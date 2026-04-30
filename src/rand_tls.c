@@ -1,0 +1,143 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * Per-thread ChaCha20-keyed CSPRNG. _Thread_local state so concurrent
+ * calls from distinct threads need no synchronisation; this is the
+ * mechanism that makes libksuid thread-safe without ever taking a
+ * lock or pulling in pthread.
+ *
+ * Reseed cadence (whichever fires first):
+ *   - first use of the thread's state
+ *   - PID change (fork detection)
+ *   - wall clock moved backwards
+ *   - wall clock moved forward by >= 3600 seconds
+ *   - >= 1 MiB of keystream consumed since the last seed
+ *
+ * The PID and wall-clock checks are explicit because we deliberately
+ * cannot use pthread_atfork. Caching getpid() per state and comparing
+ * each call costs roughly one syscall per draw on Linux, which is
+ * acceptable for a draw cadence dominated by the kernel CSPRNG seed
+ * itself; if it ever shows up in profiling the obvious tightening is
+ * to gate the getpid() call behind the bytes_emitted threshold.
+ */
+#include "rand.h"
+
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "chacha20.h"
+
+#define KSUID_RNG_RESEED_BYTES   (1u << 20)     /* 1 MiB                   */
+#define KSUID_RNG_RESEED_SECONDS 3600   /* 1 hour                  */
+
+typedef struct
+{
+  uint32_t state[16];
+  uint8_t buf[64];
+  size_t buf_pos;               /* bytes already consumed from |buf|     */
+  uint64_t bytes_emitted;       /* since last seed                       */
+  int64_t seed_time;            /* CLOCK_REALTIME seconds at last seed   */
+  long seed_pid;                /* getpid() at last seed                 */
+  bool seeded;
+} ksuid_tls_rng_t;
+
+static _Thread_local ksuid_tls_rng_t ksuid_tls_rng_;
+
+static int64_t
+ksuid_now_seconds (void)
+{
+  struct timespec ts;
+  if (clock_gettime (CLOCK_REALTIME, &ts) != 0)
+    return 0;
+  return (int64_t) ts.tv_sec;
+}
+
+static int
+ksuid_tls_rng_seed (ksuid_tls_rng_t *r)
+{
+  uint8_t kn[44];               /* 32 key + 12 nonce */
+  if (ksuid_os_random_bytes (kn, sizeof kn) < 0) {
+    /* Wipe partial seed bytes before returning. */
+    memset (kn, 0, sizeof kn);
+    return -1;
+  }
+  r->state[0] = KSUID_CHACHA20_C0;
+  r->state[1] = KSUID_CHACHA20_C1;
+  r->state[2] = KSUID_CHACHA20_C2;
+  r->state[3] = KSUID_CHACHA20_C3;
+  for (int i = 0; i < 8; ++i) {
+    r->state[4 + i] = (uint32_t) kn[i * 4 + 0]
+        | ((uint32_t) kn[i * 4 + 1] << 8)
+        | ((uint32_t) kn[i * 4 + 2] << 16)
+        | ((uint32_t) kn[i * 4 + 3] << 24);
+  }
+  r->state[12] = 0;
+  for (int i = 0; i < 3; ++i) {
+    r->state[13 + i] = (uint32_t) kn[32 + i * 4 + 0]
+        | ((uint32_t) kn[32 + i * 4 + 1] << 8)
+        | ((uint32_t) kn[32 + i * 4 + 2] << 16)
+        | ((uint32_t) kn[32 + i * 4 + 3] << 24);
+  }
+  /* Wipe seed material from local. The chacha state itself stays in
+   * TLS, but at least we limit the residue. */
+  memset (kn, 0, sizeof kn);
+
+  memset (r->buf, 0, sizeof r->buf);
+  r->buf_pos = sizeof r->buf;   /* empty buffer, force first block */
+  r->bytes_emitted = 0;
+  r->seed_pid = (long) getpid ();
+  r->seed_time = ksuid_now_seconds ();
+  r->seeded = true;
+  return 0;
+}
+
+static bool
+ksuid_tls_rng_should_reseed (const ksuid_tls_rng_t *r)
+{
+  if (!r->seeded)
+    return true;
+  if (r->bytes_emitted >= KSUID_RNG_RESEED_BYTES)
+    return true;
+  if ((long) getpid () != r->seed_pid)
+    return true;
+  int64_t now = ksuid_now_seconds ();
+  if (now < r->seed_time)       /* clock went backwards */
+    return true;
+  if (now - r->seed_time >= KSUID_RNG_RESEED_SECONDS)
+    return true;
+  return false;
+}
+
+void
+ksuid_random_force_reseed (void)
+{
+  ksuid_tls_rng_.seeded = false;
+}
+
+int
+ksuid_random_bytes (uint8_t *buf, size_t n)
+{
+  ksuid_tls_rng_t *r = &ksuid_tls_rng_;
+  if (ksuid_tls_rng_should_reseed (r)) {
+    if (ksuid_tls_rng_seed (r) < 0)
+      return -1;
+  }
+  while (n > 0) {
+    if (r->buf_pos == sizeof r->buf) {
+      ksuid_chacha20_block (r->buf, r->state);
+      r->buf_pos = 0;
+    }
+    size_t avail = sizeof r->buf - r->buf_pos;
+    size_t chunk = (n < avail) ? n : avail;
+    memcpy (buf, r->buf + r->buf_pos, chunk);
+    /* Wipe consumed keystream to limit forward exposure if memory is
+     * later inspected. */
+    memset (r->buf + r->buf_pos, 0, chunk);
+    r->buf_pos += chunk;
+    buf += chunk;
+    n -= chunk;
+    r->bytes_emitted += chunk;
+  }
+  return 0;
+}

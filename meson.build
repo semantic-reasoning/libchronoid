@@ -46,6 +46,8 @@ core_sources = files(
   'src/base62.c',
   'src/sequence.c',
   'src/rand_os.c',
+  'src/rand_tls.c',
+  'src/chacha20.c',
 )
 
 ksuid_lib = both_libraries('ksuid', core_sources,

@@ -15,4 +15,18 @@
  * library would be a worst-case correctness bug. */
 int ksuid_os_random_bytes (uint8_t * buf, size_t n);
 
+/* Fill |buf| with |n| random bytes from the per-thread CSPRNG
+ * (ChaCha20 keyed from ksuid_os_random_bytes). State is _Thread_local
+ * so concurrent calls from distinct threads need no synchronisation;
+ * concurrent calls from the same thread are NOT supported. The state
+ * is reseeded on first use, after fork(), if the wall clock moves
+ * backwards or runs forward by more than an hour, and after every 1
+ * MiB of keystream. Returns 0 on success and -1 if the underlying OS
+ * entropy source is unavailable at the moment of (re)seed. */
+int ksuid_random_bytes (uint8_t * buf, size_t n);
+
+/* For testing: force the calling thread's CSPRNG state to reseed on
+ * its next ksuid_random_bytes call. */
+void ksuid_random_force_reseed (void);
+
 #endif /* KSUID_RAND_H */

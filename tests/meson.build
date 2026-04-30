@@ -2,11 +2,23 @@ test_inc = include_directories('.', '..' / 'include')
 
 test_link = ksuid_lib.get_static_lib()
 
+threads_dep = dependency('threads')
+
+# Tests that need C11 <threads.h> link against the threads dep; others
+# don't need to.
+threaded_tests = ['test_rand_tls']
+
 foreach t : ['test_smoke', 'test_parts', 'test_base62', 'test_parse_format',
-             'test_sort', 'test_next_prev', 'test_sequence', 'test_rand_os']
+             'test_sort', 'test_next_prev', 'test_sequence', 'test_rand_os',
+             'test_chacha20', 'test_rand_tls']
+  deps = []
+  if threaded_tests.contains(t)
+    deps += threads_dep
+  endif
   exe = executable(t, t + '.c',
     include_directories : test_inc,
     link_with : test_link,
+    dependencies : deps,
   )
   test(t, exe, timeout : 30)
 endforeach
