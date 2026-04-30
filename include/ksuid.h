@@ -176,6 +176,39 @@ extern "C"
   KSUID_PUBLIC void ksuid_sequence_bounds (const ksuid_sequence_t * s,
       ksuid_t * min, ksuid_t * max);
 
+/* --------------------------------------------------------------------------
+ * Random KSUID generation.
+ *
+ * Random bytes come from the per-thread ChaCha20 CSPRNG keyed from
+ * the OS entropy source (getrandom on Linux, getentropy on macOS,
+ * BCryptGenRandom on Windows). Distinct threads draw independent
+ * streams without synchronisation; concurrent calls from the *same*
+ * thread are not supported. On entropy-source failure the function
+ * returns KSUID_ERR_RNG and leaves |*out| untouched.
+ * -------------------------------------------------------------------------- */
+
+/* Generate a new KSUID stamped with the current wall-clock time. */
+  KSUID_PUBLIC ksuid_err_t ksuid_new (ksuid_t * out);
+
+/* Generate a new KSUID stamped with |unix_seconds|. The timestamp must
+ * fall within [KSUID_EPOCH_SECONDS, KSUID_EPOCH_SECONDS + UINT32_MAX]
+ * just like ksuid_from_parts; out-of-range returns
+ * KSUID_ERR_TIME_RANGE. */
+  KSUID_PUBLIC ksuid_err_t ksuid_new_with_time (ksuid_t * out,
+      int64_t unix_seconds);
+
+/* Replace the global random source. The default source is the
+ * per-thread ChaCha20 CSPRNG; calling this with a non-NULL |fn|
+ * routes ksuid_new through |fn(ctx, buf, n)| instead. |fn| must
+ * return 0 on success and non-zero on failure. Passing NULL restores
+ * the default source.
+ *
+ * The override is global and atomic-pointer-protected, so swapping
+ * mid-flight is race-free; however, |fn| itself MUST be thread-safe
+ * if multiple threads will call ksuid_new concurrently. */
+  typedef int (*ksuid_rng_fn) (void *ctx, uint8_t * buf, size_t n);
+  KSUID_PUBLIC void ksuid_set_rand (ksuid_rng_fn fn, void *ctx);
+
 #ifdef __cplusplus
 }                               /* extern "C" */
 #endif

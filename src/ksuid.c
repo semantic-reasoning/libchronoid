@@ -9,11 +9,14 @@
  */
 #include <ksuid.h>
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "base62.h"
 #include "byteorder.h"
+#include "rand.h"
 #include "uint128.h"
 
 KSUID_PUBLIC const ksuid_t KSUID_NIL = {.b = {0} };
@@ -188,4 +191,63 @@ ksuid_prev (const ksuid_t *id)
     ksuid_be32_store (out.b, ts - 1);
   }
   return out;
+}
+
+/* Atomic-pointer overrides for ksuid_set_rand. Readers use acquire
+ * loads, writers use release stores so a swap mid-flight cannot tear
+ * the (fn, ctx) pair. The two atomics are independent, so a concurrent
+ * swap during a draw can still observe one half from the old override
+ * and the other half from the new -- documented as caller's
+ * responsibility (the user must not flip rng sources mid-load).
+ *
+ * _Atomic is spelled as a type qualifier (rather than _Atomic(T)) so
+ * gst-indent does not parse it as a function call and reflow the
+ * declarations weirdly. Static storage zero-initializes both pointers
+ * to NULL, which matches the "no override installed" state. */
+static _Atomic ksuid_rng_fn g_rng_fn;
+static void *_Atomic g_rng_ctx;
+
+void
+ksuid_set_rand (ksuid_rng_fn fn, void *ctx)
+{
+  atomic_store_explicit (&g_rng_ctx, ctx, memory_order_release);
+  atomic_store_explicit (&g_rng_fn, fn, memory_order_release);
+}
+
+static int
+ksuid_fill_payload (uint8_t *buf, size_t n)
+{
+  ksuid_rng_fn fn = atomic_load_explicit (&g_rng_fn, memory_order_acquire);
+  if (fn != NULL) {
+    void *ctx = atomic_load_explicit (&g_rng_ctx, memory_order_acquire);
+    return fn (ctx, buf, n);
+  }
+  return ksuid_random_bytes (buf, n);
+}
+
+ksuid_err_t
+ksuid_new_with_time (ksuid_t *out, int64_t unix_seconds)
+{
+  int64_t corrected = unix_seconds - KSUID_EPOCH_SECONDS;
+  if (corrected < 0 || corrected > (int64_t) UINT32_MAX)
+    return KSUID_ERR_TIME_RANGE;
+  /* Fill the payload first into a temporary so a partial RNG failure
+   * cannot leak half a payload into |*out|. */
+  uint8_t payload[KSUID_PAYLOAD_LEN];
+  if (ksuid_fill_payload (payload, KSUID_PAYLOAD_LEN) != 0)
+    return KSUID_ERR_RNG;
+  ksuid_be32_store (out->b, (uint32_t) corrected);
+  memcpy (out->b + KSUID_TIMESTAMP_LEN, payload, KSUID_PAYLOAD_LEN);
+  return KSUID_OK;
+}
+
+ksuid_err_t
+ksuid_new (ksuid_t *out)
+{
+  /* Use timespec_get rather than time(NULL) for portability with
+   * Windows CRT and to share the path tested in rand_tls.c. */
+  struct timespec ts;
+  if (timespec_get (&ts, TIME_UTC) != TIME_UTC)
+    return KSUID_ERR_TIME_RANGE;
+  return ksuid_new_with_time (out, (int64_t) ts.tv_sec);
 }
