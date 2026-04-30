@@ -34,6 +34,7 @@ public_headers = files('include/ksuid.h')
 core_sources = files(
   'src/ksuid.c',
   'src/base62.c',
+  'src/sequence.c',
 )
 
 ksuid_lib = both_libraries('ksuid', core_sources,

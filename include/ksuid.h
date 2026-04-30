@@ -151,6 +151,29 @@ extern "C"
  * timestamp, with the timestamp wrapping at zero. */
   KSUID_PUBLIC ksuid_t ksuid_prev (const ksuid_t * id);
 
+/* --------------------------------------------------------------------------
+ * Sequence: monotonic ordered KSUIDs from a single seed.
+ *
+ * Up to 65536 KSUIDs share the leading 18 bytes of the seed; the final
+ * two bytes carry a 16-bit big-endian counter starting at 0. Sequence
+ * values are NOT safe for concurrent use; one sequence per thread.
+ * -------------------------------------------------------------------------- */
+
+  typedef struct ksuid_sequence
+  {
+    ksuid_t seed;
+    /* uint32_t (rather than uint16_t) so we can detect the overflow
+     * after the 65536th call without relying on wraparound semantics. */
+    uint32_t count;
+  } ksuid_sequence_t;
+
+  KSUID_PUBLIC void ksuid_sequence_init (ksuid_sequence_t * s,
+      const ksuid_t * seed);
+  KSUID_PUBLIC ksuid_err_t ksuid_sequence_next (ksuid_sequence_t * s,
+      ksuid_t * out);
+  KSUID_PUBLIC void ksuid_sequence_bounds (const ksuid_sequence_t * s,
+      ksuid_t * min, ksuid_t * max);
+
 #ifdef __cplusplus
 }                               /* extern "C" */
 #endif
