@@ -15,9 +15,12 @@ fill_pseudo_random (ksuid_t *id, uint64_t seed)
 static void
 test_is_sorted_empty_and_single (void)
 {
-  ASSERT_TRUE (ksuid_is_sorted (NULL, 0));
-  ksuid_t one = KSUID_NIL;
-  ASSERT_TRUE (ksuid_is_sorted (&one, 1));
+  /* For n=0 the public contract is "always true"; pass a real (but
+   * unused) pointer rather than NULL so we do not accidentally
+   * commit to NULL acceptance in the public API. */
+  ksuid_t scratch = KSUID_NIL;
+  ASSERT_TRUE (ksuid_is_sorted (&scratch, 0));
+  ASSERT_TRUE (ksuid_is_sorted (&scratch, 1));
 }
 
 static void

@@ -114,7 +114,9 @@ extern "C"
  * characters, no NUL terminator required) into |out|. Returns
  * KSUID_ERR_STR_SIZE if |len| is wrong or KSUID_ERR_STR_VALUE if the input
  * contains a non-alphanumeric character or encodes a value greater than
- * KSUID_MAX. */
+ * KSUID_MAX. On any error the contents of |out| are guaranteed unchanged --
+ * decoding writes to a stack temporary first and only copies into |out|
+ * once the input has been fully validated. */
   KSUID_PUBLIC ksuid_err_t ksuid_parse (ksuid_t * out, const char *s,
       size_t len);
   KSUID_PUBLIC ksuid_t ksuid_parse_or_nil (const char *s, size_t len);

@@ -17,10 +17,11 @@
 
 #include "byteorder.h"
 
-#define B62_ALPHABET "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-                     "abcdefghijklmnopqrstuvwxyz"
-
-static const char kB62Alphabet[62] = B62_ALPHABET;
+/* The NUL terminator at index 62 is intentionally kept (no [62] fixed
+ * size) so gcc -Wunterminated-string-initialization is satisfied; the
+ * encode loop only ever indexes 0..61. */
+static const char kB62Alphabet[]
+    = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /* ASCII -> base62 digit value, with 0xFF as the invalid sentinel. The
  * table is deliberately built at compile time so the hot path stays

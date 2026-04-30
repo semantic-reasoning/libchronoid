@@ -52,6 +52,23 @@ test_parse_value_errors (void)
 }
 
 static void
+test_parse_value_error_does_not_mutate_out (void)
+{
+  /* The decoder partially writes its destination before detecting
+   * overflow. ksuid_parse must therefore use a temporary internally
+   * and leave the caller's |*out| untouched on every failure path. */
+  ksuid_t pre = KSUID_MAX;
+  ksuid_t id = pre;
+  ASSERT_EQ_INT (ksuid_parse (&id, "aWgEPTl1tmebfsQzFP4bxwgy80W",
+          KSUID_STRING_LEN), KSUID_ERR_STR_VALUE);
+  ASSERT_EQ_BYTES (id.b, pre.b, KSUID_BYTES);
+
+  ASSERT_EQ_INT (ksuid_parse (&id, "!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+          KSUID_STRING_LEN), KSUID_ERR_STR_VALUE);
+  ASSERT_EQ_BYTES (id.b, pre.b, KSUID_BYTES);
+}
+
+static void
 test_parse_or_nil (void)
 {
   ksuid_t bad = ksuid_parse_or_nil (kSampleStr, 26);
@@ -103,6 +120,7 @@ main (void)
   RUN_TEST (test_parse_golden);
   RUN_TEST (test_parse_size_errors);
   RUN_TEST (test_parse_value_errors);
+  RUN_TEST (test_parse_value_error_does_not_mutate_out);
   RUN_TEST (test_parse_or_nil);
   RUN_TEST (test_format_golden);
   RUN_TEST (test_round_trip);

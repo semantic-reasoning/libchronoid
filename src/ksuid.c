@@ -106,7 +106,16 @@ ksuid_parse (ksuid_t *out, const char *s, size_t len)
 {
   if (len != KSUID_STRING_LEN)
     return KSUID_ERR_STR_SIZE;
-  return ksuid_base62_decode (out->b, (const uint8_t *) s);
+  /* The decoder partially writes its destination before detecting an
+   * overflow; route through a stack temporary so the caller's |*out|
+   * is never observed in a half-decoded state, matching the size-error
+   * "untouched on failure" guarantee. */
+  ksuid_t tmp;
+  ksuid_err_t e = ksuid_base62_decode (tmp.b, (const uint8_t *) s);
+  if (e != KSUID_OK)
+    return e;
+  *out = tmp;
+  return KSUID_OK;
 }
 
 ksuid_t
