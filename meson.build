@@ -20,6 +20,16 @@ common_args = [
   '-fvisibility=hidden',
   '-DKSUID_BUILDING=1',
 ]
+
+# OS entropy source detection. We require *some* path that works; if
+# meson cannot prove one is available the build still succeeds because
+# rand_os.c's /dev/urandom fallback is always compiled in.
+if cc.has_function('getrandom', prefix : '#include <sys/random.h>')
+  common_args += '-DKSUID_HAVE_GETRANDOM=1'
+endif
+if cc.has_function('getentropy', prefix : '#include <unistd.h>')
+  common_args += '-DKSUID_HAVE_GETENTROPY=1'
+endif
 foreach a : ['-Wshadow', '-Wstrict-prototypes', '-Wpointer-arith',
              '-Wcast-align', '-Wconversion', '-Wmissing-prototypes']
   if cc.has_argument(a)
@@ -35,6 +45,7 @@ core_sources = files(
   'src/ksuid.c',
   'src/base62.c',
   'src/sequence.c',
+  'src/rand_os.c',
 )
 
 ksuid_lib = both_libraries('ksuid', core_sources,
