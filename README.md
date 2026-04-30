@@ -18,10 +18,16 @@ Early development. The public API and ABI are unstable until 1.0.
   binary layout, same 27-character base62 string encoding, same epoch
   (1400000000 = 2014-05-13 16:53:20 UTC), same ordering invariants.
 - **Honest SIMD**: the base62 long-division core is sequential and is
-  not vectorizable; SSE2/NEON paths accelerate input validation,
-  20-byte comparison, and big-endian byte-swaps.
+  not vectorizable; SSE2/NEON paths accelerate input validation
+  (16-byte packed range tests, sentinel-fill on miss).
+- **Cross-platform RNG**:
+  - Linux: `getrandom(2)` with `/dev/urandom` fallback
+  - macOS: `getentropy(3)` (10.12+) with `/dev/urandom` fallback
+  - Windows: `BCryptGenRandom` (linked via `bcrypt.lib`)
+  - Per-thread ChaCha20 CSPRNG keyed from the OS source, reseeded
+    every 1 MiB / hour / fork / clock-skew event.
 - **Small footprint**: no heap allocations on the hot path; no
-  third-party runtime dependencies.
+  third-party runtime dependencies. Stripped library is ~18 KB.
 
 ## Licensing
 
@@ -47,6 +53,59 @@ meson setup build
 meson compile -C build
 meson test    -C build
 ```
+
+For a release build with NDEBUG and stripped binaries:
+
+```sh
+meson setup build-release --buildtype=release
+meson compile -C build-release
+strip --strip-unneeded build-release/libksuid.so.*
+```
+
+## Footprint
+
+A release build on x86_64 produces (post-`strip --strip-unneeded`):
+
+| Artifact            | Bytes  |
+| :------------------ | -----: |
+| libksuid.so.0.1.0   | 18 560 |
+| libksuid.a          | 24 804 |
+| ksuid-gen (CLI)     | 27 464 |
+
+The shared library has zero runtime dependencies beyond the C library
+and, on Windows, `bcrypt.lib`.
+
+## CLI
+
+```sh
+$ ksuid-gen
+3D3tYHbvwtnqJnHlVV0SnfLhsIl
+
+$ ksuid-gen -n 3
+3D3tYDod37FCb5o2znp85EOqeO3
+3D3tYG2kSSEmqfHFkSFXeSYyLAa
+3D3tYGRMmQOon3PeymhLvYc1yu5
+
+$ ksuid-gen -f inspect 0ujtsYcgvSTl8PAuAdqWYSMnLOv
+
+REPRESENTATION:
+
+  String: 0ujtsYcgvSTl8PAuAdqWYSMnLOv
+     Raw: 0669F7EFB5A1CD34B5F99D1154FB6853345C9735
+
+COMPONENTS:
+
+       Time: 2017-10-10 04:00:47 +0000 UTC
+  Timestamp: 107608047
+    Payload: B5A1CD34B5F99D1154FB6853345C9735
+```
+
+The full flag set is `-n N`, `-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See `ksuid-gen -h` for details.
+
+The Go upstream's `-f template` is intentionally not supported -- a
+faithful re-implementation of Go's `text/template` grammar in C is
+out of scope, and a "mostly compatible" template engine is worse than
+no engine at all.
 
 ## Layout
 
