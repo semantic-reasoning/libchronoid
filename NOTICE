@@ -1,0 +1,43 @@
+libksuid
+Copyright (C) 2026 Justin Kim <justin.joy.9to5@gmail.com>
+
+This library is free software: you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version. See the LICENSE file for the full text.
+
+------------------------------------------------------------------------
+Upstream attribution
+------------------------------------------------------------------------
+
+libksuid is a derivative C11 work that ports the algorithms, binary
+layout (20-byte big-endian timestamp + 16-byte payload), base62 alphabet
+and encoding scheme, and KSUID semantics of the Go library
+
+    github.com/segmentio/ksuid
+
+distributed under the MIT License, Copyright (c) 2017 Segment.io. The
+upstream MIT license text is reproduced verbatim in the file
+LICENSE.MIT, which MUST accompany every redistribution of this library
+in source or binary form, regardless of whether such distribution also
+includes this NOTICE file.
+
+Files in this repository whose implementation is derived from upstream
+Go sources carry the SPDX header
+
+    SPDX-License-Identifier: LGPL-3.0-or-later AND MIT
+
+and a per-file pointer back to the upstream source they were ported
+from. Files that are wholly original to this project carry only
+
+    SPDX-License-Identifier: LGPL-3.0-or-later
+
+------------------------------------------------------------------------
+Third-party algorithms
+------------------------------------------------------------------------
+
+ChaCha20 stream cipher block function (src/chacha20.c):
+    Based on the public-domain reference implementation by D. J. Bernstein
+    (http://cr.yp.to/chacha.html). No copyright is claimed by the original
+    author; the implementation here is contributed under LGPL-3.0-or-later
+    along with the rest of libksuid.
