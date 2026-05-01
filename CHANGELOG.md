@@ -7,7 +7,9 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
 
 ## [Unreleased]
 
-### Added in 0.9.x — UUIDv7 support
+## [0.10.0] — 2026-05-01
+
+### Added — UUIDv7 support
 
 UUIDv7 (RFC 9562) generation, parsing, formatting, monotonic sequence,
 and bulk encoding -- a sibling format to KSUID under one library,
@@ -119,10 +121,32 @@ wipe/fork-aware safety primitives.
   `chronoid_*` (commit 3). Shared infrastructure now serves both
   formats under one namespace.
 
+#### Umbrella header
+
+- New `<chronoid/chronoid.h>` umbrella that includes both
+  `<chronoid/ksuid.h>` and `<chronoid/uuidv7.h>` plus the generated
+  `<chronoid/chronoid_version.h>`. Callers that want the full library
+  surface in one include now have a stable single-header entry point;
+  the per-format headers continue to be the authoritative declarations.
+
+#### CI / portability fixes
+
+- `tests/test_uuidv7_sequence.c` no longer asserts a tight upper bound
+  on `chronoid_uuidv7_sequence_next` counter-overflow timestamps; the
+  loose check is robust to MALLOC_PERTURB_-induced scheduling jitter
+  (closes #2).
+- `tests/test_*` use `_putenv_s` on Windows MSVC; `setenv` is POSIX-only.
+- Stale `libksuid` path references purged from `.github/workflows/*`.
+- Source tree reformatted via `gst-indent` for the CI lint gate.
+- `chronoid_uuidv7_sequence_next` counter draw silenced under
+  clang-tidy `bugprone-narrowing-conversions`.
+
 ## [0.9.0] — 2026-05-01
 
-Initial libchronoid release. Held at 0.9.0 until UUIDv7 lands and the
-1.0.0 line is cut.
+Initial libchronoid release. The pre-release plateau covering the
+libksuid → libchronoid rebrand and infrastructure groundwork for
+UUIDv7. The 0.10.0 release that follows adds UUIDv7 (RFC 9562) on
+top of this base.
 
 ### Project rename and scope expansion
 - **Renamed from libksuid to libchronoid.** The KSUID half of the
@@ -150,10 +174,10 @@ Initial libchronoid release. Held at 0.9.0 until UUIDv7 lands and the
   introduced under libchronoid (UUIDv7 core, hex codec) will carry
   `SPDX: LGPL-3.0-or-later` only, with no MIT clause, since they have
   no Segment lineage.
-- **Version policy.** The pre-release line stays at 0.9.0 until the
-  UUIDv7 implementation, parity tests, and the unified CLI are stable
-  enough to justify cutting 1.0.0 and freezing the SONAME at
-  `libchronoid.so.1`.
+- **Version policy.** 0.9.0 is the rebrand-only pre-release line.
+  UUIDv7 lands in 0.10.0. 1.0.0 is cut once the open
+  CI / docs / CLI cleanup items are closed, at which point the
+  SONAME freezes at `libchronoid.so.1`.
 
 ### Inherited from libksuid 1.0.0
 - KSUID generation, parsing, formatting, comparison.
@@ -174,5 +198,6 @@ Initial libchronoid release. Held at 0.9.0 until UUIDv7 lands and the
 - `chronoid-gen` (formerly `ksuid-gen`) CLI for round-trip generation
   and inspection.
 
-[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.10.0
 [0.9.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.9.0

@@ -92,17 +92,14 @@ strip --strip-unneeded build-release/libchronoid.so.*
 
 ## Footprint
 
-A release build on x86_64 produces (post-`strip --strip-unneeded`):
+A release build on x86_64 produces (post-`strip --strip-unneeded`,
+0.10.0 with UUIDv7 and the shared hex codec linked in):
 
-| Artifact            | Bytes  |
-| :------------------ | -----: |
-| libchronoid.so.0.9.0   | 26 752 |
-| libchronoid.a          | 35 212 |
-| chronoid-gen (CLI)     | 22 920 |
-
-(KSUID-only baseline carried over from libksuid 1.0.0. UUIDv7 and the
-shared hex codec add roughly 6-8 KB of `.text` to the shared library
-in the AVX2 build; rebuild and `size` locally for current numbers.)
+| Artifact               | Bytes  |
+| :--------------------- | -----: |
+| libchronoid.so.0.10.0  | 39 072 |
+| libchronoid.a          | 55 246 |
+| chronoid-gen (CLI)     | 31 136 |
 
 The bulk-encode AVX2 kernel from `chronoid/ksuid/encode_avx2.c` accounts for
 roughly 8 KB of the shared-library size, and the UUIDv7 hex AVX2
