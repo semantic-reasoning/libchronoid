@@ -174,6 +174,15 @@ error rather than a silent coercion.
 `-f raw` emits the unencoded byte image of the ID -- 20 bytes for
 KSUID, 16 bytes for UUIDv7 -- suitable for `> file.bin`.
 
+`-f payload` is KSUID-only. KSUID has a 16-byte payload field
+(`chronoid_ksuid_payload`); UUIDv7 has no equivalent — RFC 9562 §5.7
+splits the random bits across `rand_a` (12 bits) and `rand_b` (62
+bits) with the version and variant nibbles overlaid in the same
+bytes. Combining `-f payload` with `--format=uuidv7` (or with a
+36-char positional that auto-detects as UUIDv7) is a hard error.
+For UUIDv7 use `-f raw` (the 16-byte image) or `-f inspect` (which
+prints `rand_a` and `rand_b` separately).
+
 The full flag set is `--format={ksuid,uuidv7}`, `-n N`,
 `-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See
 `chronoid-gen -h` for details.

@@ -229,4 +229,60 @@ if "$KSUID_GEN" --format=wat >/dev/null 2>&1; then
   exit 1
 fi
 
+# 20. -f payload rejected for UUIDv7 in generation mode (no payload
+#     field per RFC 9562; rejection must happen before any output is
+#     written so scripted callers don't see a partial stream).
+gen_pl_out=$("$KSUID_GEN" --format=uuidv7 -f payload 2>/dev/null || true)
+if [ -n "$gen_pl_out" ]; then
+  echo "expected empty stdout for -f payload + uuidv7 rejection, got: $gen_pl_out" >&2
+  exit 1
+fi
+gen_pl_err=$("$KSUID_GEN" --format=uuidv7 -f payload 2>&1 >/dev/null || true)
+case "$gen_pl_err" in
+  *"-f payload is not supported for UUIDv7"*) ;;
+  *)
+    echo "expected literal '-f payload is not supported for UUIDv7' in stderr, got: $gen_pl_err" >&2
+    exit 1
+    ;;
+esac
+if "$KSUID_GEN" --format=uuidv7 -f payload >/dev/null 2>&1; then
+  echo "expected non-zero exit for -f payload + --format=uuidv7" >&2
+  exit 1
+fi
+# The verbose flag (-v) must not bypass the rejection: -v is parsed
+# the same way as any other option, but the rejection happens up-front
+# in main() before any per-id printing, so this exercise pins that
+# code-flow guarantee.
+if "$KSUID_GEN" -v --format=uuidv7 -f payload >/dev/null 2>&1; then
+  echo "expected non-zero exit for -v --format=uuidv7 -f payload" >&2
+  exit 1
+fi
+
+# 21. -f payload rejected for UUIDv7 in parse mode (auto-detected by
+#     the 36-char positional length).
+if "$KSUID_GEN" -f payload "$RFC_UUIDV7" >/dev/null 2>&1; then
+  echo "expected non-zero exit for -f payload on uuidv7 positional" >&2
+  exit 1
+fi
+parse_pl_err=$("$KSUID_GEN" -f payload "$RFC_UUIDV7" 2>&1 >/dev/null || true)
+case "$parse_pl_err" in
+  *"-f payload is not supported for UUIDv7"*) ;;
+  *)
+    echo "expected literal '-f payload is not supported for UUIDv7' in stderr (parse mode), got: $parse_pl_err" >&2
+    exit 1
+    ;;
+esac
+
+# 22. -h text advertises the KSUID-only restriction so the user-facing
+#     contract is discoverable without reading the source.
+help_text=$("$KSUID_GEN" -h 2>&1)
+case "$help_text" in
+  *"-f payload is KSUID-only"*) ;;
+  *)
+    echo "expected -h text to advertise '-f payload is KSUID-only', got:" >&2
+    printf '%s\n' "$help_text" >&2
+    exit 1
+    ;;
+esac
+
 echo "chronoid-gen integration: all checks passed"
