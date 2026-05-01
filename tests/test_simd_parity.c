@@ -23,8 +23,8 @@ check_one (const uint8_t in[16])
 {
   uint8_t out_scalar[16];
   uint8_t out_simd[16];
-  int rc_scalar = ksuid_base62_translate16_scalar (out_scalar, in);
-  int rc_simd = KSUID_TRANSLATE16 (out_simd, in);
+  int rc_scalar = chronoid_base62_translate16_scalar (out_scalar, in);
+  int rc_simd = CHRONOID_BASE62_TRANSLATE16 (out_simd, in);
   ASSERT_EQ_INT (rc_scalar, rc_simd);
   ASSERT_EQ_BYTES (out_scalar, out_simd, 16);
 }
@@ -85,8 +85,8 @@ test_all_zero_input (void)
   uint8_t in[16] = { 0 };
   uint8_t out_scalar[16];
   uint8_t out_simd[16];
-  int rc_scalar = ksuid_base62_translate16_scalar (out_scalar, in);
-  int rc_simd = KSUID_TRANSLATE16 (out_simd, in);
+  int rc_scalar = chronoid_base62_translate16_scalar (out_scalar, in);
+  int rc_simd = CHRONOID_BASE62_TRANSLATE16 (out_simd, in);
   ASSERT_EQ_INT (rc_scalar, -1);
   ASSERT_EQ_INT (rc_simd, -1);
   ASSERT_EQ_BYTES (out_scalar, out_simd, 16);

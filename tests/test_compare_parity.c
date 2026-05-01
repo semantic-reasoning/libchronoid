@@ -5,7 +5,7 @@
  * compiled (chronoid/compare_scalar.c is in core_sources unconditionally)
  * so this test exercises the scalar path on every host even when the
  * production library would dispatch to a SIMD kernel. On hosts where
- * neither SSE2 nor NEON is selected, KSUID_COMPARE20 maps to the
+ * neither SSE2 nor NEON is selected, CHRONOID_KSUID_COMPARE20 maps to the
  * scalar kernel and the test degenerates into a self-consistency
  * check, which still pins regressions.
  *
@@ -25,8 +25,8 @@
 static void
 check_match (const uint8_t *a, const uint8_t *b)
 {
-  int s = ksuid_compare20_scalar (a, b);
-  int v = KSUID_COMPARE20 (a, b);
+  int s = chronoid_ksuid_compare20_scalar (a, b);
+  int v = CHRONOID_KSUID_COMPARE20 (a, b);
   ASSERT_EQ_INT (s, v);
   /* Plus the {-1, 0, +1} contract -- the SIMD kernel must not
    * return e.g. -42 even if its sign happens to match. */
@@ -73,10 +73,10 @@ test_compare_pinned_nil_max (void)
   uint8_t max[20];
   memset (max, 0xff, 20);
   /* Specifically pin the {-1, +1} integer values, not just sign. */
-  ASSERT_EQ_INT (KSUID_COMPARE20 (nil, max), -1);
-  ASSERT_EQ_INT (KSUID_COMPARE20 (max, nil), +1);
-  ASSERT_EQ_INT (KSUID_COMPARE20 (nil, nil), 0);
-  ASSERT_EQ_INT (KSUID_COMPARE20 (max, max), 0);
+  ASSERT_EQ_INT (CHRONOID_KSUID_COMPARE20 (nil, max), -1);
+  ASSERT_EQ_INT (CHRONOID_KSUID_COMPARE20 (max, nil), +1);
+  ASSERT_EQ_INT (CHRONOID_KSUID_COMPARE20 (nil, nil), 0);
+  ASSERT_EQ_INT (CHRONOID_KSUID_COMPARE20 (max, max), 0);
 }
 
 static void

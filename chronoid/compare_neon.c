@@ -13,7 +13,7 @@
 #include <chronoid/compare_simd.h>
 
 int
-ksuid_compare20_neon (const uint8_t a[20], const uint8_t b[20])
+chronoid_ksuid_compare20_neon (const uint8_t a[20], const uint8_t b[20])
 {
   uint8x16_t va = vld1q_u8 (a);
   uint8x16_t vb = vld1q_u8 (b);

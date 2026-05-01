@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Internal declarations for ksuid_string_batch and the dispatch
+ * Internal declarations for chronoid_ksuid_string_batch and the dispatch
  * scaffolding it sits on. Public callers go through
- * chronoid/ksuid.h's CHRONOID_PUBLIC ksuid_string_batch.
+ * chronoid/ksuid.h's CHRONOID_PUBLIC chronoid_ksuid_string_batch.
  *
  * The pattern: a single _Atomic function pointer is initialised at
  * load time to a "trampoline" that, on first call, runs feature
@@ -20,18 +20,18 @@
 
 #include <chronoid/ksuid.h>
 
-typedef void (*ksuid_string_batch_fn) (const ksuid_t * ids, char *out_27n,
+typedef void (*chronoid_ksuid_string_batch_fn) (const chronoid_ksuid_t * ids, char *out_27n,
     size_t n);
 
 /* Always-compiled scalar reference. Used by tests as the parity
  * baseline regardless of which production kernel is selected. */
-void ksuid_string_batch_scalar (const ksuid_t * ids, char *out_27n, size_t n);
+void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, char *out_27n, size_t n);
 
 #if defined(CHRONOID_HAVE_AVX2_BATCH)
 /* AVX2 8-wide kernel. Linked in only when meson detects an x86_64
  * host with -Davx2_batch enabled. Tail (n % 8) handled by falling
  * through to the scalar loop inside the kernel itself. */
-void ksuid_string_batch_avx2 (const ksuid_t * ids, char *out_27n, size_t n);
+void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids, char *out_27n, size_t n);
 #endif
 
 #endif /* KSUID_ENCODE_BATCH_H */

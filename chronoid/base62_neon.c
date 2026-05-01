@@ -18,7 +18,7 @@
 #include <chronoid/base62_simd.h>
 
 int
-ksuid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16])
+chronoid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16])
 {
   uint8x16_t v = vld1q_u8 (in);
 

@@ -141,18 +141,18 @@ no engine at all.
 
 When formatting many KSUIDs at once (database snapshots, log batches,
 network bulk responses), use the bulk variant rather than calling
-`ksuid_format` in a loop:
+`chronoid_ksuid_format` in a loop:
 
 ```c
-ksuid_t ids[1024];
-char    out[1024 * KSUID_STRING_LEN];   /* no NUL terminators */
+chronoid_ksuid_t ids[1024];
+char    out[1024 * CHRONOID_KSUID_STRING_LEN];   /* no NUL terminators */
 
-ksuid_string_batch (ids, out, 1024);
-/* ids[i] is now at out[i * KSUID_STRING_LEN .. (i + 1) * KSUID_STRING_LEN - 1] */
+chronoid_ksuid_string_batch (ids, out, 1024);
+/* ids[i] is now at out[i * CHRONOID_KSUID_STRING_LEN .. (i + 1) * CHRONOID_KSUID_STRING_LEN - 1] */
 ```
 
 The function is thread-safe for disjoint output buffers and `n == 0`
-is a no-op. Output is byte-identical to a `ksuid_format` loop --
+is a no-op. Output is byte-identical to a `chronoid_ksuid_format` loop --
 only the throughput differs.
 
 The implementation dispatches at first call to a kernel selected
@@ -166,7 +166,7 @@ trampoline; race-free without locks or allocation):
   pinned in `chronoid/divisor_magic.h`, and verified against
   `__uint128_t` integer division on every CI run.
 - **Other hosts** (non-AVX2 x86_64, aarch64, arm, ...): a per-ID
-  scalar loop equivalent to calling `ksuid_format` N times.
+  scalar loop equivalent to calling `chronoid_ksuid_format` N times.
 
 Output is byte-identical across kernels; the differential parity
 test in `tests/test_string_batch.c` cross-checks the AVX2 kernel

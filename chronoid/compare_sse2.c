@@ -46,7 +46,7 @@ ksuid_first_diff_sse2 (int eq_mask)
 }
 
 int
-ksuid_compare20_sse2 (const uint8_t a[20], const uint8_t b[20])
+chronoid_ksuid_compare20_sse2 (const uint8_t a[20], const uint8_t b[20])
 {
   /* Head: one 16-byte unaligned compare. _mm_loadu_si128 is the
    * SSE2 unaligned load intrinsic; the (__m128i *) cast is part of

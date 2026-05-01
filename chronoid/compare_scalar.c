@@ -9,9 +9,9 @@
 #include <string.h>
 
 int
-ksuid_compare20_scalar (const uint8_t a[20], const uint8_t b[20])
+chronoid_ksuid_compare20_scalar (const uint8_t a[20], const uint8_t b[20])
 {
-  /* Same body the public ksuid_compare used to inline: byte-order
+  /* Same body the public chronoid_ksuid_compare used to inline: byte-order
    * lexicographic compare normalised to {-1, 0, +1}. The SIMD
    * kernels must reproduce this contract bit-for-bit. */
   int r = memcmp (a, b, 20);

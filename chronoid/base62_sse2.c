@@ -25,7 +25,7 @@
 #include <chronoid/base62_simd.h>
 
 int
-ksuid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16])
+chronoid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16])
 {
   /* _mm_loadu_si128 is the SSE2 unaligned-load intrinsic; the
    * (__m128i *) cast is a documented part of the API and does not

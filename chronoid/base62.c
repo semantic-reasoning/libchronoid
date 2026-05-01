@@ -76,8 +76,8 @@ static const uint8_t kB62Value[256] = {
 };
 
 void
-ksuid_base62_encode (uint8_t out[KSUID_STRING_LEN],
-    const uint8_t in[KSUID_BYTES])
+chronoid_base62_encode (uint8_t out[CHRONOID_KSUID_STRING_LEN],
+    const uint8_t in[CHRONOID_KSUID_BYTES])
 {
   /* Treat the 20-byte input as five base-2^32 limbs, MSB first. */
   uint32_t bp[5] = {
@@ -90,7 +90,7 @@ ksuid_base62_encode (uint8_t out[KSUID_STRING_LEN],
   size_t bp_len = 5;
   uint32_t bq[5];
 
-  int n = KSUID_STRING_LEN;
+  int n = CHRONOID_KSUID_STRING_LEN;
   while (bp_len > 0) {
     size_t bq_len = 0;
     uint64_t remainder = 0;
@@ -114,7 +114,7 @@ ksuid_base62_encode (uint8_t out[KSUID_STRING_LEN],
 }
 
 int
-ksuid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16])
+chronoid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16])
 {
   int valid = 1;
   for (size_t i = 0; i < 16; ++i) {
@@ -126,9 +126,9 @@ ksuid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16])
   return valid ? 0 : -1;
 }
 
-ksuid_err_t
-ksuid_base62_decode (uint8_t out[KSUID_BYTES],
-    const uint8_t in[KSUID_STRING_LEN])
+chronoid_ksuid_err_t
+chronoid_base62_decode (uint8_t out[CHRONOID_KSUID_BYTES],
+    const uint8_t in[CHRONOID_KSUID_STRING_LEN])
 {
   /* The first 16 of 27 input characters go through the SIMD/NEON
    * (or scalar) translate-and-validate kernel; the remaining 11 are
@@ -136,19 +136,19 @@ ksuid_base62_decode (uint8_t out[KSUID_BYTES],
    * fallback. The kernel's union-mask short-circuit and packed
    * range tests dominate the per-character branch chain on every
    * x86_64 / aarch64 host. */
-  uint8_t bp[KSUID_STRING_LEN];
-  if (KSUID_TRANSLATE16 (bp, in) < 0)
-    return KSUID_ERR_STR_VALUE;
-  for (size_t i = 16; i < KSUID_STRING_LEN; ++i) {
+  uint8_t bp[CHRONOID_KSUID_STRING_LEN];
+  if (CHRONOID_BASE62_TRANSLATE16 (bp, in) < 0)
+    return CHRONOID_KSUID_ERR_STR_VALUE;
+  for (size_t i = 16; i < CHRONOID_KSUID_STRING_LEN; ++i) {
     uint8_t v = kB62Value[in[i]];
     if (v == 0xff)
-      return KSUID_ERR_STR_VALUE;
+      return CHRONOID_KSUID_ERR_STR_VALUE;
     bp[i] = v;
   }
-  size_t bp_len = KSUID_STRING_LEN;
-  uint8_t bq[KSUID_STRING_LEN];
+  size_t bp_len = CHRONOID_KSUID_STRING_LEN;
+  uint8_t bq[CHRONOID_KSUID_STRING_LEN];
 
-  int n = KSUID_BYTES;
+  int n = CHRONOID_KSUID_BYTES;
   while (bp_len > 0) {
     size_t bq_len = 0;
     uint64_t remainder = 0;
@@ -165,7 +165,7 @@ ksuid_base62_decode (uint8_t out[KSUID_BYTES],
      * greater than 2^160 - 1. Upstream emits errShortBuffer here
      * which Parse re-maps to errStrValue. */
     if (n < 4)
-      return KSUID_ERR_STR_VALUE;
+      return CHRONOID_KSUID_ERR_STR_VALUE;
     out[n - 4] = (uint8_t) (remainder >> 24);
     out[n - 3] = (uint8_t) (remainder >> 16);
     out[n - 2] = (uint8_t) (remainder >> 8);
@@ -178,5 +178,5 @@ ksuid_base62_decode (uint8_t out[KSUID_BYTES],
   if (n > 0) {
     memset (out, 0, (size_t) n);
   }
-  return KSUID_OK;
+  return CHRONOID_KSUID_OK;
 }

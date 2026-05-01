@@ -85,64 +85,64 @@ fputs_time_local (int64_t unix_seconds, FILE *f)
 }
 
 static void
-print_string (const ksuid_t *id)
+print_string (const chronoid_ksuid_t *id)
 {
-  char s[KSUID_STRING_LEN + 1];
-  ksuid_format (id, s);
-  s[KSUID_STRING_LEN] = '\0';
+  char s[CHRONOID_KSUID_STRING_LEN + 1];
+  chronoid_ksuid_format (id, s);
+  s[CHRONOID_KSUID_STRING_LEN] = '\0';
   puts (s);
 }
 
 static void
-print_inspect (const ksuid_t *id)
+print_inspect (const chronoid_ksuid_t *id)
 {
-  char s[KSUID_STRING_LEN + 1];
-  ksuid_format (id, s);
-  s[KSUID_STRING_LEN] = '\0';
+  char s[CHRONOID_KSUID_STRING_LEN + 1];
+  chronoid_ksuid_format (id, s);
+  s[CHRONOID_KSUID_STRING_LEN] = '\0';
   /* Format string is byte-for-byte equivalent to upstream
    * cmd/ksuid/main.go:86-98 modulo the leading newline. */
   printf ("\n" "REPRESENTATION:\n" "\n" "  String: %s\n" "     Raw: ", s);
-  fputs_hex_upper (id->b, KSUID_BYTES, stdout);
+  fputs_hex_upper (id->b, CHRONOID_KSUID_BYTES, stdout);
   printf ("\n" "\n" "COMPONENTS:\n" "\n" "       Time: ");
-  fputs_time_local (ksuid_time_unix (id), stdout);
+  fputs_time_local (chronoid_ksuid_time_unix (id), stdout);
   printf ("\n"
-      "  Timestamp: %" PRIu32 "\n" "    Payload: ", ksuid_timestamp (id));
-  fputs_hex_upper (ksuid_payload (id), KSUID_PAYLOAD_LEN, stdout);
+      "  Timestamp: %" PRIu32 "\n" "    Payload: ", chronoid_ksuid_timestamp (id));
+  fputs_hex_upper (chronoid_ksuid_payload (id), CHRONOID_KSUID_PAYLOAD_LEN, stdout);
   fputs ("\n\n", stdout);
 }
 
 static void
-print_time (const ksuid_t *id)
+print_time (const chronoid_ksuid_t *id)
 {
-  fputs_time_local (ksuid_time_unix (id), stdout);
+  fputs_time_local (chronoid_ksuid_time_unix (id), stdout);
   fputc ('\n', stdout);
 }
 
 static void
-print_timestamp (const ksuid_t *id)
+print_timestamp (const chronoid_ksuid_t *id)
 {
-  printf ("%" PRIu32 "\n", ksuid_timestamp (id));
+  printf ("%" PRIu32 "\n", chronoid_ksuid_timestamp (id));
 }
 
 static void
-print_payload (const ksuid_t *id)
+print_payload (const chronoid_ksuid_t *id)
 {
-  fwrite (ksuid_payload (id), 1, KSUID_PAYLOAD_LEN, stdout);
+  fwrite (chronoid_ksuid_payload (id), 1, CHRONOID_KSUID_PAYLOAD_LEN, stdout);
 }
 
 static void
-print_raw (const ksuid_t *id)
+print_raw (const chronoid_ksuid_t *id)
 {
-  fwrite (id->b, 1, KSUID_BYTES, stdout);
+  fwrite (id->b, 1, CHRONOID_KSUID_BYTES, stdout);
 }
 
 static void
-print_one (int format, const ksuid_t *id, int verbose)
+print_one (int format, const chronoid_ksuid_t *id, int verbose)
 {
   if (verbose) {
-    char s[KSUID_STRING_LEN + 1];
-    ksuid_format (id, s);
-    s[KSUID_STRING_LEN] = '\0';
+    char s[CHRONOID_KSUID_STRING_LEN + 1];
+    chronoid_ksuid_format (id, s);
+    s[CHRONOID_KSUID_STRING_LEN] = '\0';
     fputs (s, stdout);
     fputs (": ", stdout);
   }
@@ -254,10 +254,10 @@ main (int argc, char **argv)
   if (idx == argc) {
     /* Generation mode. */
     for (long i = 0; i < count; ++i) {
-      ksuid_t id;
-      ksuid_err_t e = ksuid_new (&id);
-      if (e != KSUID_OK) {
-        fprintf (stderr, "ksuid_new failed (err %d)\n", (int) e);
+      chronoid_ksuid_t id;
+      chronoid_ksuid_err_t e = chronoid_ksuid_new (&id);
+      if (e != CHRONOID_KSUID_OK) {
+        fprintf (stderr, "chronoid_ksuid_new failed (err %d)\n", (int) e);
         return 2;
       }
       print_one (format, &id, verbose);
@@ -265,10 +265,10 @@ main (int argc, char **argv)
   } else {
     /* Parse mode. */
     for (int i = idx; i < argc; ++i) {
-      ksuid_t id;
+      chronoid_ksuid_t id;
       size_t len = strlen (argv[i]);
-      ksuid_err_t e = ksuid_parse (&id, argv[i], len);
-      if (e != KSUID_OK) {
+      chronoid_ksuid_err_t e = chronoid_ksuid_parse (&id, argv[i], len);
+      if (e != CHRONOID_KSUID_OK) {
         fprintf (stderr, "could not parse %s (err %d)\n", argv[i], (int) e);
         return 1;
       }

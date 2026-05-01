@@ -30,11 +30,11 @@ Initial libchronoid release. Held at 0.9.0 until UUIDv7 lands and the
   - Internal macros: `KSUID_BUILDING/PUBLIC/HAVE_*/TESTING/VERSION_*`
     and the env var `KSUID_FORCE_SCALAR` renamed to their `CHRONOID_*`
     equivalents.
-- **KSUID public API preserved.** `ksuid_t`, `ksuid_format`,
-  `ksuid_parse`, `ksuid_compare`, `ksuid_new`, `ksuid_string_batch`,
-  `ksuid_sequence_*`, `KSUID_BYTES`, `KSUID_STRING_LEN`,
-  `KSUID_PAYLOAD_LEN`, `KSUID_EPOCH_SECONDS`, `KSUID_NIL`, `KSUID_MAX`,
-  `KSUID_OK`, `KSUID_ERR_*`, `KSUID_NIL_INIT`, `KSUID_MAX_INIT` all
+- **KSUID public API preserved.** `chronoid_ksuid_t`, `chronoid_ksuid_format`,
+  `chronoid_ksuid_parse`, `chronoid_ksuid_compare`, `chronoid_ksuid_new`, `chronoid_ksuid_string_batch`,
+  `chronoid_ksuid_sequence_*`, `CHRONOID_KSUID_BYTES`, `CHRONOID_KSUID_STRING_LEN`,
+  `CHRONOID_KSUID_PAYLOAD_LEN`, `CHRONOID_KSUID_EPOCH_SECONDS`, `CHRONOID_KSUID_NIL`, `CHRONOID_KSUID_MAX`,
+  `CHRONOID_KSUID_OK`, `CHRONOID_KSUID_ERR_*`, `CHRONOID_KSUID_NIL_INIT`, `CHRONOID_KSUID_MAX_INIT` all
   retain their names and semantics — they describe the KSUID format,
   not the library, and stay stable across the rename.
 - **Predecessor archived.** `semantic-reasoning/libksuid` 1.0.0 is
@@ -55,12 +55,12 @@ Initial libchronoid release. Held at 0.9.0 until UUIDv7 lands and the
 - Per-thread ChaCha20 CSPRNG keyed from the OS entropy source
   (`getrandom` / `getentropy` / `BCryptGenRandom`), reseeded every
   1 MiB / 1 hour / fork / clock-skew event.
-- `ksuid_string_batch` bulk encoder with runtime CPUID dispatch:
+- `chronoid_ksuid_string_batch` bulk encoder with runtime CPUID dispatch:
   - x86_64 + AVX2: 8-wide AVX2 kernel using a Granlund-Möller
     floor-reciprocal multiply divide-by-62.
-  - All other hosts: scalar `ksuid_format` loop.
+  - All other hosts: scalar `chronoid_ksuid_format` loop.
 - SSE2 / NEON acceleration of base62 input validation.
-- Monotonic `ksuid_sequence_t` with 16-bit suffix counter (≤65 536
+- Monotonic `chronoid_ksuid_sequence_t` with 16-bit suffix counter (≤65 536
   ordered KSUIDs per seed).
 - DSE-resistant wipe via `explicit_bzero` / `SecureZeroMemory` /
   `memset_s` / volatile-store fallback.

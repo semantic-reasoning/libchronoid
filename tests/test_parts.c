@@ -2,7 +2,7 @@
 #include <chronoid/ksuid.h>
 #include "test_util.h"
 
-static const uint8_t kSampleBytes[KSUID_BYTES] = {
+static const uint8_t kSampleBytes[CHRONOID_KSUID_BYTES] = {
   /* 0ujtsYcgvSTl8PAuAdqWYSMnLOv -- segmentio/ksuid README */
   0x06, 0x69, 0xF7, 0xEF,
   0xB5, 0xA1, 0xCD, 0x34, 0xB5, 0xF9, 0x9D, 0x11,
@@ -14,82 +14,82 @@ static const uint8_t kSampleBytes[KSUID_BYTES] = {
 static void
 test_from_bytes_round_trip (void)
 {
-  ksuid_t id = KSUID_NIL;
-  ASSERT_EQ_INT (ksuid_from_bytes (&id, kSampleBytes, KSUID_BYTES), KSUID_OK);
-  ASSERT_EQ_BYTES (id.b, kSampleBytes, KSUID_BYTES);
+  chronoid_ksuid_t id = CHRONOID_KSUID_NIL;
+  ASSERT_EQ_INT (chronoid_ksuid_from_bytes (&id, kSampleBytes, CHRONOID_KSUID_BYTES), CHRONOID_KSUID_OK);
+  ASSERT_EQ_BYTES (id.b, kSampleBytes, CHRONOID_KSUID_BYTES);
 }
 
 static void
 test_from_bytes_size_errors (void)
 {
-  ksuid_t id = KSUID_MAX;
-  ASSERT_EQ_INT (ksuid_from_bytes (&id, kSampleBytes, 0), KSUID_ERR_SIZE);
-  ASSERT_EQ_INT (ksuid_from_bytes (&id, kSampleBytes, 19), KSUID_ERR_SIZE);
-  ASSERT_EQ_INT (ksuid_from_bytes (&id, kSampleBytes, 21), KSUID_ERR_SIZE);
+  chronoid_ksuid_t id = CHRONOID_KSUID_MAX;
+  ASSERT_EQ_INT (chronoid_ksuid_from_bytes (&id, kSampleBytes, 0), CHRONOID_KSUID_ERR_SIZE);
+  ASSERT_EQ_INT (chronoid_ksuid_from_bytes (&id, kSampleBytes, 19), CHRONOID_KSUID_ERR_SIZE);
+  ASSERT_EQ_INT (chronoid_ksuid_from_bytes (&id, kSampleBytes, 21), CHRONOID_KSUID_ERR_SIZE);
   /* On error the output must not be silently mutated. */
-  ASSERT_EQ_BYTES (id.b, KSUID_MAX.b, KSUID_BYTES);
+  ASSERT_EQ_BYTES (id.b, CHRONOID_KSUID_MAX.b, CHRONOID_KSUID_BYTES);
 }
 
 static void
 test_from_parts_writes_be_timestamp_and_payload (void)
 {
-  ksuid_t id = KSUID_NIL;
-  int64_t unix_s = (int64_t) SAMPLE_TS + KSUID_EPOCH_SECONDS;
-  ASSERT_EQ_INT (ksuid_from_parts (&id, unix_s,
-          kSampleBytes + KSUID_TIMESTAMP_LEN, KSUID_PAYLOAD_LEN), KSUID_OK);
-  ASSERT_EQ_BYTES (id.b, kSampleBytes, KSUID_BYTES);
+  chronoid_ksuid_t id = CHRONOID_KSUID_NIL;
+  int64_t unix_s = (int64_t) SAMPLE_TS + CHRONOID_KSUID_EPOCH_SECONDS;
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id, unix_s,
+          kSampleBytes + CHRONOID_KSUID_TIMESTAMP_LEN, CHRONOID_KSUID_PAYLOAD_LEN), CHRONOID_KSUID_OK);
+  ASSERT_EQ_BYTES (id.b, kSampleBytes, CHRONOID_KSUID_BYTES);
 }
 
 static void
 test_from_parts_rejects_short_payload (void)
 {
-  ksuid_t id = KSUID_MAX;
-  int64_t unix_s = KSUID_EPOCH_SECONDS;
-  ASSERT_EQ_INT (ksuid_from_parts (&id, unix_s,
-          kSampleBytes + KSUID_TIMESTAMP_LEN, 15), KSUID_ERR_PAYLOAD_SIZE);
-  ASSERT_EQ_BYTES (id.b, KSUID_MAX.b, KSUID_BYTES);
+  chronoid_ksuid_t id = CHRONOID_KSUID_MAX;
+  int64_t unix_s = CHRONOID_KSUID_EPOCH_SECONDS;
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id, unix_s,
+          kSampleBytes + CHRONOID_KSUID_TIMESTAMP_LEN, 15), CHRONOID_KSUID_ERR_PAYLOAD_SIZE);
+  ASSERT_EQ_BYTES (id.b, CHRONOID_KSUID_MAX.b, CHRONOID_KSUID_BYTES);
 }
 
 static void
 test_from_parts_rejects_out_of_range_time (void)
 {
-  ksuid_t id;
-  uint8_t pl[KSUID_PAYLOAD_LEN] = { 0 };
+  chronoid_ksuid_t id;
+  uint8_t pl[CHRONOID_KSUID_PAYLOAD_LEN] = { 0 };
   /* Before epoch is invalid. */
-  ASSERT_EQ_INT (ksuid_from_parts (&id, 0, pl, KSUID_PAYLOAD_LEN),
-      KSUID_ERR_TIME_RANGE);
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id, 0, pl, CHRONOID_KSUID_PAYLOAD_LEN),
+      CHRONOID_KSUID_ERR_TIME_RANGE);
   /* Past epoch + UINT32_MAX is invalid. */
-  int64_t past = KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX + 1;
-  ASSERT_EQ_INT (ksuid_from_parts (&id, past, pl, KSUID_PAYLOAD_LEN),
-      KSUID_ERR_TIME_RANGE);
+  int64_t past = CHRONOID_KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX + 1;
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id, past, pl, CHRONOID_KSUID_PAYLOAD_LEN),
+      CHRONOID_KSUID_ERR_TIME_RANGE);
   /* Both endpoints are valid (closed interval). */
-  ASSERT_EQ_INT (ksuid_from_parts (&id, KSUID_EPOCH_SECONDS,
-          pl, KSUID_PAYLOAD_LEN), KSUID_OK);
-  ASSERT_EQ_INT (ksuid_from_parts (&id,
-          KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX,
-          pl, KSUID_PAYLOAD_LEN), KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id, CHRONOID_KSUID_EPOCH_SECONDS,
+          pl, CHRONOID_KSUID_PAYLOAD_LEN), CHRONOID_KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_from_parts (&id,
+          CHRONOID_KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX,
+          pl, CHRONOID_KSUID_PAYLOAD_LEN), CHRONOID_KSUID_OK);
 }
 
 static void
 test_accessors (void)
 {
-  ksuid_t id;
-  ASSERT_EQ_INT (ksuid_from_bytes (&id, kSampleBytes, KSUID_BYTES), KSUID_OK);
-  ASSERT_EQ_INT (ksuid_timestamp (&id), SAMPLE_TS);
-  ASSERT_EQ_INT (ksuid_time_unix (&id),
-      (int64_t) SAMPLE_TS + KSUID_EPOCH_SECONDS);
-  ASSERT_EQ_BYTES (ksuid_payload (&id),
-      kSampleBytes + KSUID_TIMESTAMP_LEN, KSUID_PAYLOAD_LEN);
+  chronoid_ksuid_t id;
+  ASSERT_EQ_INT (chronoid_ksuid_from_bytes (&id, kSampleBytes, CHRONOID_KSUID_BYTES), CHRONOID_KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_timestamp (&id), SAMPLE_TS);
+  ASSERT_EQ_INT (chronoid_ksuid_time_unix (&id),
+      (int64_t) SAMPLE_TS + CHRONOID_KSUID_EPOCH_SECONDS);
+  ASSERT_EQ_BYTES (chronoid_ksuid_payload (&id),
+      kSampleBytes + CHRONOID_KSUID_TIMESTAMP_LEN, CHRONOID_KSUID_PAYLOAD_LEN);
 }
 
 static void
 test_nil_and_max_accessors (void)
 {
-  ASSERT_EQ_INT (ksuid_timestamp (&KSUID_NIL), 0);
-  ASSERT_EQ_INT (ksuid_timestamp (&KSUID_MAX), UINT32_MAX);
-  ASSERT_EQ_INT (ksuid_time_unix (&KSUID_NIL), KSUID_EPOCH_SECONDS);
-  ASSERT_EQ_INT (ksuid_time_unix (&KSUID_MAX),
-      KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX);
+  ASSERT_EQ_INT (chronoid_ksuid_timestamp (&CHRONOID_KSUID_NIL), 0);
+  ASSERT_EQ_INT (chronoid_ksuid_timestamp (&CHRONOID_KSUID_MAX), UINT32_MAX);
+  ASSERT_EQ_INT (chronoid_ksuid_time_unix (&CHRONOID_KSUID_NIL), CHRONOID_KSUID_EPOCH_SECONDS);
+  ASSERT_EQ_INT (chronoid_ksuid_time_unix (&CHRONOID_KSUID_MAX),
+      CHRONOID_KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX);
 }
 
 int

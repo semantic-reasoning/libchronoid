@@ -14,39 +14,39 @@ _Static_assert (UINT16_MAX == 65535,
     "uint16 overflow guard expects 16-bit max");
 
 static void
-ksuid_sequence_apply_count (ksuid_t *id, uint16_t n)
+chronoid_ksuid_sequence_apply_count (chronoid_ksuid_t *id, uint16_t n)
 {
-  uint8_t *p = id->b + (KSUID_BYTES - 2);
+  uint8_t *p = id->b + (CHRONOID_KSUID_BYTES - 2);
   p[0] = (uint8_t) (n >> 8);
   p[1] = (uint8_t) (n);
 }
 
 void
-ksuid_sequence_init (ksuid_sequence_t *s, const ksuid_t *seed)
+chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t *s, const chronoid_ksuid_t *seed)
 {
   s->seed = *seed;
   s->count = 0;
 }
 
-ksuid_err_t
-ksuid_sequence_next (ksuid_sequence_t *s, ksuid_t *out)
+chronoid_ksuid_err_t
+chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t *s, chronoid_ksuid_t *out)
 {
   if (s->count > UINT16_MAX)
-    return KSUID_ERR_EXHAUSTED;
+    return CHRONOID_KSUID_ERR_EXHAUSTED;
   *out = s->seed;
-  ksuid_sequence_apply_count (out, (uint16_t) s->count);
+  chronoid_ksuid_sequence_apply_count (out, (uint16_t) s->count);
   ++s->count;
-  return KSUID_OK;
+  return CHRONOID_KSUID_OK;
 }
 
 void
-ksuid_sequence_bounds (const ksuid_sequence_t *s, ksuid_t *min, ksuid_t *max)
+chronoid_ksuid_sequence_bounds (const chronoid_ksuid_sequence_t *s, chronoid_ksuid_t *min, chronoid_ksuid_t *max)
 {
   uint32_t lo = s->count;
   if (lo > UINT16_MAX)
     lo = UINT16_MAX;
   *min = s->seed;
-  ksuid_sequence_apply_count (min, (uint16_t) lo);
+  chronoid_ksuid_sequence_apply_count (min, (uint16_t) lo);
   *max = s->seed;
-  ksuid_sequence_apply_count (max, UINT16_MAX);
+  chronoid_ksuid_sequence_apply_count (max, UINT16_MAX);
 }

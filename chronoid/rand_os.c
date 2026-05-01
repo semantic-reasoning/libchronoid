@@ -4,7 +4,7 @@
  *
  *   Windows: BCryptGenRandom with BCRYPT_USE_SYSTEM_PREFERRED_RNG.
  *            No POSIX fallback chain is compiled in; if the call
- *            fails the only sane outcome is to surface KSUID_ERR_RNG.
+ *            fails the only sane outcome is to surface CHRONOID_KSUID_ERR_RNG.
  *
  *   POSIX (Linux, *BSD, macOS): try in order
  *     1. getrandom(2)  -- Linux >=3.17, FreeBSD >=12, glibc >=2.25,

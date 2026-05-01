@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * AVX2 8-wide ksuid_string_batch kernel.
+ * AVX2 8-wide chronoid_ksuid_string_batch kernel.
  *
  * Replaces the per-ID scalar `value / 62` and `value % 62` with a
  * Granlund-Moeller multiply-high + correction step run in parallel
@@ -19,8 +19,8 @@
  * registers. Haswell exposes 16 architectural ymm registers, so
  * everything plus M, k62, and a few temporaries stays in registers.
  *
- * Outer iteration count is fixed at KSUID_STRING_LEN = 27. The
- * scalar reference (chronoid/base62.c ksuid_base62_encode) suppresses
+ * Outer iteration count is fixed at CHRONOID_KSUID_STRING_LEN = 27. The
+ * scalar reference (chronoid/base62.c chronoid_base62_encode) suppresses
  * leading zeros and stops when bp_len reaches 0, then '0'-pads the
  * head. Lanes finish at different rates in SIMD, so we run the full
  * 27 iterations unconditionally; once all 5 limbs of a lane are
@@ -28,7 +28,7 @@
  * '0' to that lane's output column -- which is exactly the head
  * padding the scalar would have done.
  *
- * Tail (n & 7): falls through to ksuid_string_batch_scalar after
+ * Tail (n & 7): falls through to chronoid_ksuid_string_batch_scalar after
  * the bulk loop. _mm256_zeroupper() is issued before any non-VEX
  * code path is entered (Intel SDM Vol 1 sec 14.1.2 -- a stale
  * upper-ymm causes a transition penalty when subsequent SSE-encoded
@@ -135,7 +135,7 @@ ksuid_divmod62_avx2 (__m256i value, __m256i mag, __m256i *q_out, __m256i *r_out)
 }
 
 void
-ksuid_string_batch_avx2 (const ksuid_t *ids, char *out_27n, size_t n)
+chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t *ids, char *out_27n, size_t n)
 {
   size_t bulk = n & ~(size_t) 7;
   __m256i mag = _mm256_set1_epi64x ((int64_t) KSUID_DIV62_M);
@@ -152,9 +152,9 @@ ksuid_string_batch_avx2 (const ksuid_t *ids, char *out_27n, size_t n)
       for (size_t j = 0; j < 5; ++j) {
         for (size_t lane = 0; lane < 4; ++lane) {
           plo[lane] =
-              (uint64_t) ksuid_be32_load (base_p + lane * KSUID_BYTES + j * 4);
+              (uint64_t) ksuid_be32_load (base_p + lane * CHRONOID_KSUID_BYTES + j * 4);
           phi[lane] =
-              (uint64_t) ksuid_be32_load (base_p + (lane + 4) * KSUID_BYTES +
+              (uint64_t) ksuid_be32_load (base_p + (lane + 4) * CHRONOID_KSUID_BYTES +
               j * 4);
         }
         /* _mm256_loadu_si256 is the AVX2 unaligned-load intrinsic;
@@ -171,7 +171,7 @@ ksuid_string_batch_avx2 (const ksuid_t *ids, char *out_27n, size_t n)
      * column index walks right-to-left because long division by
      * the radix produces digits LSB-first (the rightmost output
      * character is the lowest-order base62 digit of the integer). */
-    for (int col = KSUID_STRING_LEN - 1; col >= 0; --col) {
+    for (int col = CHRONOID_KSUID_STRING_LEN - 1; col >= 0; --col) {
       __m256i rem_lo = _mm256_setzero_si256 ();
       __m256i rem_hi = _mm256_setzero_si256 ();
 
@@ -198,7 +198,7 @@ ksuid_string_batch_avx2 (const ksuid_t *ids, char *out_27n, size_t n)
       /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
       _mm256_storeu_si256 ((__m256i *) & rems[4], rem_hi);
       for (size_t lane = 0; lane < 8; ++lane) {
-        out_27n[(base + lane) * KSUID_STRING_LEN + (size_t) col]
+        out_27n[(base + lane) * CHRONOID_KSUID_STRING_LEN + (size_t) col]
             = k_avx2_b62_alphabet[rems[lane]];
       }
     }
@@ -209,8 +209,8 @@ ksuid_string_batch_avx2 (const ksuid_t *ids, char *out_27n, size_t n)
   _mm256_zeroupper ();
 
   if (bulk < n)
-    ksuid_string_batch_scalar (ids + bulk,
-        out_27n + bulk * KSUID_STRING_LEN, n - bulk);
+    chronoid_ksuid_string_batch_scalar (ids + bulk,
+        out_27n + bulk * CHRONOID_KSUID_STRING_LEN, n - bulk);
 }
 
 #endif /* x86_64 */

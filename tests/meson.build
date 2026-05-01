@@ -80,7 +80,7 @@ else
   message('Skipping test_rand_tls -- <threads.h> not available on this host')
 endif
 
-# Issue #1 (KSUID_NIL_INIT / KSUID_MAX_INIT) is specifically about
+# Issue #1 (CHRONOID_KSUID_NIL_INIT / CHRONOID_KSUID_MAX_INIT) is specifically about
 # Windows DLL consumers, where CHRONOID_PUBLIC expands to
 # __declspec(dllimport) and the public sentinel symbols stop being
 # constant expressions in user TUs. Every other test in this

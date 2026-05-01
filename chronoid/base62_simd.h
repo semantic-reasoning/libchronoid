@@ -21,16 +21,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
-int ksuid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16]);
+int chronoid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16]);
 
 #if defined(CHRONOID_HAVE_SSE2)
-int ksuid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16]);
-#  define KSUID_TRANSLATE16(out, in) ksuid_base62_translate16_sse2 ((out), (in))
+int chronoid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16]);
+#  define CHRONOID_BASE62_TRANSLATE16(out, in) chronoid_base62_translate16_sse2 ((out), (in))
 #elif defined(CHRONOID_HAVE_NEON)
-int ksuid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16]);
-#  define KSUID_TRANSLATE16(out, in) ksuid_base62_translate16_neon ((out), (in))
+int chronoid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16]);
+#  define CHRONOID_BASE62_TRANSLATE16(out, in) chronoid_base62_translate16_neon ((out), (in))
 #else
-#  define KSUID_TRANSLATE16(out, in) ksuid_base62_translate16_scalar ((out), (in))
+#  define CHRONOID_BASE62_TRANSLATE16(out, in) chronoid_base62_translate16_scalar ((out), (in))
 #endif
 
 #endif /* KSUID_BASE62_SIMD_H */

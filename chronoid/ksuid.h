@@ -6,8 +6,8 @@
  * scheme are derived from segmentio/ksuid (MIT, Copyright (c) 2017
  * Segment.io). See LICENSE.MIT and NOTICE in the project root.
  */
-#ifndef KSUID_H
-#define KSUID_H
+#ifndef CHRONOID_KSUID_H
+#define CHRONOID_KSUID_H
 
 #include <chronoid/chronoid_version.h>
 
@@ -36,65 +36,65 @@ extern "C"
  * Wire-format constants (compatible with segmentio/ksuid).
  * -------------------------------------------------------------------------- */
 
-#define KSUID_BYTES          20 /* binary length                         */
-#define KSUID_STRING_LEN     27 /* base62 string length (no NUL)         */
-#define KSUID_PAYLOAD_LEN    16 /* random payload length                 */
-#define KSUID_TIMESTAMP_LEN  4  /* big-endian uint32 prefix              */
-#define KSUID_EPOCH_SECONDS  1400000000LL       /* 2014-05-13 16:53:20 UTC       */
+#define CHRONOID_KSUID_BYTES          20 /* binary length                         */
+#define CHRONOID_KSUID_STRING_LEN     27 /* base62 string length (no NUL)         */
+#define CHRONOID_KSUID_PAYLOAD_LEN    16 /* random payload length                 */
+#define CHRONOID_KSUID_TIMESTAMP_LEN  4  /* big-endian uint32 prefix              */
+#define CHRONOID_KSUID_EPOCH_SECONDS  1400000000LL       /* 2014-05-13 16:53:20 UTC       */
 
   typedef struct ksuid
   {
-    uint8_t b[KSUID_BYTES];
-  } ksuid_t;
+    uint8_t b[CHRONOID_KSUID_BYTES];
+  } chronoid_ksuid_t;
 
-/* The static-storage initializer macros below assume ksuid_t is
+/* The static-storage initializer macros below assume chronoid_ksuid_t is
  * exactly its byte array -- no padding, no extra fields. If a future
  * change adds a field, the assertion fails at compile time and forces
- * the macro author to update KSUID_NIL_INIT / KSUID_MAX_INIT in
+ * the macro author to update CHRONOID_KSUID_NIL_INIT / CHRONOID_KSUID_MAX_INIT in
  * lockstep. C11 spells the assertion `_Static_assert`; C++ since
  * C++11 spells it `static_assert`. Gate so the public header
  * compiles for both, since this file lives inside extern "C" for
  * C++ consumers. */
 #ifdef __cplusplus
-    static_assert (sizeof (ksuid_t) == KSUID_BYTES,
-      "ksuid_t must be exactly KSUID_BYTES; KSUID_*_INIT macros depend on it");
+    static_assert (sizeof (chronoid_ksuid_t) == CHRONOID_KSUID_BYTES,
+      "chronoid_ksuid_t must be exactly CHRONOID_KSUID_BYTES; KSUID_*_INIT macros depend on it");
 #else
-    _Static_assert (sizeof (ksuid_t) == KSUID_BYTES,
-      "ksuid_t must be exactly KSUID_BYTES; KSUID_*_INIT macros depend on it");
+    _Static_assert (sizeof (chronoid_ksuid_t) == CHRONOID_KSUID_BYTES,
+      "chronoid_ksuid_t must be exactly CHRONOID_KSUID_BYTES; KSUID_*_INIT macros depend on it");
 #endif
 
   typedef enum ksuid_err
   {
-    KSUID_OK = 0,
-    KSUID_ERR_SIZE = -1,        /* bad binary length                     */
-    KSUID_ERR_STR_SIZE = -2,    /* bad string length                     */
-    KSUID_ERR_STR_VALUE = -3,   /* string contains non-base62 / overflow */
-    KSUID_ERR_PAYLOAD_SIZE = -4,        /* payload != KSUID_PAYLOAD_LEN          */
-    KSUID_ERR_RNG = -5,         /* OS random source unavailable          */
-    KSUID_ERR_EXHAUSTED = -6,   /* sequence exhausted                    */
-    KSUID_ERR_TIME_RANGE = -7   /* unix_seconds outside KSUID epoch range */
-  } ksuid_err_t;
+    CHRONOID_KSUID_OK = 0,
+    CHRONOID_KSUID_ERR_SIZE = -1,        /* bad binary length                     */
+    CHRONOID_KSUID_ERR_STR_SIZE = -2,    /* bad string length                     */
+    CHRONOID_KSUID_ERR_STR_VALUE = -3,   /* string contains non-base62 / overflow */
+    CHRONOID_KSUID_ERR_PAYLOAD_SIZE = -4,        /* payload != CHRONOID_KSUID_PAYLOAD_LEN          */
+    CHRONOID_KSUID_ERR_RNG = -5,         /* OS random source unavailable          */
+    CHRONOID_KSUID_ERR_EXHAUSTED = -6,   /* sequence exhausted                    */
+    CHRONOID_KSUID_ERR_TIME_RANGE = -7   /* unix_seconds outside KSUID epoch range */
+  } chronoid_ksuid_err_t;
 
 /* Two forms of the same sentinel values:
  *
- *   - KSUID_NIL / KSUID_MAX (extern const ksuid_t)
+ *   - CHRONOID_KSUID_NIL / CHRONOID_KSUID_MAX (extern const chronoid_ksuid_t)
  *       Use these for runtime comparison and parameter passing:
- *           if (ksuid_compare (&id, &KSUID_NIL) == 0) ...
+ *           if (chronoid_ksuid_compare (&id, &CHRONOID_KSUID_NIL) == 0) ...
  *
- *   - KSUID_NIL_INIT / KSUID_MAX_INIT (aggregate-initializer macros)
+ *   - CHRONOID_KSUID_NIL_INIT / CHRONOID_KSUID_MAX_INIT (aggregate-initializer macros)
  *       Use these as constant expressions in a declaration:
- *           static const ksuid_t g_zero = KSUID_NIL_INIT;
+ *           static const chronoid_ksuid_t g_zero = CHRONOID_KSUID_NIL_INIT;
  *       The macro form is REQUIRED on Windows DLL builds, where
  *       CHRONOID_PUBLIC expands to __declspec(dllimport) and the
  *       symbol is therefore not a constant expression in user TUs.
  *
  * The two forms are guaranteed byte-for-byte equal; tests/test_smoke.c
  * pins the equivalence with ASSERT_EQ_BYTES. */
-  CHRONOID_PUBLIC extern const ksuid_t KSUID_NIL;
-  CHRONOID_PUBLIC extern const ksuid_t KSUID_MAX;
+  CHRONOID_PUBLIC extern const chronoid_ksuid_t CHRONOID_KSUID_NIL;
+  CHRONOID_PUBLIC extern const chronoid_ksuid_t CHRONOID_KSUID_MAX;
 
-#define KSUID_NIL_INIT { { 0 } }
-#define KSUID_MAX_INIT                                                       \
+#define CHRONOID_KSUID_NIL_INIT { { 0 } }
+#define CHRONOID_KSUID_MAX_INIT                                                       \
   { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,            \
       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } }
 
@@ -102,26 +102,26 @@ extern "C"
  * Predicates and ordering.
  * -------------------------------------------------------------------------- */
 
-  CHRONOID_PUBLIC bool ksuid_is_nil (const ksuid_t * id);
+  CHRONOID_PUBLIC bool chronoid_ksuid_is_nil (const chronoid_ksuid_t * id);
 
 /* Lexicographic comparison over the full 20-byte representation, matching
  * the Go implementation's bytes.Compare semantics. Returns <0, 0, or >0. */
-  CHRONOID_PUBLIC int ksuid_compare (const ksuid_t * a, const ksuid_t * b);
+  CHRONOID_PUBLIC int chronoid_ksuid_compare (const chronoid_ksuid_t * a, const chronoid_ksuid_t * b);
 
 /* --------------------------------------------------------------------------
  * Construction from raw inputs.
  * -------------------------------------------------------------------------- */
 
-/* Copy the binary KSUID at |b| (which must be exactly KSUID_BYTES long) into
+/* Copy the binary KSUID at |b| (which must be exactly CHRONOID_KSUID_BYTES long) into
  * |out|. On error |out| is left untouched. */
-  CHRONOID_PUBLIC ksuid_err_t ksuid_from_bytes (ksuid_t * out, const uint8_t * b,
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_from_bytes (chronoid_ksuid_t * out, const uint8_t * b,
       size_t n);
 
 /* Build |out| from a Unix timestamp (in seconds) and a 16-byte payload. The
- * timestamp must lie within the closed interval [KSUID_EPOCH_SECONDS,
- * KSUID_EPOCH_SECONDS + UINT32_MAX] -- the full 32-bit lifetime of the KSUID
- * format. Out-of-range inputs return KSUID_ERR_TIME_RANGE. */
-  CHRONOID_PUBLIC ksuid_err_t ksuid_from_parts (ksuid_t * out,
+ * timestamp must lie within the closed interval [CHRONOID_KSUID_EPOCH_SECONDS,
+ * CHRONOID_KSUID_EPOCH_SECONDS + UINT32_MAX] -- the full 32-bit lifetime of the KSUID
+ * format. Out-of-range inputs return CHRONOID_KSUID_ERR_TIME_RANGE. */
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_from_parts (chronoid_ksuid_t * out,
       int64_t unix_seconds, const uint8_t * payload, size_t payload_len);
 
 /* --------------------------------------------------------------------------
@@ -129,40 +129,40 @@ extern "C"
  * -------------------------------------------------------------------------- */
 
 /* The KSUID's 32-bit big-endian timestamp, uncorrected for the custom epoch. */
-  CHRONOID_PUBLIC uint32_t ksuid_timestamp (const ksuid_t * id);
+  CHRONOID_PUBLIC uint32_t chronoid_ksuid_timestamp (const chronoid_ksuid_t * id);
 
 /* The KSUID's timestamp interpreted as Unix seconds (i.e. timestamp + epoch). */
-  CHRONOID_PUBLIC int64_t ksuid_time_unix (const ksuid_t * id);
+  CHRONOID_PUBLIC int64_t chronoid_ksuid_time_unix (const chronoid_ksuid_t * id);
 
 /* Pointer into |id| to the 16-byte payload region (id->b + 4). The pointer is
  * borrowed from |id|; do not free, and do not use after |id| goes out of
  * scope. */
-  CHRONOID_PUBLIC const uint8_t *ksuid_payload (const ksuid_t * id);
+  CHRONOID_PUBLIC const uint8_t *chronoid_ksuid_payload (const chronoid_ksuid_t * id);
 
 /* --------------------------------------------------------------------------
  * Base62 string conversion.
  * -------------------------------------------------------------------------- */
 
-/* Decode |len| bytes of |s| (which must be exactly KSUID_STRING_LEN base62
+/* Decode |len| bytes of |s| (which must be exactly CHRONOID_KSUID_STRING_LEN base62
  * characters, no NUL terminator required) into |out|. Returns
- * KSUID_ERR_STR_SIZE if |len| is wrong or KSUID_ERR_STR_VALUE if the input
+ * CHRONOID_KSUID_ERR_STR_SIZE if |len| is wrong or CHRONOID_KSUID_ERR_STR_VALUE if the input
  * contains a non-alphanumeric character or encodes a value greater than
- * KSUID_MAX. On any error the contents of |out| are guaranteed unchanged --
+ * CHRONOID_KSUID_MAX. On any error the contents of |out| are guaranteed unchanged --
  * decoding writes to a stack temporary first and only copies into |out|
  * once the input has been fully validated. */
-  CHRONOID_PUBLIC ksuid_err_t ksuid_parse (ksuid_t * out, const char *s,
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_parse (chronoid_ksuid_t * out, const char *s,
       size_t len);
 
 /* Write the 27-character base62 representation of |id| into |out|. The
  * output is NOT NUL-terminated; callers needing a C string should size
- * their buffer to KSUID_STRING_LEN + 1 and append '\0' themselves. */
-  CHRONOID_PUBLIC void ksuid_format (const ksuid_t * id,
-      char out[KSUID_STRING_LEN]);
+ * their buffer to CHRONOID_KSUID_STRING_LEN + 1 and append '\0' themselves. */
+  CHRONOID_PUBLIC void chronoid_ksuid_format (const chronoid_ksuid_t * id,
+      char out[CHRONOID_KSUID_STRING_LEN]);
 
-/* Bulk variant of ksuid_format. Writes |n| KSUIDs into |out_27n|, which
- * must be sized to at least n * KSUID_STRING_LEN bytes -- 27 bytes per
+/* Bulk variant of chronoid_ksuid_format. Writes |n| KSUIDs into |out_27n|, which
+ * must be sized to at least n * CHRONOID_KSUID_STRING_LEN bytes -- 27 bytes per
  * KSUID, no NUL terminator anywhere in the buffer. The ID at index i
- * lands at out_27n[i * KSUID_STRING_LEN .. (i+1) * KSUID_STRING_LEN - 1].
+ * lands at out_27n[i * CHRONOID_KSUID_STRING_LEN .. (i+1) * CHRONOID_KSUID_STRING_LEN - 1].
  *
  * The dispatch is resolved lazily on the first call (atomic, thread-
  * safe) and the resolved pointer is reused for the lifetime of the
@@ -171,8 +171,8 @@ extern "C"
  * outer iteration via a Granlund-Moeller reciprocal-multiply
  * divide-by-62; on other hosts (including non-AVX2 x86_64) the
  * dispatcher resolves to a per-ID scalar loop equivalent to
- * ksuid_format() N times. The dispatch overhead -- one acquire-
- * load + one indirect call per ksuid_string_batch invocation -- is
+ * chronoid_ksuid_format() N times. The dispatch overhead -- one acquire-
+ * load + one indirect call per chronoid_ksuid_string_batch invocation -- is
  * lost in the noise compared to even the per-ID scalar work.
  *
  * Output is byte-identical across kernels. The CHRONOID_FORCE_SCALAR
@@ -181,11 +181,11 @@ extern "C"
  * (a runtime kill switch for the AVX2 kernel without rebuilding
  * the library).
  *
- * No error path: every 20-byte ksuid_t encodes by construction. n == 0
+ * No error path: every 20-byte chronoid_ksuid_t encodes by construction. n == 0
  * is a no-op. The call is thread-safe for concurrent invocations on
  * disjoint output buffers; callers must not race two threads on the
  * same |out_27n| slice. */
-  CHRONOID_PUBLIC void ksuid_string_batch (const ksuid_t * ids,
+  CHRONOID_PUBLIC void chronoid_ksuid_string_batch (const chronoid_ksuid_t * ids,
       char *out_27n, size_t n);
 
 /* --------------------------------------------------------------------------
@@ -196,20 +196,20 @@ extern "C"
  * values are NOT safe for concurrent use; one sequence per thread.
  * -------------------------------------------------------------------------- */
 
-  typedef struct ksuid_sequence
+  typedef struct chronoid_ksuid_sequence
   {
-    ksuid_t seed;
+    chronoid_ksuid_t seed;
     /* uint32_t (rather than uint16_t) so we can detect the overflow
      * after the 65536th call without relying on wraparound semantics. */
     uint32_t count;
-  } ksuid_sequence_t;
+  } chronoid_ksuid_sequence_t;
 
-  CHRONOID_PUBLIC void ksuid_sequence_init (ksuid_sequence_t * s,
-      const ksuid_t * seed);
-  CHRONOID_PUBLIC ksuid_err_t ksuid_sequence_next (ksuid_sequence_t * s,
-      ksuid_t * out);
-  CHRONOID_PUBLIC void ksuid_sequence_bounds (const ksuid_sequence_t * s,
-      ksuid_t * min, ksuid_t * max);
+  CHRONOID_PUBLIC void chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t * s,
+      const chronoid_ksuid_t * seed);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t * s,
+      chronoid_ksuid_t * out);
+  CHRONOID_PUBLIC void chronoid_ksuid_sequence_bounds (const chronoid_ksuid_sequence_t * s,
+      chronoid_ksuid_t * min, chronoid_ksuid_t * max);
 
 /* --------------------------------------------------------------------------
  * Random KSUID generation.
@@ -219,7 +219,7 @@ extern "C"
  * BCryptGenRandom on Windows). Distinct threads draw independent
  * streams without synchronisation; concurrent calls from the *same*
  * thread are not supported. On entropy-source failure the function
- * returns KSUID_ERR_RNG and leaves |*out| untouched.
+ * returns CHRONOID_KSUID_ERR_RNG and leaves |*out| untouched.
  *
  * Thread-exit residue: the per-thread CSPRNG state holds 64 bytes
  * of ChaCha20 state plus a 64-byte keystream window. On platforms
@@ -228,8 +228,8 @@ extern "C"
  * this state automatically when the owning thread exits. On other
  * platforms the state persists in the TLS block until the OS
  * reclaims it. Callers requiring stronger guarantees should call
- * ksuid_set_rand(NULL, NULL) to no-op the override path and then
- * draw + discard a single payload via ksuid_new() before joining
+ * chronoid_set_rand(NULL, NULL) to no-op the override path and then
+ * draw + discard a single payload via chronoid_ksuid_new() before joining
  * the worker thread; the next call from the same TLS slot sees a
  * fresh seed and the bounded reseed cadence (1 MiB / 1 hour /
  * fork) keeps the residue window small even without a thread-exit
@@ -237,29 +237,29 @@ extern "C"
  * -------------------------------------------------------------------------- */
 
 /* Generate a new KSUID stamped with the current wall-clock time. */
-  CHRONOID_PUBLIC ksuid_err_t ksuid_new (ksuid_t * out);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_new (chronoid_ksuid_t * out);
 
 /* Generate a new KSUID stamped with |unix_seconds|. The timestamp must
- * fall within [KSUID_EPOCH_SECONDS, KSUID_EPOCH_SECONDS + UINT32_MAX]
- * just like ksuid_from_parts; out-of-range returns
- * KSUID_ERR_TIME_RANGE. */
-  CHRONOID_PUBLIC ksuid_err_t ksuid_new_with_time (ksuid_t * out,
+ * fall within [CHRONOID_KSUID_EPOCH_SECONDS, CHRONOID_KSUID_EPOCH_SECONDS + UINT32_MAX]
+ * just like chronoid_ksuid_from_parts; out-of-range returns
+ * CHRONOID_KSUID_ERR_TIME_RANGE. */
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_new_with_time (chronoid_ksuid_t * out,
       int64_t unix_seconds);
 
 /* Replace the global random source. The default source is the
  * per-thread ChaCha20 CSPRNG; calling this with a non-NULL |fn|
- * routes ksuid_new through |fn(ctx, buf, n)| instead. |fn| must
+ * routes chronoid_ksuid_new through |fn(ctx, buf, n)| instead. |fn| must
  * return 0 on success and non-zero on failure. Passing NULL restores
  * the default source.
  *
  * The override is global and atomic-pointer-protected, so swapping
  * mid-flight is race-free; however, |fn| itself MUST be thread-safe
- * if multiple threads will call ksuid_new concurrently. */
-  typedef int (*ksuid_rng_fn) (void *ctx, uint8_t * buf, size_t n);
-  CHRONOID_PUBLIC void ksuid_set_rand (ksuid_rng_fn fn, void *ctx);
+ * if multiple threads will call chronoid_ksuid_new concurrently. */
+  typedef int (*chronoid_rng_fn) (void *ctx, uint8_t * buf, size_t n);
+  CHRONOID_PUBLIC void chronoid_set_rand (chronoid_rng_fn fn, void *ctx);
 
 #ifdef __cplusplus
 }                               /* extern "C" */
 #endif
 
-#endif                          /* KSUID_H */
+#endif                          /* CHRONOID_KSUID_H */
