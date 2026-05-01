@@ -105,7 +105,7 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           meson test -C builddir --print-errorlogs
 
-      - name: Verify ksuid_explicit_bzero survives optimization
+      - name: Verify chronoid_explicit_bzero survives optimization
         if: runner.os == 'Linux' && matrix.compiler == 'gcc'
         run: |
           # Issue #2: the DSE-resistant wipe in chronoid/wipe.h must
@@ -117,7 +117,7 @@ jobs:
           # grepping the disassembly for either form: a direct call
           # to explicit_bzero@plt (where the static-inline shim got
           # inlined into its caller) or a call to the out-of-line
-          # ksuid_explicit_bzero symbol (where the compiler kept
+          # chronoid_explicit_bzero symbol (where the compiler kept
           # the shim as a function). At least four wipe sites exist
           # in source: three in rand_tls.c plus one in chacha20.c, so
           # counting >=4 surviving calls is the correctness floor.
@@ -130,12 +130,12 @@ jobs:
                    | head -1)
           test -n "$shared" || { echo "::error::no versioned libchronoid.so found in builddir" >&2; exit 1; }
           n=$(objdump -d "$shared" \
-              | grep -cE 'call .*<(explicit_bzero|ksuid_explicit_bzero)' \
+              | grep -cE 'call .*<(explicit_bzero|chronoid_explicit_bzero)' \
               || true)
           echo "wipe call sites in optimised .so: $n"
           # Floor was 4 (3 sites in rand_tls.c + 1 in chacha20.c) before
-          # issue #4. The new ksuid_random_thread_state_wipe adds a fifth
-          # ksuid_explicit_bzero call to the library's surviving set, so
+          # issue #4. The new chronoid_random_thread_state_wipe adds a fifth
+          # chronoid_explicit_bzero call to the library's surviving set, so
           # the floor moves to 5.
           if [ "$n" -lt 5 ]; then
             echo "::error::Expected at least 5 surviving wipe calls in libchronoid.so.*; found $n. DSE may have eaten the wipes." >&2
@@ -163,11 +163,11 @@ jobs:
   # ==========================================================================
   # Phase 2b: Wipe-shim fallback path coverage (issue #2)
   # The default build on every supported matrix lane resolves
-  # ksuid_explicit_bzero to a platform primitive (explicit_bzero,
+  # chronoid_explicit_bzero to a platform primitive (explicit_bzero,
   # SecureZeroMemory, or memset_s). The portable volatile-fn-ptr
   # fallback in chronoid/wipe.h therefore ships *unexercised* unless
   # CI explicitly forces it. This job builds with
-  # KSUID_FORCE_VOLATILE_FALLBACK=1, which disables every primitive
+  # CHRONOID_FORCE_VOLATILE_FALLBACK=1, which disables every primitive
   # branch and exercises the fallback. test_wipe asserts the
   # fallback still zeroes the buffers it is given (it does not
   # assert DSE-resistance -- the auto-build disasm gate above is
@@ -186,10 +186,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y meson ninja-build
 
-      - name: Configure with KSUID_FORCE_VOLATILE_FALLBACK
+      - name: Configure with CHRONOID_FORCE_VOLATILE_FALLBACK
         run: |
           meson setup builddir-fb \
-            -Dc_args=-DKSUID_FORCE_VOLATILE_FALLBACK=1
+            -Dc_args=-DCHRONOID_FORCE_VOLATILE_FALLBACK=1
 
       - name: Build
         run: meson compile -C builddir-fb
@@ -203,14 +203,14 @@ jobs:
           # explicit_bzero@plt anywhere in the optimised library;
           # grepping for any such reference catches a regression
           # where a future contributor adds a primitive without
-          # gating on KSUID_FORCE_VOLATILE_FALLBACK.
+          # gating on CHRONOID_FORCE_VOLATILE_FALLBACK.
           set -eux
           shared=$(find builddir-fb -maxdepth 1 -type f \
                    -name 'libchronoid.so.*' \
                    | grep -E 'libchronoid\.so\.[0-9]+\.[0-9]+\.[0-9]+$' \
                    | head -1)
           if objdump -d "$shared" | grep -qE 'call .*<explicit_bzero@plt>'; then
-            echo "::error::Fallback build leaked an explicit_bzero@plt call; KSUID_FORCE_VOLATILE_FALLBACK is not gating the primitive." >&2
+            echo "::error::Fallback build leaked an explicit_bzero@plt call; CHRONOID_FORCE_VOLATILE_FALLBACK is not gating the primitive." >&2
             exit 1
           fi
 

@@ -29,6 +29,26 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
+
+#if defined(_WIN32)
+#  include <fcntl.h>
+#  include <io.h>
+/* Switch stdout to binary mode so the `-f raw` and `-f payload`
+ * projections write the unencoded byte image without LF -> CRLF
+ * translation. POSIX stdio is binary by default; Windows defaults to
+ * text mode and would corrupt any 0x0A byte in the output. Call this
+ * once before the first binary write of the process. */
+static void
+set_stdout_binary_for_raw_output (void)
+{
+  (void) _setmode (_fileno (stdout), _O_BINARY);
+}
+#else
+static inline void
+set_stdout_binary_for_raw_output (void)
+{
+}
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -200,12 +220,14 @@ print_timestamp (const chronoid_ksuid_t *id)
 static void
 print_payload (const chronoid_ksuid_t *id)
 {
+  set_stdout_binary_for_raw_output ();
   fwrite (chronoid_ksuid_payload (id), 1, CHRONOID_KSUID_PAYLOAD_LEN, stdout);
 }
 
 static void
 print_raw (const chronoid_ksuid_t *id)
 {
+  set_stdout_binary_for_raw_output ();
   fwrite (id->b, 1, CHRONOID_KSUID_BYTES, stdout);
 }
 
@@ -321,6 +343,7 @@ print_payload_uuidv7 (const chronoid_uuidv7_t *id)
    * raw layout and are emitted as-is; this keeps the output a faithful
    * slice of the binary UUID for round-trip uses. */
   memcpy (buf + 2, id->b + 8, 8);
+  set_stdout_binary_for_raw_output ();
   fwrite (buf, 1, sizeof buf, stdout);
 }
 
@@ -331,6 +354,7 @@ print_raw_uuidv7 (const chronoid_uuidv7_t *id)
    * `> file.bin`: 16 raw bytes (matches KSUID -f raw which writes 20
    * raw bytes). The hex-encoded uppercase form lives in the inspect
    * projection's "Raw:" line, not here. */
+  set_stdout_binary_for_raw_output ();
   fwrite (id->b, 1, CHRONOID_UUIDV7_BYTES, stdout);
 }
 
