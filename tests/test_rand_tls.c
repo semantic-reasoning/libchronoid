@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#include <libksuid/rand.h>
+#include <chronoid/rand.h>
 #include "test_util.h"
 
 #include <threads.h>
 #include <stdint.h>
 #include <stdlib.h>
-#ifdef KSUID_TESTING
+#ifdef CHRONOID_TESTING
 #  include <stdatomic.h>
 #endif
 
@@ -90,7 +90,7 @@ test_threads_get_independent_streams (void)
   }
 }
 
-#ifdef KSUID_TESTING
+#ifdef CHRONOID_TESTING
 /* Issue #4 thread-exit wipe regression test. The thread body sets a
  * 0xa5 sentinel pattern in the TLS state, peeks to confirm the
  * sentinel is in place, then exits. The platform-registered
@@ -100,8 +100,8 @@ test_threads_get_independent_streams (void)
  *
  * On platforms that don't have a thread-exit hook (the documented-
  * residue lane) the destructor never runs; meson does NOT compile
- * test_rand_tls with -DKSUID_TESTING on those lanes. The test is
- * skipped at compile time via the #ifdef KSUID_TESTING guard. */
+ * test_rand_tls with -DCHRONOID_TESTING on those lanes. The test is
+ * skipped at compile time via the #ifdef CHRONOID_TESTING guard. */
 static int
 sentinel_thread_body (void *opaque)
 {
@@ -164,7 +164,7 @@ main (void)
   RUN_TEST (test_large_buffer_spans_multiple_chacha_blocks);
   RUN_TEST (test_force_reseed_stays_random);
   RUN_TEST (test_threads_get_independent_streams);
-#ifdef KSUID_TESTING
+#ifdef CHRONOID_TESTING
   RUN_TEST (test_thread_exit_wipes_tls_state);
 #endif
   TEST_MAIN_END ();

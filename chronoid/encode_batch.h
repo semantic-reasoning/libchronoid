@@ -2,7 +2,7 @@
  *
  * Internal declarations for ksuid_string_batch and the dispatch
  * scaffolding it sits on. Public callers go through
- * libksuid/ksuid.h's KSUID_PUBLIC ksuid_string_batch.
+ * chronoid/ksuid.h's CHRONOID_PUBLIC ksuid_string_batch.
  *
  * The pattern: a single _Atomic function pointer is initialised at
  * load time to a "trampoline" that, on first call, runs feature
@@ -18,7 +18,7 @@
 
 #include <stddef.h>
 
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 
 typedef void (*ksuid_string_batch_fn) (const ksuid_t * ids, char *out_27n,
     size_t n);
@@ -27,7 +27,7 @@ typedef void (*ksuid_string_batch_fn) (const ksuid_t * ids, char *out_27n,
  * baseline regardless of which production kernel is selected. */
 void ksuid_string_batch_scalar (const ksuid_t * ids, char *out_27n, size_t n);
 
-#if defined(KSUID_HAVE_AVX2_BATCH)
+#if defined(CHRONOID_HAVE_AVX2_BATCH)
 /* AVX2 8-wide kernel. Linked in only when meson detects an x86_64
  * host with -Davx2_batch enabled. Tail (n % 8) handled by falling
  * through to the scalar loop inside the kernel itself. */

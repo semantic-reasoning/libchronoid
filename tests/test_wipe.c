@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Smoke test for libksuid/wipe.h. Proves the shim *zeroes* a buffer.
+ * Smoke test for chronoid/wipe.h. Proves the shim *zeroes* a buffer.
  * Does NOT prove the shim resists dead-store elimination -- that
  * property is verified by the objdump grep step in CI's Linux GCC
  * lane, which fails the build if the wipe call disappeared from the
  * library's optimised disassembly.
  */
-#include <libksuid/wipe.h>
+#include <chronoid/wipe.h>
 #include "test_util.h"
 
 static void

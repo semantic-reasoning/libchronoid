@@ -27,7 +27,7 @@
  * (&ksuid_string_batch_scalar) and the AVX2 TU is excluded from the
  * build entirely.
  */
-#include <libksuid/encode_batch.h>
+#include <chronoid/encode_batch.h>
 
 #include <stdatomic.h>
 #include <stddef.h>
@@ -51,7 +51,7 @@ ksuid_string_batch_scalar (const ksuid_t *ids, char *out_27n, size_t n)
     ksuid_format (&ids[i], out_27n + i * KSUID_STRING_LEN);
 }
 
-#if defined(KSUID_HAVE_AVX2_BATCH)
+#if defined(CHRONOID_HAVE_AVX2_BATCH)
 
 /* CPUID-based AVX2 detection. Two checks: bit 5 of EBX from leaf
  * 7 sub-leaf 0 (AVX2 instruction support) AND XGETBV bit 2 (the
@@ -90,7 +90,7 @@ ksuid_cpu_supports_avx2 (void)
 #  endif
 }
 
-#endif /* KSUID_HAVE_AVX2_BATCH */
+#endif /* CHRONOID_HAVE_AVX2_BATCH */
 
 static void
 ksuid_string_batch_init_trampoline (const ksuid_t * ids, char *out_27n,
@@ -101,7 +101,7 @@ ksuid_string_batch_init_trampoline (const ksuid_t * ids, char *out_27n,
 static _Atomic ksuid_string_batch_fn g_batch_impl =
     &ksuid_string_batch_init_trampoline;
 
-/* KSUID_FORCE_SCALAR override (Critic R11). Reading getenv on the
+/* CHRONOID_FORCE_SCALAR override (Critic R11). Reading getenv on the
  * first dispatch only is safe -- the resolved pointer is cached for
  * the lifetime of the process and the env var is consulted exactly
  * once. The override exists so production deployments can pin the
@@ -114,7 +114,7 @@ static _Atomic ksuid_string_batch_fn g_batch_impl =
 static int
 ksuid_force_scalar_env (void)
 {
-  const char *v = getenv ("KSUID_FORCE_SCALAR");
+  const char *v = getenv ("CHRONOID_FORCE_SCALAR");
   if (v == NULL || v[0] == '\0')
     return 0;
   if (strcmp (v, "0") == 0 || strcmp (v, "false") == 0
@@ -127,7 +127,7 @@ static void
 ksuid_string_batch_init_trampoline (const ksuid_t *ids, char *out_27n, size_t n)
 {
   ksuid_string_batch_fn resolved = &ksuid_string_batch_scalar;
-#if defined(KSUID_HAVE_AVX2_BATCH)
+#if defined(CHRONOID_HAVE_AVX2_BATCH)
   if (!ksuid_force_scalar_env () && ksuid_cpu_supports_avx2 ())
     resolved = &ksuid_string_batch_avx2;
 #else

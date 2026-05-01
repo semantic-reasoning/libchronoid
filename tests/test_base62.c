@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#include <libksuid/base62.h>
+#include <chronoid/base62.h>
 #include "test_util.h"
 
 /* Golden vectors from segmentio/ksuid:
@@ -90,7 +90,7 @@ test_decode_rejects_overflow (void)
   /* "aWgEPTl1tmebfsQzFP4bxwgy80W" is one increment past KSUID_MAX's
    * encoding ('V' -> 'W'); its decoded value is 2^160 which does not
    * fit in 20 bytes. Upstream's fastDecodeBase62 returns
-   * errShortBuffer; libksuid maps that to KSUID_ERR_STR_VALUE. */
+   * errShortBuffer; libchronoid maps that to KSUID_ERR_STR_VALUE. */
   static const char *const overflow = "aWgEPTl1tmebfsQzFP4bxwgy80W";
   uint8_t out[KSUID_BYTES];
   ASSERT_EQ_INT (ksuid_base62_decode (out, (const uint8_t *) overflow),

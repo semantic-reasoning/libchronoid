@@ -10,8 +10,8 @@
  * The scalar fallback is always compiled. The SSE2 kernel is
  * compiled only on x86_64 (where SSE2 is part of the ABI baseline);
  * the NEON kernel only on aarch64 / ARMv8 (likewise mandatory).
- * Choice is made at compile time via KSUID_HAVE_SSE2 /
- * KSUID_HAVE_NEON; runtime dispatch is unnecessary for those
+ * Choice is made at compile time via CHRONOID_HAVE_SSE2 /
+ * CHRONOID_HAVE_NEON; runtime dispatch is unnecessary for those
  * baselines and the architect plan's atomic function-pointer
  * scaffolding is reserved for the eventual AVX2 / SVE upgrades.
  */
@@ -23,10 +23,10 @@
 
 int ksuid_base62_translate16_scalar (uint8_t out[16], const uint8_t in[16]);
 
-#if defined(KSUID_HAVE_SSE2)
+#if defined(CHRONOID_HAVE_SSE2)
 int ksuid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16]);
 #  define KSUID_TRANSLATE16(out, in) ksuid_base62_translate16_sse2 ((out), (in))
-#elif defined(KSUID_HAVE_NEON)
+#elif defined(CHRONOID_HAVE_NEON)
 int ksuid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16]);
 #  define KSUID_TRANSLATE16(out, in) ksuid_base62_translate16_neon ((out), (in))
 #else

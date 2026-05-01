@@ -8,15 +8,15 @@
  *
  * Both routines are inherently sequential along the long-division
  * carry chain and do not benefit from SIMD; vectorization opportunities
- * for libksuid live in input-character validation and bulk operations,
+ * for libchronoid live in input-character validation and bulk operations,
  * not the divide-and-emit core that runs here.
  */
-#include <libksuid/base62.h>
+#include <chronoid/base62.h>
 
 #include <string.h>
 
-#include <libksuid/base62_simd.h>
-#include <libksuid/byteorder.h>
+#include <chronoid/base62_simd.h>
+#include <chronoid/byteorder.h>
 
 /* The NUL terminator at index 62 is intentionally kept (no [62] fixed
  * size) so gcc -Wunterminated-string-initialization is satisfied; the

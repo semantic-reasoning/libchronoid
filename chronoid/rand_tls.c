@@ -2,7 +2,7 @@
  *
  * Per-thread ChaCha20-keyed CSPRNG. _Thread_local state so concurrent
  * calls from distinct threads need no synchronisation; this is the
- * mechanism that makes libksuid thread-safe without ever taking a
+ * mechanism that makes libchronoid thread-safe without ever taking a
  * lock or pulling in pthread.
  *
  * Reseed cadence (whichever fires first):
@@ -20,13 +20,13 @@
  * to gate the getpid() call behind the bytes_emitted threshold.
  */
 /* The for_testing helpers below are always defined; their
- * prototypes in rand.h are gated behind KSUID_TESTING so production
- * callers can't reach them. Setting KSUID_TESTING here -- before the
+ * prototypes in rand.h are gated behind CHRONOID_TESTING so production
+ * callers can't reach them. Setting CHRONOID_TESTING here -- before the
  * rand.h include -- pulls those prototypes into this TU and silences
  * the -Wmissing-prototypes warning that would otherwise fire on the
  * helper definitions further down. */
-#define KSUID_TESTING 1
-#include <libksuid/rand.h>
+#define CHRONOID_TESTING 1
+#include <chronoid/rand.h>
 
 #include <stdbool.h>
 #include <string.h>
@@ -44,8 +44,8 @@
 #  define KSUID_GETPID() ((int64_t) getpid ())
 #endif
 
-#include <libksuid/chacha20.h>
-#include <libksuid/wipe.h>
+#include <chronoid/chacha20.h>
+#include <chronoid/wipe.h>
 
 /* Thread-exit residue policy: the per-thread ksuid_tls_rng_t below
  * holds 64 bytes of ChaCha20 state plus a 64-byte keystream window.
@@ -60,7 +60,7 @@
  *
  * The wipe entry point itself is implemented in this file (commit 1)
  * even when no platform hook fires, so the test harness can drive it
- * via the KSUID_TESTING-gated for_testing helpers added in commit 3.
+ * via the CHRONOID_TESTING-gated for_testing helpers added in commit 3.
  */
 
 #define KSUID_RNG_RESEED_BYTES   (1u << 20)     /* 1 MiB                   */
@@ -89,10 +89,10 @@ static _Thread_local bool ksuid_tls_in_destructor_;
 
 /* Atomic counter incremented on every entry to
  * ksuid_random_thread_state_wipe. Always defined and always
- * incremented, regardless of KSUID_TESTING -- the cost is one
+ * incremented, regardless of CHRONOID_TESTING -- the cost is one
  * relaxed atomic increment per wipe (~5 ns on x86_64) and the
  * counter only matters to the test harness, which sees it through
- * the KSUID_TESTING-gated extern declaration in rand.h. */
+ * the CHRONOID_TESTING-gated extern declaration in rand.h. */
 #include <stdatomic.h>
 _Atomic int ksuid_thread_exit_wipes_observed;
 
@@ -144,7 +144,7 @@ ksuid_random_thread_state_size_for_testing (void)
  * cc.links() probe (commit 2 of the issue #4 series); platforms
  * that don't match either branch fall through to the documented
  * residue policy in the public header. */
-#if defined(KSUID_HAVE_CXA_THREAD_ATEXIT_IMPL)
+#if defined(CHRONOID_HAVE_CXA_THREAD_ATEXIT_IMPL)
 
 /* Both identifiers below are reserved (double-underscore prefix), but
  * they're how glibc / libc++abi spell the symbols we have to call.
@@ -168,7 +168,7 @@ ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
     return;
   r->destructor_registered = true;
   /* The third argument scopes the registration to this DSO so a
-   * dlclose(libksuid.so) tears down its registrations cleanly.
+   * dlclose(libchronoid.so) tears down its registrations cleanly.
    * __dso_handle is `void *`, so we pass its address (a `void **`)
    * cast to the `void *` ABI parameter via an explicit cast --
    * silencing bugprone-multi-level-implicit-pointer-conversion. */
@@ -176,7 +176,7 @@ ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
       (void *) &__dso_handle);
 }
 
-#elif defined(KSUID_HAVE_FLS)
+#elif defined(CHRONOID_HAVE_FLS)
 
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>

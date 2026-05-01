@@ -18,8 +18,8 @@ Checks: >
   -cert-msc33-c,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
 
-# Apply the same checks to headers that are part of libksuid.
-HeaderFilterRegex: '.*/libksuid/.*\.h$'
+# Apply the same checks to headers that are part of libchronoid.
+HeaderFilterRegex: '.*/chronoid/.*\.h$'
 
 # Don't reformat alongside fixes -- keep clang-tidy and gst-indent
 # concerns separate.

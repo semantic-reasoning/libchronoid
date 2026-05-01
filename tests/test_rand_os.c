@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#include <libksuid/rand.h>
+#include <chronoid/rand.h>
 #include "test_util.h"
 
 static void

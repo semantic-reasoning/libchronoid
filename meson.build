@@ -1,5 +1,5 @@
-project('libksuid', 'c',
-  version : '1.0.0',
+project('libchronoid', 'c',
+  version : '0.9.0',
   license : 'LGPL-3.0-or-later AND MIT',
   meson_version : '>=1.1.0',
   default_options : [
@@ -18,7 +18,7 @@ pkg = import('pkgconfig')
 # control + POSIX feature macros only mean anything on the GCC-style
 # command line, and MSVC needs an explicit opt-in to C11 atomics
 # until they leave experimental status.
-common_args = ['-DKSUID_BUILDING=1']
+common_args = ['-DCHRONOID_BUILDING=1']
 if cc.get_argument_syntax() == 'msvc'
   # MSVC's <stdatomic.h> is gated behind /experimental:c11atomics
   # until C11 atomics ship as fully supported (Microsoft Learn:
@@ -38,10 +38,10 @@ endif
 # neither getrandom nor getentropy) or are kept compiled-in as a
 # secondary fallback (urandom on POSIX).
 if cc.has_function('getrandom', prefix : '#include <sys/random.h>')
-  common_args += '-DKSUID_HAVE_GETRANDOM=1'
+  common_args += '-DCHRONOID_HAVE_GETRANDOM=1'
 endif
 if cc.has_function('getentropy', prefix : '#include <unistd.h>')
-  common_args += '-DKSUID_HAVE_GETENTROPY=1'
+  common_args += '-DCHRONOID_HAVE_GETENTROPY=1'
 endif
 
 # DSE-resistant wipe primitive (issue #2). The explicit_bzero
@@ -63,18 +63,18 @@ wipe_backend = 'volatile-fallback'
 if cc.has_function('explicit_bzero',
     prefix : '#include <string.h>',
     args   : ['-D_DEFAULT_SOURCE'])
-  common_args += '-DKSUID_HAVE_EXPLICIT_BZERO_STRING_H=1'
+  common_args += '-DCHRONOID_HAVE_EXPLICIT_BZERO_STRING_H=1'
   wipe_backend = 'explicit_bzero (<string.h>)'
 elif cc.has_function('explicit_bzero',
     prefix : '#include <strings.h>',
     args   : ['-D_DEFAULT_SOURCE'])
-  common_args += '-DKSUID_HAVE_EXPLICIT_BZERO_STRINGS_H=1'
+  common_args += '-DCHRONOID_HAVE_EXPLICIT_BZERO_STRINGS_H=1'
   wipe_backend = 'explicit_bzero (<strings.h>)'
 elif host_machine.system() == 'windows'
   wipe_backend = 'SecureZeroMemory'
 elif cc.has_function('memset_s',
     prefix : '#define __STDC_WANT_LIB_EXT1__ 1\n#include <string.h>')
-  common_args += '-DKSUID_HAVE_MEMSET_S=1'
+  common_args += '-DCHRONOID_HAVE_MEMSET_S=1'
   # Annex K's memset_s prototype is gated behind __STDC_WANT_LIB_EXT1__
   # on every libc that provides it (glibc, Apple libc, MUSL...).
   # Defining the opt-in macro project-wide -- not just inside wipe.h
@@ -84,7 +84,7 @@ elif cc.has_function('memset_s',
   common_args += '-D__STDC_WANT_LIB_EXT1__=1'
   wipe_backend = 'memset_s (C11 Annex K)'
 endif
-summary({'wipe backend' : wipe_backend}, section : 'libksuid')
+summary({'wipe backend' : wipe_backend}, section : 'libchronoid')
 
 # Issue #4 thread-exit wipe registration. Probe via cc.links() with
 # an explicit prototype rather than cc.has_function() because
@@ -105,23 +105,23 @@ int main(void) {
 '''
 if cc.links(cxa_thread_atexit_test,
     name : '__cxa_thread_atexit_impl + __dso_handle')
-  common_args += '-DKSUID_HAVE_CXA_THREAD_ATEXIT_IMPL=1'
+  common_args += '-DCHRONOID_HAVE_CXA_THREAD_ATEXIT_IMPL=1'
   thread_exit_backend = '__cxa_thread_atexit_impl'
 elif host_machine.system() == 'windows'
-  common_args += '-DKSUID_HAVE_FLS=1'
+  common_args += '-DCHRONOID_HAVE_FLS=1'
   thread_exit_backend = 'FlsAlloc (Windows)'
 endif
-summary({'thread-exit wipe' : thread_exit_backend}, section : 'libksuid')
+summary({'thread-exit wipe' : thread_exit_backend}, section : 'libchronoid')
 
 # Windows: the supported entropy source is BCryptGenRandom. The whole
 # /dev/urandom + getrandom + getentropy chain doesn't apply, and
-# rand_os.c switches to a Bcrypt-only path when KSUID_HAVE_BCRYPT is
+# rand_os.c switches to a Bcrypt-only path when CHRONOID_HAVE_BCRYPT is
 # defined.
 extra_link_deps = []
 if host_machine.system() == 'windows'
   bcrypt_dep = cc.find_library('bcrypt', required : true)
   extra_link_deps += bcrypt_dep
-  common_args += '-DKSUID_HAVE_BCRYPT=1'
+  common_args += '-DCHRONOID_HAVE_BCRYPT=1'
 endif
 if cc.get_argument_syntax() != 'msvc'
   foreach a : ['-Wshadow', '-Wstrict-prototypes', '-Wpointer-arith',
@@ -133,27 +133,27 @@ if cc.get_argument_syntax() != 'msvc'
 endif
 
 # libsoup-style layout: the project root is on the include path so
-# every #include uses the <libksuid/foo.h> form, which works
+# every #include uses the <chronoid/foo.h> form, which works
 # uniformly for in-tree builds, downstream consumers, and the
-# generated install tree (${prefix}/include/libksuid/ksuid.h).
+# generated install tree (${prefix}/include/chronoid/ksuid.h).
 inc = include_directories('.')
-public_headers = files('libksuid/ksuid.h')
+public_headers = files('chronoid/ksuid.h')
 
-# Generate libksuid/ksuid_version.h alongside the source tree's
-# libksuid/. The configure_file lives in libksuid/meson.build so
-# its output lands at ${MESON_BUILD_ROOT}/libksuid/ksuid_version.h
-# and resolves through |inc| as <libksuid/ksuid_version.h>.
-subdir('libksuid')
+# Generate chronoid/chronoid_version.h alongside the source tree's
+# chronoid/. The configure_file lives in chronoid/meson.build so
+# its output lands at ${MESON_BUILD_ROOT}/chronoid/chronoid_version.h
+# and resolves through |inc| as <chronoid/chronoid_version.h>.
+subdir('chronoid')
 
 core_sources = files(
-  'libksuid/ksuid.c',
-  'libksuid/base62.c',
-  'libksuid/sequence.c',
-  'libksuid/rand_os.c',
-  'libksuid/rand_tls.c',
-  'libksuid/chacha20.c',
-  'libksuid/compare_scalar.c',
-  'libksuid/encode_batch.c',
+  'chronoid/ksuid.c',
+  'chronoid/base62.c',
+  'chronoid/sequence.c',
+  'chronoid/rand_os.c',
+  'chronoid/rand_tls.c',
+  'chronoid/chacha20.c',
+  'chronoid/compare_scalar.c',
+  'chronoid/encode_batch.c',
 )
 
 # SIMD / NEON acceleration. SSE2 is part of the x86_64 ABI baseline
@@ -166,29 +166,29 @@ host_cpu = host_machine.cpu_family()
 if get_option('simd') != 'none'
   if host_cpu == 'x86_64'
     core_sources += files(
-      'libksuid/base62_sse2.c',
-      'libksuid/compare_sse2.c',
+      'chronoid/base62_sse2.c',
+      'chronoid/compare_sse2.c',
     )
-    common_args += '-DKSUID_HAVE_SSE2=1'
+    common_args += '-DCHRONOID_HAVE_SSE2=1'
   elif host_cpu in ['aarch64', 'arm64']
     core_sources += files(
-      'libksuid/base62_neon.c',
-      'libksuid/compare_neon.c',
+      'chronoid/base62_neon.c',
+      'chronoid/compare_neon.c',
     )
-    common_args += '-DKSUID_HAVE_NEON=1'
+    common_args += '-DCHRONOID_HAVE_NEON=1'
   elif host_cpu == 'arm' and cc.has_argument('-mfpu=neon')
     core_sources += files(
-      'libksuid/base62_neon.c',
-      'libksuid/compare_neon.c',
+      'chronoid/base62_neon.c',
+      'chronoid/compare_neon.c',
     )
-    common_args += '-DKSUID_HAVE_NEON=1'
+    common_args += '-DCHRONOID_HAVE_NEON=1'
   endif
 endif
 
 # AVX2 8-wide ksuid_string_batch kernel. Compiled in its own static
-# library with -mavx2 (or /arch:AVX2 on MSVC) so the rest of libksuid
+# library with -mavx2 (or /arch:AVX2 on MSVC) so the rest of libchronoid
 # keeps the SSE2 baseline ABI; the kernel is selected at runtime via
-# CPUID inside the dispatcher (libksuid/encode_batch.c). Non-x86_64
+# CPUID inside the dispatcher (chronoid/encode_batch.c). Non-x86_64
 # hosts skip this entirely; non-AVX2 x86_64 hosts compile the TU but
 # never call into it.
 have_avx2_batch = false
@@ -203,22 +203,22 @@ if get_option('simd') != 'none' and host_cpu == 'x86_64'
     if cc.has_argument(candidate)
       have_avx2_batch = true
       avx2_arg = candidate
-      common_args += '-DKSUID_HAVE_AVX2_BATCH=1'
+      common_args += '-DCHRONOID_HAVE_AVX2_BATCH=1'
     endif
   endif
 endif
 
 # Apply collected defines + warnings only after the per-arch SIMD
-# section has had its chance to push KSUID_HAVE_SSE2 / _NEON /
+# section has had its chance to push CHRONOID_HAVE_SSE2 / _NEON /
 # _AVX2_BATCH.
 add_project_arguments(common_args, language : 'c')
 
 avx2_lib_dep = []
 if have_avx2_batch
   # PIC required so the same objects can land in both the static and
-  # shared variants of `both_libraries('ksuid', ...)` below.
-  ksuid_avx2_lib = static_library('ksuid_avx2_batch',
-    'libksuid/encode_avx2.c',
+  # shared variants of `both_libraries('chronoid', ...)` below.
+  chronoid_avx2_lib = static_library('chronoid_avx2_batch',
+    'chronoid/encode_avx2.c',
     include_directories : inc,
     c_args              : [avx2_arg],
     pic                 : true,
@@ -229,10 +229,10 @@ if have_avx2_batch
   # in encode_batch.c) only ever takes the address of the kernel
   # behind a runtime CPUID check; without link_whole the linker may
   # GC the symbol on shared-library link.
-  avx2_lib_dep = [ksuid_avx2_lib]
+  avx2_lib_dep = [chronoid_avx2_lib]
 endif
 
-ksuid_lib = both_libraries('ksuid', core_sources,
+chronoid_lib = both_libraries('chronoid', core_sources,
   include_directories : inc,
   dependencies        : extra_link_deps,
   link_whole          : avx2_lib_dep,
@@ -240,35 +240,35 @@ ksuid_lib = both_libraries('ksuid', core_sources,
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the
   # first stable ABI commitment.
-  soversion           : '1',
+  soversion           : '0',
   install             : true,
 )
 
-install_headers(public_headers, subdir : 'libksuid')
+install_headers(public_headers, subdir : 'chronoid')
 
 # License + attribution artifacts MUST ship with every redistribution
-# of libksuid in source or binary form: LGPL-3.0-or-later requires the
+# of libchronoid in source or binary form: LGPL-3.0-or-later requires the
 # LGPL text, and the upstream MIT terms (LICENSE.MIT) require the
 # permission notice "be included in all copies or substantial portions
 # of the Software". NOTICE documents how the two combine.
-license_dir = get_option('datadir') / 'doc' / 'libksuid'
+license_dir = get_option('datadir') / 'doc' / 'libchronoid'
 install_data(
   files('LICENSE', 'LICENSE.MIT', 'NOTICE'),
   install_dir : license_dir,
 )
 
-pkg.generate(ksuid_lib.get_shared_lib(),
-  name        : 'libksuid',
-  description : 'Pure C11 port of segmentio/ksuid',
+pkg.generate(chronoid_lib.get_shared_lib(),
+  name        : 'libchronoid',
+  description : 'C11 toolkit for time-ordered IDs (KSUID + future UUIDv7); successor to libksuid',
   version     : meson.project_version(),
-  filebase    : 'libksuid',
+  filebase    : 'libchronoid',
 )
 
 if get_option('cli')
-  ksuid_gen = executable('ksuid-gen',
-    'examples/ksuid-gen.c',
+  chronoid_gen = executable('chronoid-gen',
+    'examples/chronoid-gen.c',
     include_directories : inc,
-    link_with : ksuid_lib.get_static_lib(),
+    link_with : chronoid_lib.get_static_lib(),
     install : true,
   )
 endif

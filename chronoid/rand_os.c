@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Operating system entropy source for libksuid. Per-platform path:
+ * Operating system entropy source for libchronoid. Per-platform path:
  *
  *   Windows: BCryptGenRandom with BCRYPT_USE_SYSTEM_PREFERRED_RNG.
  *            No POSIX fallback chain is compiled in; if the call
@@ -18,9 +18,9 @@
  * silently producing predictable bytes from an ID generator is a far
  * worse outcome than a clean error.
  */
-#include <libksuid/rand.h>
+#include <chronoid/rand.h>
 
-#if defined(KSUID_HAVE_BCRYPT)
+#if defined(CHRONOID_HAVE_BCRYPT)
 /* Windows path: BCryptGenRandom is the documented modern API for
  * cryptographic randomness. Linking is handled by meson via Bcrypt.lib. */
 #  define WIN32_LEAN_AND_MEAN
@@ -31,10 +31,10 @@
 #  endif
 #else /* POSIX */
 #  include <errno.h>
-#  if defined(KSUID_HAVE_GETRANDOM)
+#  if defined(CHRONOID_HAVE_GETRANDOM)
 #    include <sys/random.h>
 #  endif
-#  if defined(KSUID_HAVE_GETENTROPY)
+#  if defined(CHRONOID_HAVE_GETENTROPY)
 #    include <unistd.h>
 #  endif
 /* /dev/urandom fallback always present on POSIX-ish hosts. */
@@ -44,14 +44,14 @@
 #  include <unistd.h>
 #endif
 
-#if defined(KSUID_HAVE_BCRYPT)
+#if defined(CHRONOID_HAVE_BCRYPT)
 
 static int
 ksuid_random_via_bcrypt (uint8_t *buf, size_t n)
 {
   /* BCryptGenRandom takes a ULONG length. On 64-bit Windows ULONG
    * stays 32 bits, so we loop for buffers >= 4 GiB even though the
-   * libksuid hot path never asks for that much. */
+   * libchronoid hot path never asks for that much. */
   while (n > 0) {
     ULONG chunk = (n > 0xffffffffu) ? 0xffffffffu : (ULONG) n;
     NTSTATUS s = BCryptGenRandom (NULL, buf, chunk,
@@ -74,7 +74,7 @@ ksuid_os_random_bytes (uint8_t *buf, size_t n)
 
 #else /* POSIX path */
 
-#  if defined(KSUID_HAVE_GETRANDOM)
+#  if defined(CHRONOID_HAVE_GETRANDOM)
 static int
 ksuid_random_via_getrandom (uint8_t *buf, size_t n)
 {
@@ -92,7 +92,7 @@ ksuid_random_via_getrandom (uint8_t *buf, size_t n)
 }
 #  endif
 
-#  if defined(KSUID_HAVE_GETENTROPY)
+#  if defined(CHRONOID_HAVE_GETENTROPY)
 static int
 ksuid_random_via_getentropy (uint8_t *buf, size_t n)
 {
@@ -145,12 +145,12 @@ ksuid_os_random_bytes (uint8_t *buf, size_t n)
   if (n == 0)
     return 0;
 
-#  if defined(KSUID_HAVE_GETRANDOM)
+#  if defined(CHRONOID_HAVE_GETRANDOM)
   if (ksuid_random_via_getrandom (buf, n) == 0)
     return 0;
 #  endif
 
-#  if defined(KSUID_HAVE_GETENTROPY)
+#  if defined(CHRONOID_HAVE_GETENTROPY)
   if (ksuid_random_via_getentropy (buf, n) == 0)
     return 0;
 #  endif

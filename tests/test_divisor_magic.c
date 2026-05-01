@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
  * Verifies that the auto-generated KSUID_DIV62_M magic constant in
- * libksuid/divisor_magic.h, plugged into a Granlund-Moeller scalar
+ * chronoid/divisor_magic.h, plugged into a Granlund-Moeller scalar
  * reciprocal, agrees with straight integer division by 62 for every
  * tested input. Builds the floor/correction algorithm from scratch
  * here -- the AVX2 kernel will reuse the same algebra over 8 lanes.
@@ -16,11 +16,11 @@
  * checked-in header was hand-edited. Both modes are blockers for
  * shipping the AVX2 kernel.
  */
-#include <libksuid/divisor_magic.h>
+#include <chronoid/divisor_magic.h>
 #include "test_util.h"
 
 /* Reference mulhi64 via __uint128_t. Available on GCC/Clang on
- * every libksuid CI lane that exercises this test (the AVX2-target
+ * every libchronoid CI lane that exercises this test (the AVX2-target
  * x86_64 lane is the only one that ships the AVX2 kernel; MSVC is
  * not in this test's build matrix). */
 _Static_assert (sizeof (unsigned __int128) == 16, "test requires __uint128_t");

@@ -124,13 +124,13 @@ jobs:
           rm -rf build-rel
           meson setup build-rel --buildtype=release
           meson compile -C build-rel
-          strip --strip-unneeded build-rel/libksuid.so.* 2>/dev/null || true
+          strip --strip-unneeded build-rel/libchronoid.so.* 2>/dev/null || true
           {
             echo '## Footprint (stripped release build) — ${{ matrix.os }}'
             echo ''
             echo '| Artifact | Bytes |'
             echo '|---|---:|'
-            for f in build-rel/libksuid.so.* build-rel/libksuid.a build-rel/ksuid-gen; do
+            for f in build-rel/libchronoid.so.* build-rel/libchronoid.a build-rel/ksuid-gen; do
               [ -e "$f" ] && printf '| %s | %s |\n' "$(basename "$f")" "$(stat -c '%s' "$f")"
             done
           } >> "$GITHUB_STEP_SUMMARY"

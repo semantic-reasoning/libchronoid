@@ -2,7 +2,7 @@
  *
  * Differential parity test that pins the SSE2 / NEON 20-byte compare
  * kernel against the scalar reference. The scalar function is always
- * compiled (libksuid/compare_scalar.c is in core_sources unconditionally)
+ * compiled (chronoid/compare_scalar.c is in core_sources unconditionally)
  * so this test exercises the scalar path on every host even when the
  * production library would dispatch to a SIMD kernel. On hosts where
  * neither SSE2 nor NEON is selected, KSUID_COMPARE20 maps to the
@@ -17,7 +17,7 @@
  *   - "almost equal" pairs that share a long prefix and differ only
  *     at byte 19, the case random testing rarely produces
  */
-#include <libksuid/compare_simd.h>
+#include <chronoid/compare_simd.h>
 #include "test_util.h"
 
 #include <string.h>

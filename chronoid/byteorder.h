@@ -11,7 +11,7 @@
 
 #include <limits.h>
 
-_Static_assert (CHAR_BIT == 8, "libksuid requires 8-bit bytes");
+_Static_assert (CHAR_BIT == 8, "libchronoid requires 8-bit bytes");
 _Static_assert (sizeof (uint32_t) == 4, "uint32_t must be exactly 4 bytes");
 _Static_assert (sizeof (uint64_t) == 8, "uint64_t must be exactly 8 bytes");
 

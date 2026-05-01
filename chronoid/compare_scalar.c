@@ -4,7 +4,7 @@
  * so the parity test in tests/test_compare_parity.c can drive both
  * the scalar and the SIMD path on every host.
  */
-#include <libksuid/compare_simd.h>
+#include <chronoid/compare_simd.h>
 
 #include <string.h>
 

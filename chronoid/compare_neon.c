@@ -10,7 +10,7 @@
 #include <arm_neon.h>
 #include <stdint.h>
 
-#include <libksuid/compare_simd.h>
+#include <chronoid/compare_simd.h>
 
 int
 ksuid_compare20_neon (const uint8_t a[20], const uint8_t b[20])

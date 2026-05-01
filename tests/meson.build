@@ -1,6 +1,6 @@
 test_inc = include_directories('.', '..')
 
-test_link = ksuid_lib.get_static_lib()
+test_link = chronoid_lib.get_static_lib()
 
 # C11 <threads.h> is not available on Apple Clang's libc shipped with
 # macOS through at least Xcode 16 (April 2026); the rest of the
@@ -52,22 +52,22 @@ if have_uint128
 endif
 
 if have_threads_h and threads_dep.found()
-  # test_rand_tls compiles with -DKSUID_TESTING=1 only when the
+  # test_rand_tls compiles with -DCHRONOID_TESTING=1 only when the
   # platform exposes a thread-exit hook to assert against (issue #4
-  # commit 3). KSUID_TESTING reveals the prototypes of the
+  # commit 3). CHRONOID_TESTING reveals the prototypes of the
   # for_testing helpers + the atomic ksuid_thread_exit_wipes_observed
-  # counter in libksuid/rand.h. The library itself unconditionally
+  # counter in chronoid/rand.h. The library itself unconditionally
   # defines those symbols (cost: one relaxed atomic increment per
   # wipe, ~5 ns on x86_64), so the test only needs the prototype to
   # see them; no separate testing-enabled library object is
   # required.
   thread_exit_test_args = []
-  has_cxa = cc.get_define('KSUID_HAVE_CXA_THREAD_ATEXIT_IMPL',
+  has_cxa = cc.get_define('CHRONOID_HAVE_CXA_THREAD_ATEXIT_IMPL',
       args : common_args) == '1'
-  has_fls = cc.get_define('KSUID_HAVE_FLS',
+  has_fls = cc.get_define('CHRONOID_HAVE_FLS',
       args : common_args) == '1'
   if has_cxa or has_fls
-    thread_exit_test_args += '-DKSUID_TESTING=1'
+    thread_exit_test_args += '-DCHRONOID_TESTING=1'
   endif
   exe = executable('test_rand_tls', 'test_rand_tls.c',
     include_directories : test_inc,
@@ -81,31 +81,31 @@ else
 endif
 
 # Issue #1 (KSUID_NIL_INIT / KSUID_MAX_INIT) is specifically about
-# Windows DLL consumers, where KSUID_PUBLIC expands to
+# Windows DLL consumers, where CHRONOID_PUBLIC expands to
 # __declspec(dllimport) and the public sentinel symbols stop being
 # constant expressions in user TUs. Every other test in this
-# directory links the static archive (where KSUID_BUILDING stays
+# directory links the static archive (where CHRONOID_BUILDING stays
 # defined and dllimport never triggers), so they DO NOT exercise
 # the regression issue #1 was filed against.
 #
 # This dedicated TU links the SHARED library and explicitly undefines
-# KSUID_BUILDING so the public header sees the dllimport / hidden-
+# CHRONOID_BUILDING so the public header sees the dllimport / hidden-
 # visibility consumer code path. On Windows this catches the original
 # bug; on Linux/macOS it exercises shared-library export semantics
 # uniformly.
 if cc.get_argument_syntax() == 'msvc'
-  test_init_shared_args = ['/UKSUID_BUILDING']
+  test_init_shared_args = ['/UCHRONOID_BUILDING']
 else
-  test_init_shared_args = ['-UKSUID_BUILDING']
+  test_init_shared_args = ['-UCHRONOID_BUILDING']
 endif
 exe = executable('test_init_shared', 'test_init_shared.c',
   include_directories : test_inc,
-  link_with : ksuid_lib.get_shared_lib(),
+  link_with : chronoid_lib.get_shared_lib(),
   c_args : test_init_shared_args,
 )
 test('test_init_shared', exe, timeout : 30)
 
-# Integration test for the ksuid-gen CLI; only registered when the
+# Integration test for the chronoid-gen CLI; only registered when the
 # CLI is built (default on). meson resolves File objects and build
 # targets to absolute paths automatically when they appear in test()
 # args, so we pass them as-is rather than calling .full_path() (which
@@ -115,7 +115,7 @@ if get_option('cli')
   sh = find_program('sh', required : true)
   test('test_cli',
     sh,
-    args : [files('test_cli.sh')[0], ksuid_gen],
+    args : [files('test_cli.sh')[0], chronoid_gen],
     timeout : 30,
   )
 endif

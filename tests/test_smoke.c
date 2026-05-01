@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 #include "test_util.h"
 
 /* File-scope statics initialised from the public macros. The point of
@@ -81,26 +81,26 @@ test_version_macros_are_consistent (void)
   /* DELIBERATE SYNC POINT: these literal values must equal the
    * `version :` field in the top-level meson.build. The test exists
    * to prove that meson.project_version() flows through the
-   * configure_file substitution into ksuid_version.h.in -- a
+   * configure_file substitution into chronoid_version.h.in -- a
    * `>= 0` check would silently accept an empty @VERSION_MAJOR@
    * substitution that the C preprocessor turns into 0. A real
    * regression in the substitution chain therefore fails here.
    *
    * When you bump meson.build's project version you MUST update
    * these four asserts in the same commit. */
-  ASSERT_EQ_INT (KSUID_VERSION_MAJOR, 1);
-  ASSERT_EQ_INT (KSUID_VERSION_MINOR, 0);
-  ASSERT_EQ_INT (KSUID_VERSION_PATCH, 0);
-  ASSERT_EQ_STR (KSUID_VERSION_STRING, "1.0.0");
+  ASSERT_EQ_INT (CHRONOID_VERSION_MAJOR, 0);
+  ASSERT_EQ_INT (CHRONOID_VERSION_MINOR, 9);
+  ASSERT_EQ_INT (CHRONOID_VERSION_PATCH, 0);
+  ASSERT_EQ_STR (CHRONOID_VERSION_STRING, "0.9.0");
 
-  /* The composite KSUID_VERSION must equal the documented
+  /* The composite CHRONOID_VERSION must equal the documented
    * (MAJOR << 16) | (MINOR << 8) | PATCH layout for `#if
-   * KSUID_VERSION >= ...` arithmetic to behave the way callers
+   * CHRONOID_VERSION >= ...` arithmetic to behave the way callers
    * expect. */
-  int composed = (KSUID_VERSION_MAJOR << 16)
-      | (KSUID_VERSION_MINOR << 8)
-      | (KSUID_VERSION_PATCH);
-  ASSERT_EQ_INT (KSUID_VERSION, composed);
+  int composed = (CHRONOID_VERSION_MAJOR << 16)
+      | (CHRONOID_VERSION_MINOR << 8)
+      | (CHRONOID_VERSION_PATCH);
+  ASSERT_EQ_INT (CHRONOID_VERSION, composed);
 }
 
 int

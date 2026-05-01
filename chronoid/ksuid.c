@@ -7,16 +7,16 @@
  *   - Compare = bytes.Compare(a, b):                   ksuid.go:308-311
  *   - FromBytes / FromParts / Timestamp / Payload:     ksuid.go:74-81, 247-294
  */
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 
 #include <stdatomic.h>
 #include <string.h>
 #include <time.h>
 
-#include <libksuid/base62.h>
-#include <libksuid/byteorder.h>
-#include <libksuid/compare_simd.h>
-#include <libksuid/rand.h>
+#include <chronoid/base62.h>
+#include <chronoid/byteorder.h>
+#include <chronoid/compare_simd.h>
+#include <chronoid/rand.h>
 
 /* Drive both definitions from the public KSUID_*_INIT macros so the
  * runtime symbols and the static-storage initializer form can never
@@ -24,8 +24,8 @@
  * test_init_macros_match_symbols pins the same equivalence at runtime
  * but a single source of truth at the definition site removes the
  * possibility entirely. */
-KSUID_PUBLIC const ksuid_t KSUID_NIL = KSUID_NIL_INIT;
-KSUID_PUBLIC const ksuid_t KSUID_MAX = KSUID_MAX_INIT;
+CHRONOID_PUBLIC const ksuid_t KSUID_NIL = KSUID_NIL_INIT;
+CHRONOID_PUBLIC const ksuid_t KSUID_MAX = KSUID_MAX_INIT;
 
 bool
 ksuid_is_nil (const ksuid_t *id)

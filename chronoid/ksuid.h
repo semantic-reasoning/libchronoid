@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later AND MIT
  *
- * libksuid -- pure C11 port of github.com/segmentio/ksuid.
+ * libchronoid -- pure C11 port of github.com/segmentio/ksuid.
  *
  * The KSUID specification, binary layout, base62 alphabet and encoding
  * scheme are derived from segmentio/ksuid (MIT, Copyright (c) 2017
@@ -9,7 +9,7 @@
 #ifndef KSUID_H
 #define KSUID_H
 
-#include <libksuid/ksuid_version.h>
+#include <chronoid/chronoid_version.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -21,15 +21,15 @@ extern "C"
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#  if defined(KSUID_BUILDING)
-#    define KSUID_PUBLIC __declspec(dllexport)
+#  if defined(CHRONOID_BUILDING)
+#    define CHRONOID_PUBLIC __declspec(dllexport)
 #  else
-#    define KSUID_PUBLIC __declspec(dllimport)
+#    define CHRONOID_PUBLIC __declspec(dllimport)
 #  endif
 #elif defined(__GNUC__) || defined(__clang__)
-#  define KSUID_PUBLIC __attribute__((visibility("default")))
+#  define CHRONOID_PUBLIC __attribute__((visibility("default")))
 #else
-#  define KSUID_PUBLIC
+#  define CHRONOID_PUBLIC
 #endif
 
 /* --------------------------------------------------------------------------
@@ -85,13 +85,13 @@ extern "C"
  *       Use these as constant expressions in a declaration:
  *           static const ksuid_t g_zero = KSUID_NIL_INIT;
  *       The macro form is REQUIRED on Windows DLL builds, where
- *       KSUID_PUBLIC expands to __declspec(dllimport) and the
+ *       CHRONOID_PUBLIC expands to __declspec(dllimport) and the
  *       symbol is therefore not a constant expression in user TUs.
  *
  * The two forms are guaranteed byte-for-byte equal; tests/test_smoke.c
  * pins the equivalence with ASSERT_EQ_BYTES. */
-  KSUID_PUBLIC extern const ksuid_t KSUID_NIL;
-  KSUID_PUBLIC extern const ksuid_t KSUID_MAX;
+  CHRONOID_PUBLIC extern const ksuid_t KSUID_NIL;
+  CHRONOID_PUBLIC extern const ksuid_t KSUID_MAX;
 
 #define KSUID_NIL_INIT { { 0 } }
 #define KSUID_MAX_INIT                                                       \
@@ -102,11 +102,11 @@ extern "C"
  * Predicates and ordering.
  * -------------------------------------------------------------------------- */
 
-  KSUID_PUBLIC bool ksuid_is_nil (const ksuid_t * id);
+  CHRONOID_PUBLIC bool ksuid_is_nil (const ksuid_t * id);
 
 /* Lexicographic comparison over the full 20-byte representation, matching
  * the Go implementation's bytes.Compare semantics. Returns <0, 0, or >0. */
-  KSUID_PUBLIC int ksuid_compare (const ksuid_t * a, const ksuid_t * b);
+  CHRONOID_PUBLIC int ksuid_compare (const ksuid_t * a, const ksuid_t * b);
 
 /* --------------------------------------------------------------------------
  * Construction from raw inputs.
@@ -114,14 +114,14 @@ extern "C"
 
 /* Copy the binary KSUID at |b| (which must be exactly KSUID_BYTES long) into
  * |out|. On error |out| is left untouched. */
-  KSUID_PUBLIC ksuid_err_t ksuid_from_bytes (ksuid_t * out, const uint8_t * b,
+  CHRONOID_PUBLIC ksuid_err_t ksuid_from_bytes (ksuid_t * out, const uint8_t * b,
       size_t n);
 
 /* Build |out| from a Unix timestamp (in seconds) and a 16-byte payload. The
  * timestamp must lie within the closed interval [KSUID_EPOCH_SECONDS,
  * KSUID_EPOCH_SECONDS + UINT32_MAX] -- the full 32-bit lifetime of the KSUID
  * format. Out-of-range inputs return KSUID_ERR_TIME_RANGE. */
-  KSUID_PUBLIC ksuid_err_t ksuid_from_parts (ksuid_t * out,
+  CHRONOID_PUBLIC ksuid_err_t ksuid_from_parts (ksuid_t * out,
       int64_t unix_seconds, const uint8_t * payload, size_t payload_len);
 
 /* --------------------------------------------------------------------------
@@ -129,15 +129,15 @@ extern "C"
  * -------------------------------------------------------------------------- */
 
 /* The KSUID's 32-bit big-endian timestamp, uncorrected for the custom epoch. */
-  KSUID_PUBLIC uint32_t ksuid_timestamp (const ksuid_t * id);
+  CHRONOID_PUBLIC uint32_t ksuid_timestamp (const ksuid_t * id);
 
 /* The KSUID's timestamp interpreted as Unix seconds (i.e. timestamp + epoch). */
-  KSUID_PUBLIC int64_t ksuid_time_unix (const ksuid_t * id);
+  CHRONOID_PUBLIC int64_t ksuid_time_unix (const ksuid_t * id);
 
 /* Pointer into |id| to the 16-byte payload region (id->b + 4). The pointer is
  * borrowed from |id|; do not free, and do not use after |id| goes out of
  * scope. */
-  KSUID_PUBLIC const uint8_t *ksuid_payload (const ksuid_t * id);
+  CHRONOID_PUBLIC const uint8_t *ksuid_payload (const ksuid_t * id);
 
 /* --------------------------------------------------------------------------
  * Base62 string conversion.
@@ -150,13 +150,13 @@ extern "C"
  * KSUID_MAX. On any error the contents of |out| are guaranteed unchanged --
  * decoding writes to a stack temporary first and only copies into |out|
  * once the input has been fully validated. */
-  KSUID_PUBLIC ksuid_err_t ksuid_parse (ksuid_t * out, const char *s,
+  CHRONOID_PUBLIC ksuid_err_t ksuid_parse (ksuid_t * out, const char *s,
       size_t len);
 
 /* Write the 27-character base62 representation of |id| into |out|. The
  * output is NOT NUL-terminated; callers needing a C string should size
  * their buffer to KSUID_STRING_LEN + 1 and append '\0' themselves. */
-  KSUID_PUBLIC void ksuid_format (const ksuid_t * id,
+  CHRONOID_PUBLIC void ksuid_format (const ksuid_t * id,
       char out[KSUID_STRING_LEN]);
 
 /* Bulk variant of ksuid_format. Writes |n| KSUIDs into |out_27n|, which
@@ -175,7 +175,7 @@ extern "C"
  * load + one indirect call per ksuid_string_batch invocation -- is
  * lost in the noise compared to even the per-ID scalar work.
  *
- * Output is byte-identical across kernels. The KSUID_FORCE_SCALAR
+ * Output is byte-identical across kernels. The CHRONOID_FORCE_SCALAR
  * environment variable, if set to a non-empty non-"0"/"false"
  * value, pins the dispatcher to the scalar path at first dispatch
  * (a runtime kill switch for the AVX2 kernel without rebuilding
@@ -185,7 +185,7 @@ extern "C"
  * is a no-op. The call is thread-safe for concurrent invocations on
  * disjoint output buffers; callers must not race two threads on the
  * same |out_27n| slice. */
-  KSUID_PUBLIC void ksuid_string_batch (const ksuid_t * ids,
+  CHRONOID_PUBLIC void ksuid_string_batch (const ksuid_t * ids,
       char *out_27n, size_t n);
 
 /* --------------------------------------------------------------------------
@@ -204,11 +204,11 @@ extern "C"
     uint32_t count;
   } ksuid_sequence_t;
 
-  KSUID_PUBLIC void ksuid_sequence_init (ksuid_sequence_t * s,
+  CHRONOID_PUBLIC void ksuid_sequence_init (ksuid_sequence_t * s,
       const ksuid_t * seed);
-  KSUID_PUBLIC ksuid_err_t ksuid_sequence_next (ksuid_sequence_t * s,
+  CHRONOID_PUBLIC ksuid_err_t ksuid_sequence_next (ksuid_sequence_t * s,
       ksuid_t * out);
-  KSUID_PUBLIC void ksuid_sequence_bounds (const ksuid_sequence_t * s,
+  CHRONOID_PUBLIC void ksuid_sequence_bounds (const ksuid_sequence_t * s,
       ksuid_t * min, ksuid_t * max);
 
 /* --------------------------------------------------------------------------
@@ -224,7 +224,7 @@ extern "C"
  * Thread-exit residue: the per-thread CSPRNG state holds 64 bytes
  * of ChaCha20 state plus a 64-byte keystream window. On platforms
  * with a thread-exit hook (glibc 2.18+ via __cxa_thread_atexit_impl,
- * MUSL >= 1.2.0, libc++abi on macOS, FLS on Windows) libksuid wipes
+ * MUSL >= 1.2.0, libc++abi on macOS, FLS on Windows) libchronoid wipes
  * this state automatically when the owning thread exits. On other
  * platforms the state persists in the TLS block until the OS
  * reclaims it. Callers requiring stronger guarantees should call
@@ -237,13 +237,13 @@ extern "C"
  * -------------------------------------------------------------------------- */
 
 /* Generate a new KSUID stamped with the current wall-clock time. */
-  KSUID_PUBLIC ksuid_err_t ksuid_new (ksuid_t * out);
+  CHRONOID_PUBLIC ksuid_err_t ksuid_new (ksuid_t * out);
 
 /* Generate a new KSUID stamped with |unix_seconds|. The timestamp must
  * fall within [KSUID_EPOCH_SECONDS, KSUID_EPOCH_SECONDS + UINT32_MAX]
  * just like ksuid_from_parts; out-of-range returns
  * KSUID_ERR_TIME_RANGE. */
-  KSUID_PUBLIC ksuid_err_t ksuid_new_with_time (ksuid_t * out,
+  CHRONOID_PUBLIC ksuid_err_t ksuid_new_with_time (ksuid_t * out,
       int64_t unix_seconds);
 
 /* Replace the global random source. The default source is the
@@ -256,7 +256,7 @@ extern "C"
  * mid-flight is race-free; however, |fn| itself MUST be thread-safe
  * if multiple threads will call ksuid_new concurrently. */
   typedef int (*ksuid_rng_fn) (void *ctx, uint8_t * buf, size_t n);
-  KSUID_PUBLIC void ksuid_set_rand (ksuid_rng_fn fn, void *ctx);
+  CHRONOID_PUBLIC void ksuid_set_rand (ksuid_rng_fn fn, void *ctx);
 
 #ifdef __cplusplus
 }                               /* extern "C" */

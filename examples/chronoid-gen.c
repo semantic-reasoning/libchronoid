@@ -1,20 +1,20 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later AND MIT
  *
- * ksuid-gen -- the libksuid demo CLI. Generates and inspects KSUIDs;
+ * chronoid-gen -- the libchronoid demo CLI. Generates and inspects KSUIDs;
  * intentionally feature-aligned with upstream segmentio/ksuid's
  * `cmd/ksuid` (cmd/ksuid/main.go) MINUS the Go template format which
  * cannot be sensibly reimplemented without dragging Go's text/template
  * grammar in.
  *
- *   ksuid-gen                 -- emit one new KSUID
- *   ksuid-gen -n N            -- emit N new KSUIDs
- *   ksuid-gen -f FORMAT       -- one of {string, inspect, time,
+ *   chronoid-gen                 -- emit one new KSUID
+ *   chronoid-gen -n N            -- emit N new KSUIDs
+ *   chronoid-gen -f FORMAT       -- one of {string, inspect, time,
  *                                 timestamp, payload, raw}
- *   ksuid-gen [args...]       -- treat args as KSUID strings to parse
+ *   chronoid-gen [args...]       -- treat args as KSUID strings to parse
  *                                 and format
- *   ksuid-gen -v              -- prefix each line with "<ksuid>: "
+ *   chronoid-gen -v              -- prefix each line with "<ksuid>: "
  */
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 
 #include <errno.h>
 #include <inttypes.h>

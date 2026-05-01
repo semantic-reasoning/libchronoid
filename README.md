@@ -1,21 +1,41 @@
-# libksuid
+# libchronoid
 
-A pure C11 port of [`segmentio/ksuid`](https://github.com/segmentio/ksuid)
-focused on small footprint, lock-free thread safety, and SIMD/NEON
-acceleration where the underlying algorithms admit it.
+A C11 toolkit for time-ordered identifiers. Today it ships a pure-C
+port of [`segmentio/ksuid`](https://github.com/segmentio/ksuid)
+(20-byte KSUID, 27-char base62, segmentio wire-compatible). UUIDv7
+([RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562)) lands on
+the road to 1.0 and is the reason this project exists as something
+broader than a single-format port. Both formats share one CSPRNG, one
+SIMD dispatch lane, and one set of wipe/fork-aware safety primitives.
 
 ## Status
 
-**1.0.0** — public API and ABI are stable. SONAME is `libksuid.so.1`;
-subsequent 1.x releases stay binary-compatible (semver). A breaking
-ABI change would require a 2.0 with a new SONAME.
+**0.9.0 — pre-release.** Held at 0.9.0 until UUIDv7 ships and parity
+tests stabilize, at which point the project cuts **1.0.0** and freezes
+the SONAME at `libchronoid.so.1`. During the 0.9.x window the ABI is
+**additive only** (no removals, no signature changes); the SONAME is
+`libchronoid.so.0` and downstream consumers should expect to rebuild
+when 1.0 lands. The KSUID API surface inherited from libksuid 1.0.0 is
+already feature-complete and tested.
+
+## Provenance
+
+libchronoid is the successor to
+[`libksuid` 1.0.0](https://github.com/semantic-reasoning/libksuid)
+and inherits its full git history, tests, SIMD kernels, and wire-format
+guarantees for KSUID. The rename reflects an enlarged scope: a
+single-format port grows into a multi-format toolkit. The KSUID public
+API (types, constants, functions) is unchanged byte-for-byte at the
+ABI level; only header path (`<chronoid/ksuid.h>` instead of
+`<libksuid/ksuid.h>`) and library/SONAME (`libchronoid.so.0` instead
+of `libksuid.so.1`) move.
 
 ## Goals
 
 - **Pure C11.** No pthread; thread safety via `_Thread_local` storage and
   `<stdatomic.h>` only.
 - **meson + ninja** build. Both static and shared libraries plus a
-  `ksuid-gen` CLI for round-trip generation and parsing.
+  `chronoid-gen` CLI for round-trip generation and parsing.
 - **Wire-compatible** with upstream `segmentio/ksuid` — same 20-byte
   binary layout, same 27-character base62 string encoding, same epoch
   (1400000000 = 2014-05-13 16:53:20 UTC), same ordering invariants.
@@ -33,7 +53,7 @@ ABI change would require a 2.0 with a new SONAME.
 
 ## Licensing
 
-libksuid is distributed under the **GNU Lesser General Public License,
+libchronoid is distributed under the **GNU Lesser General Public License,
 version 3 or later** (see [`LICENSE`](LICENSE)). It is a derivative
 work that ports algorithms and binary formats from `segmentio/ksuid`,
 which is distributed under the **MIT License** (see
@@ -61,7 +81,7 @@ For a release build with NDEBUG and stripped binaries:
 ```sh
 meson setup build-release --buildtype=release
 meson compile -C build-release
-strip --strip-unneeded build-release/libksuid.so.*
+strip --strip-unneeded build-release/libchronoid.so.*
 ```
 
 ## Footprint
@@ -70,11 +90,14 @@ A release build on x86_64 produces (post-`strip --strip-unneeded`):
 
 | Artifact            | Bytes  |
 | :------------------ | -----: |
-| libksuid.so.1.0.0   | 26 752 |
-| libksuid.a          | 35 212 |
-| ksuid-gen (CLI)     | 22 920 |
+| libchronoid.so.0.9.0   | 26 752 |
+| libchronoid.a          | 35 212 |
+| chronoid-gen (CLI)     | 22 920 |
 
-The bulk-encode AVX2 kernel from `libksuid/encode_avx2.c` accounts for
+(Numbers carried over from libksuid 1.0.0; the rebrand commit changed
+no compiled bytes. They will move when UUIDv7 + hex codec land.)
+
+The bulk-encode AVX2 kernel from `chronoid/encode_avx2.c` accounts for
 roughly 8 KB of the shared-library size; non-AVX2 hosts compile and
 link the kernel but never call into it, so the CPUID-gated dispatch
 adds no runtime cost to those targets.
@@ -85,15 +108,15 @@ and, on Windows, `bcrypt.lib`.
 ## CLI
 
 ```sh
-$ ksuid-gen
+$ chronoid-gen
 3D3tYHbvwtnqJnHlVV0SnfLhsIl
 
-$ ksuid-gen -n 3
+$ chronoid-gen -n 3
 3D3tYDod37FCb5o2znp85EOqeO3
 3D3tYG2kSSEmqfHFkSFXeSYyLAa
 3D3tYGRMmQOon3PeymhLvYc1yu5
 
-$ ksuid-gen -f inspect 0ujtsYcgvSTl8PAuAdqWYSMnLOv
+$ chronoid-gen -f inspect 0ujtsYcgvSTl8PAuAdqWYSMnLOv
 
 REPRESENTATION:
 
@@ -107,7 +130,7 @@ COMPONENTS:
     Payload: B5A1CD34B5F99D1154FB6853345C9735
 ```
 
-The full flag set is `-n N`, `-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See `ksuid-gen -h` for details.
+The full flag set is `-n N`, `-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See `chronoid-gen -h` for details.
 
 The Go upstream's `-f template` is intentionally not supported -- a
 faithful re-implementation of Go's `text/template` grammar in C is
@@ -138,9 +161,9 @@ trampoline; race-free without locks or allocation):
 
 - **x86_64 + AVX2**: an 8-wide AVX2 kernel that processes eight
   KSUIDs per outer iteration via a Granlund-Möller floor-reciprocal
-  multiply divide-by-62 ([#13](https://github.com/semantic-reasoning/libksuid/issues/13)).
+  multiply divide-by-62 ([libksuid#13](https://github.com/semantic-reasoning/libksuid/issues/13)).
   The magic constant is auto-generated by `tools/derive-magic.py`,
-  pinned in `libksuid/divisor_magic.h`, and verified against
+  pinned in `chronoid/divisor_magic.h`, and verified against
   `__uint128_t` integer division on every CI run.
 - **Other hosts** (non-AVX2 x86_64, aarch64, arm, ...): a per-ID
   scalar loop equivalent to calling `ksuid_format` N times.
@@ -150,7 +173,7 @@ test in `tests/test_string_batch.c` cross-checks the AVX2 kernel
 against the scalar reference over ≥ 2²⁰ pseudo-random KSUIDs and a
 lane-swap detection corpus.
 
-Setting the environment variable `KSUID_FORCE_SCALAR=1` pins the
+Setting the environment variable `CHRONOID_FORCE_SCALAR=1` pins the
 dispatcher to the scalar path at first call (runtime kill switch
 without rebuilding the library).
 
@@ -158,21 +181,21 @@ without rebuilding the library).
 
 The repository follows the libsoup-style single-source-directory
 convention. All public and private library code lives under
-`libksuid/`, and every C file -- inside the library, in tests, and in
+`chronoid/`, and every C file -- inside the library, in tests, and in
 examples -- includes its dependencies with the prefixed form
 
 ```c
-#include <libksuid/ksuid.h>          /* the public umbrella */
-#include <libksuid/base62.h>         /* internal helper */
+#include <chronoid/ksuid.h>          /* the public umbrella */
+#include <chronoid/base62.h>         /* internal helper */
 ```
 
 After install the public header lands at
-`${prefix}/include/libksuid/ksuid.h`, so downstream consumers use the
+`${prefix}/include/chronoid/ksuid.h`, so downstream consumers use the
 exact same include line that the in-tree sources do.
 
 ```
-libksuid/        library source + headers (public ksuid.h here too)
-examples/        example consumers; ksuid-gen CLI
+chronoid/        library source + headers (public ksuid.h here too)
+examples/        example consumers; chronoid-gen CLI
 tests/           unit + integration tests
 tools/           build tooling (gst-indent)
 hooks/           git hooks (pre-commit code-style check)
@@ -185,3 +208,12 @@ test vectors all originate from
 [`segmentio/ksuid`](https://github.com/segmentio/ksuid) (MIT License,
 Copyright (c) 2017 Segment.io). This project would not exist without
 that prior art.
+
+The UUIDv7 wire format and monotonicity guidance come from
+[RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562) (May 2024,
+P. Leach et al.).
+
+The KSUID half of this codebase was first published as
+[`libksuid` 1.0.0](https://github.com/semantic-reasoning/libksuid)
+(LGPL-3.0-or-later AND MIT) before being absorbed into libchronoid;
+the original repository is preserved as a read-only archive.

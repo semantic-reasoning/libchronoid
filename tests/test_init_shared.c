@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Companion to test_smoke.c that links against the libksuid SHARED
+ * Companion to test_smoke.c that links against the libchronoid SHARED
  * library rather than the static archive. This is the Windows DLL
- * consumer scenario in miniature: KSUID_PUBLIC expands to
- * __declspec(dllimport) here (because KSUID_BUILDING is undefined for
+ * consumer scenario in miniature: CHRONOID_PUBLIC expands to
+ * __declspec(dllimport) here (because CHRONOID_BUILDING is undefined for
  * this TU), and KSUID_NIL / KSUID_MAX are therefore *not* constant
  * expressions in this translation unit. If the build of this file
  * succeeds, the public KSUID_*_INIT macros really do work as static-
@@ -12,11 +12,11 @@
  * to prove the bytes match.
  *
  * This file exists because tests/test_smoke.c links the static
- * archive (KSUID_BUILDING is in scope, no dllimport, the symbol is a
+ * archive (CHRONOID_BUILDING is in scope, no dllimport, the symbol is a
  * normal const) and so does NOT exercise the very codepath issue #1
  * was filed about. */
 
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 #include "test_util.h"
 
 /* File-scope static storage from the macro form. On Windows DLL

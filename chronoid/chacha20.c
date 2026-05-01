@@ -8,11 +8,11 @@
  * http://cr.yp.to/chacha.html. This translation is contributed under
  * LGPL-3.0-or-later.
  */
-#include <libksuid/chacha20.h>
+#include <chronoid/chacha20.h>
 
 #include <string.h>
 
-#include <libksuid/wipe.h>
+#include <chronoid/wipe.h>
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 

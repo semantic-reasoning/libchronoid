@@ -10,7 +10,7 @@
  *      of-8, off-by-one-into-tail (n=9), prime-misaligned (n=257),
  *      and the corner KSUIDs (NIL, MAX).
  *   2. Direct AVX2-vs-scalar differential parity (compiled in only
- *      when KSUID_HAVE_AVX2_BATCH is defined; gated at runtime on
+ *      when CHRONOID_HAVE_AVX2_BATCH is defined; gated at runtime on
  *      __builtin_cpu_supports("avx2") so the same binary is safe
  *      on non-AVX2 hosts in the same x86_64 build). Bypasses the
  *      runtime dispatcher and calls the scalar + AVX2 kernels
@@ -20,12 +20,12 @@
  *      would still pass per-ID format-parity tests if the wrong
  *      output happens to match a different input).
  */
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 #include "test_util.h"
 
 #include <stdlib.h>
 
-#if defined(KSUID_HAVE_AVX2_BATCH) && (defined(__GNUC__) || defined(__clang__))
+#if defined(CHRONOID_HAVE_AVX2_BATCH) && (defined(__GNUC__) || defined(__clang__))
 #  define KSUID_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
  * so default-hidden visibility does not exclude these symbols. */

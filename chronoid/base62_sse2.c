@@ -22,7 +22,7 @@
 #include <emmintrin.h>          /* SSE2 */
 #include <stdint.h>
 
-#include <libksuid/base62_simd.h>
+#include <chronoid/base62_simd.h>
 
 int
 ksuid_base62_translate16_sse2 (uint8_t out[16], const uint8_t in[16])

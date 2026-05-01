@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Internal ChaCha20 block function used by libksuid's per-thread CSPRNG.
+ * Internal ChaCha20 block function used by libchronoid's per-thread CSPRNG.
  * IETF variant (RFC 8439): 32-bit block counter at state[12], 96-bit
  * nonce at state[13..15]. The block function emits 64 bytes of
  * keystream and increments state[12] with overflow into state[13]
@@ -8,7 +8,7 @@
  *
  * Algorithm by D. J. Bernstein (public domain reference at
  * http://cr.yp.to/chacha.html); this implementation is contributed
- * under LGPL-3.0-or-later along with the rest of libksuid.
+ * under LGPL-3.0-or-later along with the rest of libchronoid.
  */
 #ifndef KSUID_CHACHA20_H
 #define KSUID_CHACHA20_H

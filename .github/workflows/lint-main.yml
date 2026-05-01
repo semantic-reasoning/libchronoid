@@ -37,10 +37,10 @@ jobs:
 
       - name: Run gst-indent
         run: |
-          find libksuid examples tests \
+          find libchronoid examples tests \
             \( -name '*.c' -o -name '*.h' \) -print0 \
             | xargs -0 -r ./tools/gst-indent
-          find libksuid examples tests -name '*~' -delete
+          find libchronoid examples tests -name '*~' -delete
           git diff > format-results.txt || true
 
       - name: Publish results
@@ -87,7 +87,7 @@ jobs:
       - name: Run clang-tidy
         run: |
           run-clang-tidy-22 -p builddir \
-            "^.*/libksuid/.*\.(c|h)$" \
+            "^.*/chronoid/.*\.(c|h)$" \
             2>&1 | tee tidy-results.txt || true
 
       - name: Publish results

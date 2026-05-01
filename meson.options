@@ -1,7 +1,7 @@
 option('tests', type : 'boolean', value : true,
        description : 'Build the unit test suite')
 option('cli', type : 'boolean', value : true,
-       description : 'Build the ksuid-gen CLI tool')
+       description : 'Build the chronoid-gen CLI tool')
 option('simd', type : 'combo', choices : ['auto', 'none'], value : 'auto',
        description : 'Enable SIMD/NEON acceleration (auto-detected per host arch)')
 option('avx2_batch', type : 'feature', value : 'auto',

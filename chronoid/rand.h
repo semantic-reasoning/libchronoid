@@ -42,13 +42,13 @@ void ksuid_random_force_reseed (void);
  * caller. */
 void ksuid_random_thread_state_wipe (void);
 
-#ifdef KSUID_TESTING
-/* Test-only hooks compiled into the test binary via -DKSUID_TESTING=1
+#ifdef CHRONOID_TESTING
+/* Test-only hooks compiled into the test binary via -DCHRONOID_TESTING=1
  * (set per-test in tests/meson.build). They give tests/test_rand_tls.c
  * a way to drive the wipe path deterministically without depending on
  * thread-exit timing, and to peek at the post-wipe TLS state to prove
  * the bytes were actually zeroed. None of these symbols are exported
- * from the library; production builds compile without -DKSUID_TESTING
+ * from the library; production builds compile without -DCHRONOID_TESTING
  * and never see the prototypes. */
 
 /* Atomic counter incremented on every entry to

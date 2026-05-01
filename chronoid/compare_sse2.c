@@ -12,7 +12,7 @@
 #include <emmintrin.h>          /* SSE2 */
 #include <stdint.h>
 
-#include <libksuid/compare_simd.h>
+#include <chronoid/compare_simd.h>
 
 /* MSVC has no __builtin_ctz; use the BitScanForward intrinsic from
  * <intrin.h>. GCC/Clang inline the builtin to BSF / TZCNT directly. */

@@ -52,14 +52,14 @@
  * without it the fallback ships unverified on every supported
  * matrix lane. Production builds never set this. */
 #if !defined(KSUID_FORCE_VOLATILE_FALLBACK)
-#  if defined(KSUID_HAVE_EXPLICIT_BZERO_STRINGS_H)
+#  if defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRINGS_H)
 #    include <strings.h>
-#  elif defined(KSUID_HAVE_EXPLICIT_BZERO_STRING_H)
+#  elif defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRING_H)
 /* explicit_bzero already pulled in by <string.h> above. */
 #  elif defined(_WIN32) || defined(__CYGWIN__)
 #    define WIN32_LEAN_AND_MEAN
 #    include <windows.h>
-#  elif defined(KSUID_HAVE_MEMSET_S)
+#  elif defined(CHRONOID_HAVE_MEMSET_S)
 /* __STDC_WANT_LIB_EXT1__ is set project-wide by meson when this
  * branch is selected -- defining it here would be too late, the
  * unconditional <string.h> include at the top of this header has
@@ -74,14 +74,14 @@ ksuid_explicit_bzero (void *p, size_t n)
     return;
 
 #if !defined(KSUID_FORCE_VOLATILE_FALLBACK) && \
-    (defined(KSUID_HAVE_EXPLICIT_BZERO_STRINGS_H) \
-     || defined(KSUID_HAVE_EXPLICIT_BZERO_STRING_H))
+    (defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRINGS_H) \
+     || defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRING_H))
   explicit_bzero (p, n);
 #elif !defined(KSUID_FORCE_VOLATILE_FALLBACK) && \
     (defined(_WIN32) || defined(__CYGWIN__))
   SecureZeroMemory (p, n);
 #elif !defined(KSUID_FORCE_VOLATILE_FALLBACK) \
-    && defined(KSUID_HAVE_MEMSET_S)
+    && defined(CHRONOID_HAVE_MEMSET_S)
   memset_s (p, n, 0, n);
 #else
   /* Indirect-call-through-volatile fallback. The function pointer

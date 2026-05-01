@@ -15,7 +15,7 @@
 #include <arm_neon.h>
 #include <stdint.h>
 
-#include <libksuid/base62_simd.h>
+#include <chronoid/base62_simd.h>
 
 int
 ksuid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16])

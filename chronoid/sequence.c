@@ -6,9 +6,9 @@
  * Segment.io). Same uint32 counter trick to detect uint16 overflow,
  * same big-endian write of the count into the last two payload bytes.
  */
-#include <libksuid/ksuid.h>
+#include <chronoid/ksuid.h>
 
-#include <libksuid/byteorder.h>
+#include <chronoid/byteorder.h>
 
 _Static_assert (UINT16_MAX == 65535,
     "uint16 overflow guard expects 16-bit max");
