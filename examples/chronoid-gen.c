@@ -327,25 +327,15 @@ print_timestamp_uuidv7 (const chronoid_uuidv7_t *id)
   printf ("%" PRId64 "\n", chronoid_uuidv7_unix_ms (id));
 }
 
-/* UUIDv7 has no single "payload" field. We print the random tail
- * (rand_a's 12 bits packed into 2 bytes plus rand_b's 8 bytes) as
- * 10 raw bytes -- analogous to KSUID's binary -f payload output --
- * so scripted callers get a stable, byte-counted rendering. */
-static void
-print_payload_uuidv7 (const chronoid_uuidv7_t *id)
-{
-  uint8_t buf[10];
-  /* rand_a low nibble of byte 6 + byte 7 = 12-bit value packed into
-   * two bytes with the high nibble zeroed. */
-  buf[0] = id->b[6] & 0x0f;
-  buf[1] = id->b[7];
-  /* rand_b -- the variant bits in the top of byte 8 are part of the
-   * raw layout and are emitted as-is; this keeps the output a faithful
-   * slice of the binary UUID for round-trip uses. */
-  memcpy (buf + 2, id->b + 8, 8);
-  set_stdout_binary_for_raw_output ();
-  fwrite (buf, 1, sizeof buf, stdout);
-}
+/* No print_payload_uuidv7: UUIDv7 has no payload field equivalent
+ * to KSUID's 16-byte payload. RFC 9562 §5.7 splits randomness across
+ * rand_a (12 bits) and rand_b (62 bits) with version/variant nibbles
+ * overlaid; any single "payload" projection would be a category
+ * error. Callers wanting the unencoded byte image use -f raw (16
+ * bytes); callers wanting the random fields broken out use
+ * -f inspect (which prints rand_a and rand_b separately). The
+ * `-f payload` combination with --format=uuidv7 is rejected in
+ * main() before any output is written. */
 
 static void
 print_raw_uuidv7 (const chronoid_uuidv7_t *id)
@@ -381,13 +371,13 @@ print_one_uuidv7 (int format, const chronoid_uuidv7_t *id, int verbose)
     case FMT_TIMESTAMP:
       print_timestamp_uuidv7 (id);
       break;
-    case FMT_PAYLOAD:
-      print_payload_uuidv7 (id);
-      break;
     case FMT_RAW:
       print_raw_uuidv7 (id);
       break;
     default:
+      /* FMT_PAYLOAD is rejected up-front in main(); other values are
+       * filtered by parse_format(). Branch exists to satisfy
+       * bugprone-switch-missing-default-case. */
       break;
   }
 }
@@ -400,6 +390,10 @@ usage (FILE *f, const char *argv0)
       "  -n N        number of IDs to generate when no args given (default 1)\n"
       "  -f FORMAT   output projection: one of string, inspect, time,\n"
       "              timestamp, payload, raw (default: string)\n"
+      "              -f payload is KSUID-only; UUIDv7 has no equivalent\n"
+      "              field, so combining -f payload with a UUIDv7 is an\n"
+      "              error. Use -f raw for the 16-byte image or -f inspect\n"
+      "              for rand_a / rand_b.\n"
       "  --format=ID ID format for generation: one of ksuid, uuidv7\n"
       "              (default: ksuid)\n"
       "  -v          prefix each line with the ID and ': '\n"
@@ -502,6 +496,20 @@ main (int argc, char **argv)
     }
   }
 
+  /* Reject the (UUIDv7, -f payload) combination up-front in generation
+   * mode. UUIDv7 has no payload field per RFC 9562 §5.7; rand_a (12
+   * bits) and rand_b (62 bits) live mixed with the version/variant
+   * nibbles across bytes 6..15, and any single-slice "payload"
+   * projection is a category error. The check happens before the
+   * generation loop so no partial output is written. Parse mode runs
+   * the same check per-arg below, after auto-detect. */
+  if (idx == argc && format == FMT_PAYLOAD && idformat == IDFMT_UUIDV7) {
+    fprintf (stderr,
+        "-f payload is not supported for UUIDv7; use -f raw for the\n"
+        "16-byte image or -f inspect for rand_a / rand_b.\n");
+    return 1;
+  }
+
   if (idx == argc) {
     /* Generation mode. */
     for (long i = 0; i < count; ++i) {
@@ -545,6 +553,12 @@ main (int argc, char **argv)
             "format mismatch: --format=%s but %s looks like a %s (%zu chars)\n",
             idformat == IDFMT_UUIDV7 ? "uuidv7" : "ksuid",
             argv[i], detected == IDFMT_UUIDV7 ? "UUIDv7" : "KSUID", len);
+        return 1;
+      }
+      if (format == FMT_PAYLOAD && detected == IDFMT_UUIDV7) {
+        fprintf (stderr,
+            "-f payload is not supported for UUIDv7; use -f raw for the\n"
+            "16-byte image or -f inspect for rand_a / rand_b.\n");
         return 1;
       }
       if (detected == IDFMT_UUIDV7) {

@@ -7,6 +7,21 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
 
 ## [Unreleased]
 
+### Changed (BREAKING — pre-1.0 contract tightening)
+
+- `chronoid-gen -f payload` is now KSUID-only. Combining `-f payload`
+  with `--format=uuidv7` (generation mode) or with a 36-char
+  UUIDv7 positional (parse mode) exits non-zero with a stderr
+  message pointing at `-f raw` (16-byte image) or `-f inspect`
+  (rand_a / rand_b broken out). Rationale: UUIDv7 has no payload
+  field per RFC 9562 §5.7 — randomness lives in `rand_a` (12 bits)
+  and `rand_b` (62 bits) with version/variant nibbles overlaid, so
+  any single "payload" slice is a category error. The previous
+  10-byte slice shipped in 0.10.0 was structurally invertible but
+  semantically misnamed; failing closed before 1.0.0 keeps the
+  released-API contract honest. The `-f payload` projection for
+  KSUID is unchanged (16 bytes). Closes #3.
+
 ## [0.10.0] — 2026-05-01
 
 ### Added — UUIDv7 support
