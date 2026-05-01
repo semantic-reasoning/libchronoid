@@ -36,8 +36,10 @@ test_macros_at_static_storage_match_shared_symbols (void)
    * Windows lane) the runtime symbol resolution lands here at
    * comparison time, after the file-scope statics above were already
    * frozen at load time from the macro values. */
-  ASSERT_EQ_BYTES (kSharedNilInit.b, CHRONOID_KSUID_NIL.b, CHRONOID_KSUID_BYTES);
-  ASSERT_EQ_BYTES (kSharedMaxInit.b, CHRONOID_KSUID_MAX.b, CHRONOID_KSUID_BYTES);
+  ASSERT_EQ_BYTES (kSharedNilInit.b, CHRONOID_KSUID_NIL.b,
+      CHRONOID_KSUID_BYTES);
+  ASSERT_EQ_BYTES (kSharedMaxInit.b, CHRONOID_KSUID_MAX.b,
+      CHRONOID_KSUID_BYTES);
   ASSERT_TRUE (chronoid_ksuid_is_nil (&kSharedNilInit));
 
   /* Same regression guard for the UUIDv7 sentinels: with
@@ -47,9 +49,9 @@ test_macros_at_static_storage_match_shared_symbols (void)
    * still work as a static-storage initializer and yield byte-for-byte
    * equal contents. */
   ASSERT_EQ_BYTES (kSharedUuidv7NilInit.b, CHRONOID_UUIDV7_NIL.b,
-                   CHRONOID_UUIDV7_BYTES);
+      CHRONOID_UUIDV7_BYTES);
   ASSERT_EQ_BYTES (kSharedUuidv7MaxInit.b, CHRONOID_UUIDV7_MAX.b,
-                   CHRONOID_UUIDV7_BYTES);
+      CHRONOID_UUIDV7_BYTES);
   ASSERT_TRUE (chronoid_uuidv7_is_nil (&kSharedUuidv7NilInit));
   ASSERT_FALSE (chronoid_uuidv7_is_nil (&kSharedUuidv7MaxInit));
 }

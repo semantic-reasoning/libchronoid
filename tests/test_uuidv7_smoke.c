@@ -44,10 +44,14 @@ test_max_is_all_ff (void)
 static void
 test_compare_orders_lex (void)
 {
-  ASSERT_TRUE (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_NIL, &CHRONOID_UUIDV7_MAX) < 0);
-  ASSERT_TRUE (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_MAX, &CHRONOID_UUIDV7_NIL) > 0);
-  ASSERT_EQ_INT (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_NIL, &CHRONOID_UUIDV7_NIL), 0);
-  ASSERT_EQ_INT (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_MAX, &CHRONOID_UUIDV7_MAX), 0);
+  ASSERT_TRUE (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_NIL,
+          &CHRONOID_UUIDV7_MAX) < 0);
+  ASSERT_TRUE (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_MAX,
+          &CHRONOID_UUIDV7_NIL) > 0);
+  ASSERT_EQ_INT (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_NIL,
+          &CHRONOID_UUIDV7_NIL), 0);
+  ASSERT_EQ_INT (chronoid_uuidv7_compare (&CHRONOID_UUIDV7_MAX,
+          &CHRONOID_UUIDV7_MAX), 0);
 }
 
 static void
@@ -66,8 +70,10 @@ test_init_macros_match_symbols (void)
   /* File-scope statics: the codepath that fails on Windows DLL today.
    * Byte-for-byte parity with the runtime symbols proves the macros
    * encode the right constants. */
-  ASSERT_EQ_BYTES (kStaticNilInit.b, CHRONOID_UUIDV7_NIL.b, CHRONOID_UUIDV7_BYTES);
-  ASSERT_EQ_BYTES (kStaticMaxInit.b, CHRONOID_UUIDV7_MAX.b, CHRONOID_UUIDV7_BYTES);
+  ASSERT_EQ_BYTES (kStaticNilInit.b, CHRONOID_UUIDV7_NIL.b,
+      CHRONOID_UUIDV7_BYTES);
+  ASSERT_EQ_BYTES (kStaticMaxInit.b, CHRONOID_UUIDV7_MAX.b,
+      CHRONOID_UUIDV7_BYTES);
   ASSERT_TRUE (chronoid_uuidv7_is_nil (&kStaticNilInit));
 
   /* Block-scope static storage: distinct codepath from file scope on

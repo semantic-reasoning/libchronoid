@@ -93,7 +93,8 @@ chronoid_explicit_bzero (void *p, size_t n)
    * On MSVC <intrin.h>'s _ReadWriteBarrier serves the same role,
    * but MSVC builds use the SecureZeroMemory branch above so this
    * fallback is GCC/Clang in practice. */
-  static void *(*const volatile chronoid_memset_v) (void *, int, size_t) = memset;
+  static void *(*const volatile chronoid_memset_v) (void *, int, size_t) =
+      memset;
   chronoid_memset_v (p, 0, n);
 #  if defined(__GNUC__) || defined(__clang__)
   __asm__ __volatile__ (""::"r" (p):"memory");

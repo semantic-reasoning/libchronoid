@@ -20,18 +20,20 @@
 
 #include <chronoid/ksuid.h>
 
-typedef void (*chronoid_ksuid_string_batch_fn) (const chronoid_ksuid_t * ids, char *out_27n,
-    size_t n);
+typedef void (*chronoid_ksuid_string_batch_fn) (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
 
 /* Always-compiled scalar reference. Used by tests as the parity
  * baseline regardless of which production kernel is selected. */
-void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, char *out_27n, size_t n);
+void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
 
 #if defined(CHRONOID_HAVE_AVX2_BATCH)
 /* AVX2 8-wide kernel. Linked in only when meson detects an x86_64
  * host with -Davx2_batch enabled. Tail (n % 8) handled by falling
  * through to the scalar loop inside the kernel itself. */
-void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids, char *out_27n, size_t n);
+void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
 #endif
 
 #endif /* CHRONOID_KSUID_ENCODE_BATCH_H */

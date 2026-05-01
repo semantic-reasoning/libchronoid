@@ -49,7 +49,7 @@ chronoid_hex_encode_lower_ssse3 (char out[36], const uint8_t in[16])
   };
 
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
-  __m128i v   = _mm_loadu_si128 ((const __m128i *) in);
+  __m128i v = _mm_loadu_si128 ((const __m128i *) in);
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
   __m128i lut = _mm_loadu_si128 ((const __m128i *) kHexLowerLut);
 
@@ -60,7 +60,7 @@ chronoid_hex_encode_lower_ssse3 (char out[36], const uint8_t in[16])
    * high nibble lane become 0 after the AND, which is exactly what
    * pshufb wants for an in-LUT index (0..15). */
   __m128i hi_nibbles = _mm_and_si128 (_mm_srli_epi16 (v, 4), mask_low);
-  __m128i lo_nibbles = _mm_and_si128 (v,                     mask_low);
+  __m128i lo_nibbles = _mm_and_si128 (v, mask_low);
 
   /* pshufb: for each lane index i in [0..15], output[i] = LUT[low4(idx[i])].
    * Our nibble vectors only have values 0..15 by construction so the
@@ -78,7 +78,7 @@ chronoid_hex_encode_lower_ssse3 (char out[36], const uint8_t in[16])
 
   char tmp[32];
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
-  _mm_storeu_si128 ((__m128i *) (tmp + 0),  lo_half);
+  _mm_storeu_si128 ((__m128i *) (tmp + 0), lo_half);
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
   _mm_storeu_si128 ((__m128i *) (tmp + 16), hi_half);
 
@@ -93,14 +93,14 @@ chronoid_hex_encode_lower_ssse3 (char out[36], const uint8_t in[16])
    *   char  23     = '-'
    *   chars 24..35 = bytes 10..15 (12 hex digits)
    * Source offsets in tmp[] are 2x the byte index. */
-  memcpy (out +  0, tmp +  0,  8);  /* bytes 0..3   -> chars 0..7   */
-  out[8]  = '-';
-  memcpy (out +  9, tmp +  8,  4);  /* bytes 4..5   -> chars 9..12  */
+  memcpy (out + 0, tmp + 0, 8); /* bytes 0..3   -> chars 0..7   */
+  out[8] = '-';
+  memcpy (out + 9, tmp + 8, 4); /* bytes 4..5   -> chars 9..12  */
   out[13] = '-';
-  memcpy (out + 14, tmp + 12,  4);  /* bytes 6..7   -> chars 14..17 */
+  memcpy (out + 14, tmp + 12, 4);       /* bytes 6..7   -> chars 14..17 */
   out[18] = '-';
-  memcpy (out + 19, tmp + 16,  4);  /* bytes 8..9   -> chars 19..22 */
+  memcpy (out + 19, tmp + 16, 4);       /* bytes 8..9   -> chars 19..22 */
   out[23] = '-';
-  memcpy (out + 24, tmp + 20, 12);  /* bytes 10..15 -> chars 24..35 */
+  memcpy (out + 24, tmp + 20, 12);      /* bytes 10..15 -> chars 24..35 */
 }
 #endif /* x86 */

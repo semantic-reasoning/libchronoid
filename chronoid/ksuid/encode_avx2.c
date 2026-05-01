@@ -118,7 +118,8 @@ chronoid_ksuid_mulhi64_avx2 (__m256i a, __m256i b)
  * with shifts -- AVX2 has no native u64*u64-to-u64 truncating
  * multiply that would not require another mul_epu32 carry chain. */
 static inline void
-chronoid_ksuid_divmod62_avx2 (__m256i value, __m256i mag, __m256i *q_out, __m256i *r_out)
+chronoid_ksuid_divmod62_avx2 (__m256i value, __m256i mag, __m256i *q_out,
+    __m256i *r_out)
 {
   __m256i q = chronoid_ksuid_mulhi64_avx2 (value, mag);
   __m256i q62 =
@@ -135,7 +136,8 @@ chronoid_ksuid_divmod62_avx2 (__m256i value, __m256i mag, __m256i *q_out, __m256
 }
 
 void
-chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t *ids, char *out_27n, size_t n)
+chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t *ids, char *out_27n,
+    size_t n)
 {
   size_t bulk = n & ~(size_t) 7;
   __m256i mag = _mm256_set1_epi64x ((int64_t) CHRONOID_KSUID_DIV62_M);
@@ -152,10 +154,11 @@ chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t *ids, char *out_27n, si
       for (size_t j = 0; j < 5; ++j) {
         for (size_t lane = 0; lane < 4; ++lane) {
           plo[lane] =
-              (uint64_t) chronoid_be32_load (base_p + lane * CHRONOID_KSUID_BYTES + j * 4);
+              (uint64_t) chronoid_be32_load (base_p +
+              lane * CHRONOID_KSUID_BYTES + j * 4);
           phi[lane] =
-              (uint64_t) chronoid_be32_load (base_p + (lane + 4) * CHRONOID_KSUID_BYTES +
-              j * 4);
+              (uint64_t) chronoid_be32_load (base_p + (lane +
+                  4) * CHRONOID_KSUID_BYTES + j * 4);
         }
         /* _mm256_loadu_si256 is the AVX2 unaligned-load intrinsic;
          * the (__m256i *) cast is documented and does not require

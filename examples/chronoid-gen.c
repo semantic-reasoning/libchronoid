@@ -177,8 +177,10 @@ print_inspect (const chronoid_ksuid_t *id)
   printf ("\n" "\n" "COMPONENTS:\n" "\n" "       Time: ");
   fputs_time_local (chronoid_ksuid_time_unix (id), stdout);
   printf ("\n"
-      "  Timestamp: %" PRIu32 "\n" "    Payload: ", chronoid_ksuid_timestamp (id));
-  fputs_hex_upper (chronoid_ksuid_payload (id), CHRONOID_KSUID_PAYLOAD_LEN, stdout);
+      "  Timestamp: %" PRIu32 "\n" "    Payload: ",
+      chronoid_ksuid_timestamp (id));
+  fputs_hex_upper (chronoid_ksuid_payload (id), CHRONOID_KSUID_PAYLOAD_LEN,
+      stdout);
   fputs ("\n\n", stdout);
 }
 
@@ -285,8 +287,7 @@ print_inspect_uuidv7 (const chronoid_uuidv7_t *id)
       chronoid_uuidv7_unix_ms (id),
       (unsigned) chronoid_uuidv7_version (id),
       ((unsigned) chronoid_uuidv7_variant (id) >> 1) & 1u,
-      (unsigned) chronoid_uuidv7_variant (id) & 1u,
-      (unsigned) rand_a_12);
+      (unsigned) chronoid_uuidv7_variant (id) & 1u, (unsigned) rand_a_12);
   fputs_hex_upper (id->b + 8, 8, stdout);
   fputs ("\n\n", stdout);
 }
@@ -519,9 +520,7 @@ main (int argc, char **argv)
         fprintf (stderr,
             "format mismatch: --format=%s but %s looks like a %s (%zu chars)\n",
             idformat == IDFMT_UUIDV7 ? "uuidv7" : "ksuid",
-            argv[i],
-            detected == IDFMT_UUIDV7 ? "UUIDv7" : "KSUID",
-            len);
+            argv[i], detected == IDFMT_UUIDV7 ? "UUIDv7" : "KSUID", len);
         return 1;
       }
       if (detected == IDFMT_UUIDV7) {

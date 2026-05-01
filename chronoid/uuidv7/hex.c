@@ -95,20 +95,20 @@ chronoid_hex_encode_lower_scalar (char out[36], const uint8_t in[16])
    * Static table avoids branching on hyphen positions inside the
    * loop. */
   static const uint8_t kCharOff[16] = {
-    0,  2,  4,  6,                   /* group 1: chars 0..7   */
-    9,  11,                          /* group 2: chars 9..12  */
-    14, 16,                          /* group 3: chars 14..17 */
-    19, 21,                          /* group 4: chars 19..22 */
-    24, 26, 28, 30, 32, 34,          /* group 5: chars 24..35 */
+    0, 2, 4, 6,                 /* group 1: chars 0..7   */
+    9, 11,                      /* group 2: chars 9..12  */
+    14, 16,                     /* group 3: chars 14..17 */
+    19, 21,                     /* group 4: chars 19..22 */
+    24, 26, 28, 30, 32, 34,     /* group 5: chars 24..35 */
   };
 
   for (size_t i = 0; i < 16; ++i) {
     uint8_t b = in[i];
     size_t off = kCharOff[i];
-    out[off]     = kHexLower[(b >> 4) & 0x0F];
+    out[off] = kHexLower[(b >> 4) & 0x0F];
     out[off + 1] = kHexLower[b & 0x0F];
   }
-  out[8]  = '-';
+  out[8] = '-';
   out[13] = '-';
   out[18] = '-';
   out[23] = '-';
@@ -140,8 +140,8 @@ chronoid_hex_decode (uint8_t out[16], const char *s, size_t len)
    * offset for each output byte. Keeping the table identical to the
    * encode side makes drift impossible. */
   static const uint8_t kCharOff[16] = {
-    0,  2,  4,  6,
-    9,  11,
+    0, 2, 4, 6,
+    9, 11,
     14, 16,
     19, 21,
     24, 26, 28, 30, 32, 34,

@@ -29,9 +29,9 @@
 #  define CHRONOID_UUIDV7_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
  * so default-hidden visibility does not exclude these symbols. */
-extern void chronoid_uuidv7_string_batch_scalar (const chronoid_uuidv7_t *ids,
+extern void chronoid_uuidv7_string_batch_scalar (const chronoid_uuidv7_t * ids,
     char *out_36n, size_t n);
-extern void chronoid_uuidv7_string_batch_avx2 (const chronoid_uuidv7_t *ids,
+extern void chronoid_uuidv7_string_batch_avx2 (const chronoid_uuidv7_t * ids,
     char *out_36n, size_t n);
 #else
 #  define CHRONOID_UUIDV7_TEST_AVX2_PARITY 0
@@ -81,14 +81,53 @@ test_batch_matches_format_for_n (size_t n)
   free (batch_out);
 }
 
-static void test_batch_one (void)               { test_batch_matches_format_for_n (1); }
-static void test_batch_three (void)             { test_batch_matches_format_for_n (3); }
-static void test_batch_four_exact (void)        { test_batch_matches_format_for_n (4); }
-static void test_batch_five_one_past (void)     { test_batch_matches_format_for_n (5); }
-static void test_batch_fifteen (void)           { test_batch_matches_format_for_n (15); }
-static void test_batch_sixteen (void)           { test_batch_matches_format_for_n (16); }
-static void test_batch_seventeen (void)         { test_batch_matches_format_for_n (17); }
-static void test_batch_257_misaligned (void)    { test_batch_matches_format_for_n (257); }
+static void
+test_batch_one (void)
+{
+  test_batch_matches_format_for_n (1);
+}
+
+static void
+test_batch_three (void)
+{
+  test_batch_matches_format_for_n (3);
+}
+
+static void
+test_batch_four_exact (void)
+{
+  test_batch_matches_format_for_n (4);
+}
+
+static void
+test_batch_five_one_past (void)
+{
+  test_batch_matches_format_for_n (5);
+}
+
+static void
+test_batch_fifteen (void)
+{
+  test_batch_matches_format_for_n (15);
+}
+
+static void
+test_batch_sixteen (void)
+{
+  test_batch_matches_format_for_n (16);
+}
+
+static void
+test_batch_seventeen (void)
+{
+  test_batch_matches_format_for_n (17);
+}
+
+static void
+test_batch_257_misaligned (void)
+{
+  test_batch_matches_format_for_n (257);
+}
 
 static void
 test_batch_pinned_corners (void)
@@ -286,8 +325,7 @@ test_avx2_parity_one_million_lcg (void)
  * On AVX2-capable hosts this proves the override actually pins
  * scalar; on non-AVX2 hosts the dispatcher already resolves to
  * scalar, so the test still asserts byte-equality with chronoid_uuidv7_format. */
-static int
-test_force_scalar_setup_done = 0;
+static int test_force_scalar_setup_done = 0;
 
 static void
 test_force_scalar_env_pins_scalar (void)

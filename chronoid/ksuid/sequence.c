@@ -22,14 +22,16 @@ chronoid_ksuid_sequence_apply_count (chronoid_ksuid_t *id, uint16_t n)
 }
 
 void
-chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t *s, const chronoid_ksuid_t *seed)
+chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t *s,
+    const chronoid_ksuid_t *seed)
 {
   s->seed = *seed;
   s->count = 0;
 }
 
 chronoid_ksuid_err_t
-chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t *s, chronoid_ksuid_t *out)
+chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t *s,
+    chronoid_ksuid_t *out)
 {
   if (s->count > UINT16_MAX)
     return CHRONOID_KSUID_ERR_EXHAUSTED;
@@ -40,7 +42,8 @@ chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t *s, chronoid_ksuid_t *ou
 }
 
 void
-chronoid_ksuid_sequence_bounds (const chronoid_ksuid_sequence_t *s, chronoid_ksuid_t *min, chronoid_ksuid_t *max)
+chronoid_ksuid_sequence_bounds (const chronoid_ksuid_sequence_t *s,
+    chronoid_ksuid_t *min, chronoid_ksuid_t *max)
 {
   uint32_t lo = s->count;
   if (lo > UINT16_MAX)

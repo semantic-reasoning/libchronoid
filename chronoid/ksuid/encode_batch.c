@@ -41,7 +41,8 @@
 #endif
 
 void
-chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t *ids, char *out_27n, size_t n)
+chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t *ids, char *out_27n,
+    size_t n)
 {
   /* Plain per-ID loop calling the existing scalar formatter. The
    * compiler can't auto-vectorise the long-division-by-62 inner
@@ -93,8 +94,8 @@ chronoid_ksuid_cpu_supports_avx2 (void)
 #endif /* CHRONOID_HAVE_AVX2_BATCH */
 
 static void
-chronoid_ksuid_string_batch_init_trampoline (const chronoid_ksuid_t * ids, char *out_27n,
-    size_t n);
+chronoid_ksuid_string_batch_init_trampoline (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
 
 /* _Atomic-qualified pointer, not _Atomic(T) shorthand -- the latter
  * confuses gst-indent (it parses _Atomic(T) as a function call). */
@@ -124,21 +125,23 @@ chronoid_force_scalar_env (void)
 }
 
 static void
-chronoid_ksuid_string_batch_init_trampoline (const chronoid_ksuid_t *ids, char *out_27n, size_t n)
+chronoid_ksuid_string_batch_init_trampoline (const chronoid_ksuid_t *ids,
+    char *out_27n, size_t n)
 {
   chronoid_ksuid_string_batch_fn resolved = &chronoid_ksuid_string_batch_scalar;
 #if defined(CHRONOID_HAVE_AVX2_BATCH)
   if (!chronoid_force_scalar_env () && chronoid_ksuid_cpu_supports_avx2 ())
     resolved = &chronoid_ksuid_string_batch_avx2;
 #else
-  (void) chronoid_force_scalar_env;        /* silence unused-static warning */
+  (void) chronoid_force_scalar_env;     /* silence unused-static warning */
 #endif
   atomic_store_explicit (&g_batch_impl, resolved, memory_order_release);
   resolved (ids, out_27n, n);
 }
 
 void
-chronoid_ksuid_string_batch (const chronoid_ksuid_t *ids, char *out_27n, size_t n)
+chronoid_ksuid_string_batch (const chronoid_ksuid_t *ids, char *out_27n,
+    size_t n)
 {
   /* The n == 0 early-out lives here, before the dispatch indirect
    * call, so callers passing 0 don't pay for the atomic load. */
