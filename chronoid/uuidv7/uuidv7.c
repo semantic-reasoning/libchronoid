@@ -19,8 +19,10 @@
  * chronoid/ksuid/ksuid.c. The smoke test pins the equivalence at
  * runtime, but a single source of truth at the definition site
  * removes the possibility entirely. */
-CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_NIL = CHRONOID_UUIDV7_NIL_INIT;
-CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_MAX = CHRONOID_UUIDV7_MAX_INIT;
+CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_NIL =
+    CHRONOID_UUIDV7_NIL_INIT;
+CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_MAX =
+    CHRONOID_UUIDV7_MAX_INIT;
 
 /* Inclusive upper bound on the 48-bit Unix-ms timestamp encodable in
  * bytes 0..5 of a UUIDv7. Anything outside [0, UUIDV7_MAX_UNIX_MS] is

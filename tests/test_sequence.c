@@ -61,7 +61,8 @@ test_sequence_exhausts_after_65536 (void)
   ASSERT_EQ_INT (out.b[CHRONOID_KSUID_BYTES - 2], 0xff);
   ASSERT_EQ_INT (out.b[CHRONOID_KSUID_BYTES - 1], 0xff);
   /* The 65537th call must fail. */
-  ASSERT_EQ_INT (chronoid_ksuid_sequence_next (&s, &out), CHRONOID_KSUID_ERR_EXHAUSTED);
+  ASSERT_EQ_INT (chronoid_ksuid_sequence_next (&s, &out),
+      CHRONOID_KSUID_ERR_EXHAUSTED);
 }
 
 static void

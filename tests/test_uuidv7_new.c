@@ -13,7 +13,7 @@
  *   - RNG failure is surfaced as CHRONOID_UUIDV7_ERR_RNG and |*out|
  *     stays unchanged.
  */
-#include <chronoid/ksuid.h>      /* for chronoid_set_rand */
+#include <chronoid/ksuid.h>     /* for chronoid_set_rand */
 #include <chronoid/uuidv7.h>
 #include "test_util.h"
 
@@ -37,13 +37,15 @@ test_new_timestamp_tracks_wallclock (void)
    * matches what chronoid_now_ms does internally. */
   struct timespec ts;
   ASSERT_EQ_INT (timespec_get (&ts, TIME_UTC), TIME_UTC);
-  int64_t pre_ms = (int64_t) ts.tv_sec * 1000 + (int64_t) (ts.tv_nsec / 1000000);
+  int64_t pre_ms =
+      (int64_t) ts.tv_sec * 1000 + (int64_t) (ts.tv_nsec / 1000000);
 
   chronoid_uuidv7_t id;
   ASSERT_EQ_INT (chronoid_uuidv7_new (&id), CHRONOID_UUIDV7_OK);
 
   ASSERT_EQ_INT (timespec_get (&ts, TIME_UTC), TIME_UTC);
-  int64_t post_ms = (int64_t) ts.tv_sec * 1000 + (int64_t) (ts.tv_nsec / 1000000);
+  int64_t post_ms =
+      (int64_t) ts.tv_sec * 1000 + (int64_t) (ts.tv_nsec / 1000000);
 
   int64_t embedded = chronoid_uuidv7_unix_ms (&id);
   ASSERT_TRUE (embedded >= pre_ms - 5);
@@ -58,7 +60,8 @@ test_new_with_time_pins_timestamp (void)
    * is recognisable. */
   const int64_t unix_ms = 1234567890123LL;
   chronoid_uuidv7_t id;
-  ASSERT_EQ_INT (chronoid_uuidv7_new_with_time (&id, unix_ms), CHRONOID_UUIDV7_OK);
+  ASSERT_EQ_INT (chronoid_uuidv7_new_with_time (&id, unix_ms),
+      CHRONOID_UUIDV7_OK);
   ASSERT_EQ_INT (chronoid_uuidv7_unix_ms (&id), unix_ms);
   ASSERT_EQ_INT (chronoid_uuidv7_version (&id), 0x7);
   ASSERT_EQ_INT (chronoid_uuidv7_variant (&id), 0x2);
@@ -123,7 +126,7 @@ test_rng_failing (void *opaque, uint8_t *buf, size_t n)
 static void
 test_set_rand_overrides_uuidv7_random (void)
 {
-  chronoid_test_rng_ctx_t ctx = { .fill = 0xa5, .call_count = 0 };
+  chronoid_test_rng_ctx_t ctx = {.fill = 0xa5,.call_count = 0 };
   chronoid_set_rand (test_rng_fixed, &ctx);
 
   chronoid_uuidv7_t id;

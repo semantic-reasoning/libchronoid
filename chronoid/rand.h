@@ -53,7 +53,7 @@ int64_t chronoid_now_ms (void);
  * The same override governs both formats: a single chronoid_set_rand
  * call routes both chronoid_ksuid_new and chronoid_uuidv7_new through
  * the supplied function. */
-int chronoid_internal_fill_random (uint8_t *buf, size_t n);
+int chronoid_internal_fill_random (uint8_t * buf, size_t n);
 
 /* Issue #4 thread-exit hook. Wipes the calling thread's CSPRNG
  * state in place via chronoid_explicit_bzero so the 64-byte ChaCha20
@@ -92,7 +92,8 @@ void chronoid_random_thread_state_set_sentinel_for_testing (void);
  * must be at least sizeof(chronoid_tls_rng_t) -- the test is allowed to
  * over-allocate). Used to assert the wipe actually zeroed the
  * region. */
-void chronoid_random_thread_state_peek_for_testing (uint8_t * out, size_t out_len);
+void chronoid_random_thread_state_peek_for_testing (uint8_t * out,
+    size_t out_len);
 
 /* Size in bytes that a peek buffer must accommodate. */
 size_t chronoid_random_thread_state_size_for_testing (void);

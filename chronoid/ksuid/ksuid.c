@@ -24,8 +24,10 @@
  * test_init_macros_match_symbols pins the same equivalence at runtime
  * but a single source of truth at the definition site removes the
  * possibility entirely. */
-CHRONOID_PUBLIC const chronoid_ksuid_t CHRONOID_KSUID_NIL = CHRONOID_KSUID_NIL_INIT;
-CHRONOID_PUBLIC const chronoid_ksuid_t CHRONOID_KSUID_MAX = CHRONOID_KSUID_MAX_INIT;
+CHRONOID_PUBLIC const chronoid_ksuid_t CHRONOID_KSUID_NIL =
+    CHRONOID_KSUID_NIL_INIT;
+CHRONOID_PUBLIC const chronoid_ksuid_t CHRONOID_KSUID_MAX =
+    CHRONOID_KSUID_MAX_INIT;
 
 bool
 chronoid_ksuid_is_nil (const chronoid_ksuid_t *id)
@@ -63,7 +65,8 @@ chronoid_ksuid_from_parts (chronoid_ksuid_t *out,
   if (corrected < 0 || corrected > (int64_t) UINT32_MAX)
     return CHRONOID_KSUID_ERR_TIME_RANGE;
   chronoid_be32_store (out->b, (uint32_t) corrected);
-  memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload, CHRONOID_KSUID_PAYLOAD_LEN);
+  memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload,
+      CHRONOID_KSUID_PAYLOAD_LEN);
   return CHRONOID_KSUID_OK;
 }
 
@@ -103,7 +106,8 @@ chronoid_ksuid_parse (chronoid_ksuid_t *out, const char *s, size_t len)
 }
 
 void
-chronoid_ksuid_format (const chronoid_ksuid_t *id, char out[CHRONOID_KSUID_STRING_LEN])
+chronoid_ksuid_format (const chronoid_ksuid_t *id,
+    char out[CHRONOID_KSUID_STRING_LEN])
 {
   chronoid_base62_encode ((uint8_t *) out, id->b);
 }
@@ -160,7 +164,8 @@ chronoid_ksuid_new_with_time (chronoid_ksuid_t *out, int64_t unix_seconds)
   if (chronoid_internal_fill_random (payload, CHRONOID_KSUID_PAYLOAD_LEN) != 0)
     return CHRONOID_KSUID_ERR_RNG;
   chronoid_be32_store (out->b, (uint32_t) corrected);
-  memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload, CHRONOID_KSUID_PAYLOAD_LEN);
+  memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload,
+      CHRONOID_KSUID_PAYLOAD_LEN);
   return CHRONOID_KSUID_OK;
 }
 

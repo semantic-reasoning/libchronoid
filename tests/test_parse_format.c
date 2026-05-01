@@ -16,13 +16,16 @@ static void
 test_parse_golden (void)
 {
   chronoid_ksuid_t id;
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr,
+          CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
   ASSERT_EQ_BYTES (id.b, kSampleBytes, CHRONOID_KSUID_BYTES);
 
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kNilStr, CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kNilStr, CHRONOID_KSUID_STRING_LEN),
+      CHRONOID_KSUID_OK);
   ASSERT_TRUE (chronoid_ksuid_is_nil (&id));
 
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kMaxStr, CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kMaxStr, CHRONOID_KSUID_STRING_LEN),
+      CHRONOID_KSUID_OK);
   ASSERT_EQ_INT (chronoid_ksuid_compare (&id, &CHRONOID_KSUID_MAX), 0);
 }
 
@@ -30,9 +33,12 @@ static void
 test_parse_size_errors (void)
 {
   chronoid_ksuid_t id = CHRONOID_KSUID_MAX;
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 0), CHRONOID_KSUID_ERR_STR_SIZE);
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 26), CHRONOID_KSUID_ERR_STR_SIZE);
-  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 28), CHRONOID_KSUID_ERR_STR_SIZE);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 0),
+      CHRONOID_KSUID_ERR_STR_SIZE);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 26),
+      CHRONOID_KSUID_ERR_STR_SIZE);
+  ASSERT_EQ_INT (chronoid_ksuid_parse (&id, kSampleStr, 28),
+      CHRONOID_KSUID_ERR_STR_SIZE);
   /* On size error |out| must not have been mutated. */
   ASSERT_EQ_INT (chronoid_ksuid_compare (&id, &CHRONOID_KSUID_MAX), 0);
 }
@@ -100,7 +106,8 @@ test_round_trip (void)
     char str[CHRONOID_KSUID_STRING_LEN];
     chronoid_ksuid_format (&in, str);
     chronoid_ksuid_t round;
-    ASSERT_EQ_INT (chronoid_ksuid_parse (&round, str, CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
+    ASSERT_EQ_INT (chronoid_ksuid_parse (&round, str,
+            CHRONOID_KSUID_STRING_LEN), CHRONOID_KSUID_OK);
     ASSERT_EQ_BYTES (round.b, in.b, CHRONOID_KSUID_BYTES);
   }
 }

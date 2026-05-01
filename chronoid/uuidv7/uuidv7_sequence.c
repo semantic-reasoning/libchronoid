@@ -47,7 +47,8 @@ static chronoid_uuidv7_err_t
 chronoid_uuidv7_sequence_draw_counter (uint16_t *out)
 {
   uint8_t two[2];
-  chronoid_uuidv7_err_t e = chronoid_uuidv7_sequence_draw_random (two, sizeof two);
+  chronoid_uuidv7_err_t e =
+      chronoid_uuidv7_sequence_draw_random (two, sizeof two);
   if (e != CHRONOID_UUIDV7_OK)
     return e;
   *out = (uint16_t) ((((uint16_t) two[0] << 8) | two[1]) & UUIDV7_COUNTER_MASK);

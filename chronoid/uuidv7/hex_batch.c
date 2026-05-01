@@ -113,7 +113,7 @@ chronoid_uuidv7_string_batch_init_trampoline (const chronoid_uuidv7_t *ids,
       && chronoid_uuidv7_cpu_supports_avx2 ())
     resolved = &chronoid_uuidv7_string_batch_avx2;
 #else
-  (void) chronoid_uuidv7_force_scalar_env;       /* silence unused-static warning */
+  (void) chronoid_uuidv7_force_scalar_env;      /* silence unused-static warning */
 #endif
   atomic_store_explicit (&g_hex_batch_impl, resolved, memory_order_release);
   resolved (ids, out_36n, n);

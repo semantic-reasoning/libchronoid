@@ -29,10 +29,10 @@
 #  define CHRONOID_KSUID_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
  * so default-hidden visibility does not exclude these symbols. */
-extern void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, char *out_27n,
-    size_t n);
-extern void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids, char *out_27n,
-    size_t n);
+extern void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
+extern void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids,
+    char *out_27n, size_t n);
 #else
 #  define CHRONOID_KSUID_TEST_AVX2_PARITY 0
 #endif
@@ -73,7 +73,8 @@ test_batch_matches_format_for_n (size_t n)
   for (size_t i = 0; i < n; ++i) {
     char ref[CHRONOID_KSUID_STRING_LEN];
     chronoid_ksuid_format (&ids[i], ref);
-    ASSERT_EQ_BYTES (batch_out + i * CHRONOID_KSUID_STRING_LEN, ref, CHRONOID_KSUID_STRING_LEN);
+    ASSERT_EQ_BYTES (batch_out + i * CHRONOID_KSUID_STRING_LEN, ref,
+        CHRONOID_KSUID_STRING_LEN);
   }
   free (ids);
   free (batch_out);
@@ -131,7 +132,8 @@ test_batch_pinned_corners (void)
   for (size_t i = 0; i < 3; ++i) {
     char ref[CHRONOID_KSUID_STRING_LEN];
     chronoid_ksuid_format (&ids[i], ref);
-    ASSERT_EQ_BYTES (out + i * CHRONOID_KSUID_STRING_LEN, ref, CHRONOID_KSUID_STRING_LEN);
+    ASSERT_EQ_BYTES (out + i * CHRONOID_KSUID_STRING_LEN, ref,
+        CHRONOID_KSUID_STRING_LEN);
   }
 }
 
@@ -284,7 +286,8 @@ test_avx2_parity_one_million_lcg (void)
   if (memcmp (out_s, out_a, n * CHRONOID_KSUID_STRING_LEN) != 0) {
     for (size_t i = 0; i < n; ++i) {
       if (memcmp (out_s + i * CHRONOID_KSUID_STRING_LEN,
-              out_a + i * CHRONOID_KSUID_STRING_LEN, CHRONOID_KSUID_STRING_LEN) != 0) {
+              out_a + i * CHRONOID_KSUID_STRING_LEN,
+              CHRONOID_KSUID_STRING_LEN) != 0) {
         fprintf (stderr, "  AVX2 parity diverged at lane %zu of %zu\n", i, n);
         chronoid_test_failures_++;
         break;

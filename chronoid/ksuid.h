@@ -36,11 +36,11 @@ extern "C"
  * Wire-format constants (compatible with segmentio/ksuid).
  * -------------------------------------------------------------------------- */
 
-#define CHRONOID_KSUID_BYTES          20 /* binary length                         */
-#define CHRONOID_KSUID_STRING_LEN     27 /* base62 string length (no NUL)         */
-#define CHRONOID_KSUID_PAYLOAD_LEN    16 /* random payload length                 */
-#define CHRONOID_KSUID_TIMESTAMP_LEN  4  /* big-endian uint32 prefix              */
-#define CHRONOID_KSUID_EPOCH_SECONDS  1400000000LL       /* 2014-05-13 16:53:20 UTC       */
+#define CHRONOID_KSUID_BYTES          20        /* binary length                         */
+#define CHRONOID_KSUID_STRING_LEN     27        /* base62 string length (no NUL)         */
+#define CHRONOID_KSUID_PAYLOAD_LEN    16        /* random payload length                 */
+#define CHRONOID_KSUID_TIMESTAMP_LEN  4 /* big-endian uint32 prefix              */
+#define CHRONOID_KSUID_EPOCH_SECONDS  1400000000LL      /* 2014-05-13 16:53:20 UTC       */
 
   typedef struct ksuid
   {
@@ -66,13 +66,13 @@ extern "C"
   typedef enum chronoid_ksuid_err
   {
     CHRONOID_KSUID_OK = 0,
-    CHRONOID_KSUID_ERR_SIZE = -1,        /* bad binary length                     */
-    CHRONOID_KSUID_ERR_STR_SIZE = -2,    /* bad string length                     */
-    CHRONOID_KSUID_ERR_STR_VALUE = -3,   /* string contains non-base62 / overflow */
-    CHRONOID_KSUID_ERR_PAYLOAD_SIZE = -4,        /* payload != CHRONOID_KSUID_PAYLOAD_LEN          */
-    CHRONOID_KSUID_ERR_RNG = -5,         /* OS random source unavailable          */
-    CHRONOID_KSUID_ERR_EXHAUSTED = -6,   /* sequence exhausted                    */
-    CHRONOID_KSUID_ERR_TIME_RANGE = -7   /* unix_seconds outside KSUID epoch range */
+    CHRONOID_KSUID_ERR_SIZE = -1,       /* bad binary length                     */
+    CHRONOID_KSUID_ERR_STR_SIZE = -2,   /* bad string length                     */
+    CHRONOID_KSUID_ERR_STR_VALUE = -3,  /* string contains non-base62 / overflow */
+    CHRONOID_KSUID_ERR_PAYLOAD_SIZE = -4,       /* payload != CHRONOID_KSUID_PAYLOAD_LEN          */
+    CHRONOID_KSUID_ERR_RNG = -5,        /* OS random source unavailable          */
+    CHRONOID_KSUID_ERR_EXHAUSTED = -6,  /* sequence exhausted                    */
+    CHRONOID_KSUID_ERR_TIME_RANGE = -7  /* unix_seconds outside KSUID epoch range */
   } chronoid_ksuid_err_t;
 
 /* Two forms of the same sentinel values:
@@ -106,7 +106,8 @@ extern "C"
 
 /* Lexicographic comparison over the full 20-byte representation, matching
  * the Go implementation's bytes.Compare semantics. Returns <0, 0, or >0. */
-  CHRONOID_PUBLIC int chronoid_ksuid_compare (const chronoid_ksuid_t * a, const chronoid_ksuid_t * b);
+  CHRONOID_PUBLIC int chronoid_ksuid_compare (const chronoid_ksuid_t * a,
+      const chronoid_ksuid_t * b);
 
 /* --------------------------------------------------------------------------
  * Construction from raw inputs.
@@ -114,30 +115,35 @@ extern "C"
 
 /* Copy the binary KSUID at |b| (which must be exactly CHRONOID_KSUID_BYTES long) into
  * |out|. On error |out| is left untouched. */
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_from_bytes (chronoid_ksuid_t * out, const uint8_t * b,
+  CHRONOID_PUBLIC chronoid_ksuid_err_t
+      chronoid_ksuid_from_bytes (chronoid_ksuid_t * out, const uint8_t * b,
       size_t n);
 
 /* Build |out| from a Unix timestamp (in seconds) and a 16-byte payload. The
  * timestamp must lie within the closed interval [CHRONOID_KSUID_EPOCH_SECONDS,
  * CHRONOID_KSUID_EPOCH_SECONDS + UINT32_MAX] -- the full 32-bit lifetime of the KSUID
  * format. Out-of-range inputs return CHRONOID_KSUID_ERR_TIME_RANGE. */
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_from_parts (chronoid_ksuid_t * out,
-      int64_t unix_seconds, const uint8_t * payload, size_t payload_len);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t
+      chronoid_ksuid_from_parts (chronoid_ksuid_t * out, int64_t unix_seconds,
+      const uint8_t * payload, size_t payload_len);
 
 /* --------------------------------------------------------------------------
  * Field accessors.
  * -------------------------------------------------------------------------- */
 
 /* The KSUID's 32-bit big-endian timestamp, uncorrected for the custom epoch. */
-  CHRONOID_PUBLIC uint32_t chronoid_ksuid_timestamp (const chronoid_ksuid_t * id);
+  CHRONOID_PUBLIC uint32_t chronoid_ksuid_timestamp (const chronoid_ksuid_t *
+      id);
 
 /* The KSUID's timestamp interpreted as Unix seconds (i.e. timestamp + epoch). */
-  CHRONOID_PUBLIC int64_t chronoid_ksuid_time_unix (const chronoid_ksuid_t * id);
+  CHRONOID_PUBLIC int64_t chronoid_ksuid_time_unix (const chronoid_ksuid_t *
+      id);
 
 /* Pointer into |id| to the 16-byte payload region (id->b + 4). The pointer is
  * borrowed from |id|; do not free, and do not use after |id| goes out of
  * scope. */
-  CHRONOID_PUBLIC const uint8_t *chronoid_ksuid_payload (const chronoid_ksuid_t * id);
+  CHRONOID_PUBLIC const uint8_t *chronoid_ksuid_payload (const chronoid_ksuid_t
+      * id);
 
 /* --------------------------------------------------------------------------
  * Base62 string conversion.
@@ -150,8 +156,8 @@ extern "C"
  * CHRONOID_KSUID_MAX. On any error the contents of |out| are guaranteed unchanged --
  * decoding writes to a stack temporary first and only copies into |out|
  * once the input has been fully validated. */
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_parse (chronoid_ksuid_t * out, const char *s,
-      size_t len);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_parse (chronoid_ksuid_t *
+      out, const char *s, size_t len);
 
 /* Write the 27-character base62 representation of |id| into |out|. The
  * output is NOT NUL-terminated; callers needing a C string should size
@@ -185,8 +191,8 @@ extern "C"
  * is a no-op. The call is thread-safe for concurrent invocations on
  * disjoint output buffers; callers must not race two threads on the
  * same |out_27n| slice. */
-  CHRONOID_PUBLIC void chronoid_ksuid_string_batch (const chronoid_ksuid_t * ids,
-      char *out_27n, size_t n);
+  CHRONOID_PUBLIC void chronoid_ksuid_string_batch (const chronoid_ksuid_t *
+      ids, char *out_27n, size_t n);
 
 /* --------------------------------------------------------------------------
  * Sequence: monotonic ordered KSUIDs from a single seed.
@@ -204,12 +210,14 @@ extern "C"
     uint32_t count;
   } chronoid_ksuid_sequence_t;
 
-  CHRONOID_PUBLIC void chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t * s,
-      const chronoid_ksuid_t * seed);
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t * s,
+  CHRONOID_PUBLIC void chronoid_ksuid_sequence_init (chronoid_ksuid_sequence_t *
+      s, const chronoid_ksuid_t * seed);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t
+      chronoid_ksuid_sequence_next (chronoid_ksuid_sequence_t * s,
       chronoid_ksuid_t * out);
-  CHRONOID_PUBLIC void chronoid_ksuid_sequence_bounds (const chronoid_ksuid_sequence_t * s,
-      chronoid_ksuid_t * min, chronoid_ksuid_t * max);
+  CHRONOID_PUBLIC void chronoid_ksuid_sequence_bounds (const
+      chronoid_ksuid_sequence_t * s, chronoid_ksuid_t * min,
+      chronoid_ksuid_t * max);
 
 /* --------------------------------------------------------------------------
  * Random KSUID generation.
@@ -237,13 +245,15 @@ extern "C"
  * -------------------------------------------------------------------------- */
 
 /* Generate a new KSUID stamped with the current wall-clock time. */
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_new (chronoid_ksuid_t * out);
+  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_new (chronoid_ksuid_t *
+      out);
 
 /* Generate a new KSUID stamped with |unix_seconds|. The timestamp must
  * fall within [CHRONOID_KSUID_EPOCH_SECONDS, CHRONOID_KSUID_EPOCH_SECONDS + UINT32_MAX]
  * just like chronoid_ksuid_from_parts; out-of-range returns
  * CHRONOID_KSUID_ERR_TIME_RANGE. */
-  CHRONOID_PUBLIC chronoid_ksuid_err_t chronoid_ksuid_new_with_time (chronoid_ksuid_t * out,
+  CHRONOID_PUBLIC chronoid_ksuid_err_t
+      chronoid_ksuid_new_with_time (chronoid_ksuid_t * out,
       int64_t unix_seconds);
 
 /* Replace the global random source. The default source is the

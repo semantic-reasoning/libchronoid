@@ -103,11 +103,9 @@ chronoid_uuidv7_hex32_avx2 (char out64[64], const uint8_t *in32)
    * in (lo_half-lo, hi_half-lo, lo_half-hi, hi_half-hi) order
    * produces the contiguous 64-char output. */
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
-  _mm_storeu_si128 ((__m128i *) (out64 + 0),
-      _mm256_castsi256_si128 (lo_half));
+  _mm_storeu_si128 ((__m128i *) (out64 + 0), _mm256_castsi256_si128 (lo_half));
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
-  _mm_storeu_si128 ((__m128i *) (out64 + 16),
-      _mm256_castsi256_si128 (hi_half));
+  _mm_storeu_si128 ((__m128i *) (out64 + 16), _mm256_castsi256_si128 (hi_half));
   /* NOLINTNEXTLINE(clang-diagnostic-cast-align) */
   _mm_storeu_si128 ((__m128i *) (out64 + 32),
       _mm256_extracti128_si256 (lo_half, 1));

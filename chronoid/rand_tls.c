@@ -63,8 +63,8 @@
  * via the CHRONOID_TESTING-gated for_testing helpers added in commit 3.
  */
 
-#define CHRONOID_RNG_RESEED_BYTES   (1u << 20)     /* 1 MiB                   */
-#define CHRONOID_RNG_RESEED_SECONDS 3600   /* 1 hour                  */
+#define CHRONOID_RNG_RESEED_BYTES   (1u << 20)  /* 1 MiB                   */
+#define CHRONOID_RNG_RESEED_SECONDS 3600        /* 1 hour                  */
 
 typedef struct
 {

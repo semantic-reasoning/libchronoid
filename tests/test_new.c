@@ -44,9 +44,11 @@ static void
 test_new_with_time_rejects_out_of_range (void)
 {
   chronoid_ksuid_t id;
-  ASSERT_EQ_INT (chronoid_ksuid_new_with_time (&id, 0), CHRONOID_KSUID_ERR_TIME_RANGE);
+  ASSERT_EQ_INT (chronoid_ksuid_new_with_time (&id, 0),
+      CHRONOID_KSUID_ERR_TIME_RANGE);
   int64_t past = CHRONOID_KSUID_EPOCH_SECONDS + (int64_t) UINT32_MAX + 1;
-  ASSERT_EQ_INT (chronoid_ksuid_new_with_time (&id, past), CHRONOID_KSUID_ERR_TIME_RANGE);
+  ASSERT_EQ_INT (chronoid_ksuid_new_with_time (&id, past),
+      CHRONOID_KSUID_ERR_TIME_RANGE);
 }
 
 /* A test-only RNG that always returns a fixed byte pattern; lets us
@@ -87,7 +89,8 @@ test_set_rand_overrides_default_source (void)
   ASSERT_EQ_INT (ctx.call_count, 1);
   uint8_t expected_payload[CHRONOID_KSUID_PAYLOAD_LEN];
   memset (expected_payload, 0xa5, sizeof expected_payload);
-  ASSERT_EQ_BYTES (chronoid_ksuid_payload (&id), expected_payload, CHRONOID_KSUID_PAYLOAD_LEN);
+  ASSERT_EQ_BYTES (chronoid_ksuid_payload (&id), expected_payload,
+      CHRONOID_KSUID_PAYLOAD_LEN);
 
   /* Restore default. */
   chronoid_set_rand (NULL, NULL);

@@ -105,7 +105,8 @@ test_monotonic_within_fixed_ms (void)
   chronoid_uuidv7_t prev, cur;
   ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &prev), CHRONOID_UUIDV7_OK);
   for (int i = 1; i < 100; ++i) {
-    ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &cur), CHRONOID_UUIDV7_OK);
+    ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &cur),
+        CHRONOID_UUIDV7_OK);
     /* Strict monotonicity over the full 16-byte representation. */
     ASSERT_TRUE (chronoid_uuidv7_compare (&prev, &cur) < 0);
     /* Version + variant nibbles must always be set correctly on emit. */
@@ -147,7 +148,8 @@ test_counter_overflow_bumps_timestamp (void)
   int64_t last_ms = first_ms;
   for (int i = 1; i < 4097; ++i) {
     chronoid_uuidv7_t cur;
-    ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &cur), CHRONOID_UUIDV7_OK);
+    ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &cur),
+        CHRONOID_UUIDV7_OK);
     /* Strict monotonicity over the entire 4097-emit run. */
     ASSERT_TRUE (chronoid_uuidv7_compare (&prev, &cur) < 0);
     int64_t cur_ms = read_unix_ms (&cur);
@@ -190,7 +192,7 @@ test_clock_backward_clamps_to_last_ms (void)
   ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &a), CHRONOID_UUIDV7_OK);
   ASSERT_EQ_INT (read_unix_ms (&a), 1000);
 
-  install_pinned_clock (500);  /* clock went backwards */
+  install_pinned_clock (500);   /* clock went backwards */
   ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &b), CHRONOID_UUIDV7_OK);
   /* Embedded ms is the clamped value, not the rewound 500. */
   ASSERT_EQ_INT (read_unix_ms (&b), 1000);
@@ -239,7 +241,8 @@ test_bounds_bracket_next_emit (void)
 
   /* Prime with one emit so s->counter is bounded on the lower end. */
   chronoid_uuidv7_t primed;
-  ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &primed), CHRONOID_UUIDV7_OK);
+  ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &primed),
+      CHRONOID_UUIDV7_OK);
 
   chronoid_uuidv7_t lo, hi, actual;
   chronoid_uuidv7_sequence_bounds (&s, &lo, &hi);
@@ -250,7 +253,8 @@ test_bounds_bracket_next_emit (void)
   /* The next emit (still within the pinned ms) must bracket [lo, hi]
    * inclusive on the lex compare, modulo the counter boundary case
    * where saturating lo_counter at 0xFFF means lo == hi. */
-  ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &actual), CHRONOID_UUIDV7_OK);
+  ASSERT_EQ_INT (chronoid_uuidv7_sequence_next (&s, &actual),
+      CHRONOID_UUIDV7_OK);
   ASSERT_TRUE (chronoid_uuidv7_compare (&lo, &actual) <= 0);
   ASSERT_TRUE (chronoid_uuidv7_compare (&actual, &hi) <= 0);
 

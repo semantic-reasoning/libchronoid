@@ -63,116 +63,104 @@ typedef struct rfc_vector
  * verbatim so we set them to the published bytes 9..15. */
 static const rfc_vector_t kVectors[] = {
   {
-    .name           = "rfc9562 appendix A.1 published example",
-    .unix_ms        = (int64_t) 0x017F22E279B0LL,
-    .rand_a_12bit   = 0x0CC3,
-    .rand_b         = { 0x18, 0xC4, 0xDC, 0x0C, 0x0C, 0x07, 0x39, 0x8F },
-    .expected_bytes = {
-      0x01, 0x7F, 0x22, 0xE2, 0x79, 0xB0, 0x7C, 0xC3,
-      0x98, 0xC4, 0xDC, 0x0C, 0x0C, 0x07, 0x39, 0x8F
-    },
-    .expected_string = {
-      '0','1','7','f','2','2','e','2','-',
-      '7','9','b','0','-',
-      '7','c','c','3','-',
-      '9','8','c','4','-',
-      'd','c','0','c','0','c','0','7','3','9','8','f'
-    },
-  },
+        .name = "rfc9562 appendix A.1 published example",
+        .unix_ms = (int64_t) 0x017F22E279B0LL,
+        .rand_a_12bit = 0x0CC3,
+        .rand_b = {0x18, 0xC4, 0xDC, 0x0C, 0x0C, 0x07, 0x39, 0x8F},
+        .expected_bytes = {
+              0x01, 0x7F, 0x22, 0xE2, 0x79, 0xB0, 0x7C, 0xC3,
+            0x98, 0xC4, 0xDC, 0x0C, 0x0C, 0x07, 0x39, 0x8F},
+        .expected_string = {
+              '0', '1', '7', 'f', '2', '2', 'e', '2', '-',
+              '7', '9', 'b', '0', '-',
+              '7', 'c', 'c', '3', '-',
+              '9', '8', 'c', '4', '-',
+            'd', 'c', '0', 'c', '0', 'c', '0', '7', '3', '9', '8', 'f'},
+      },
   {
-    .name           = "all-zero inputs",
-    .unix_ms        = 0,
-    .rand_a_12bit   = 0,
-    .rand_b         = { 0, 0, 0, 0, 0, 0, 0, 0 },
-    .expected_bytes = {
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00,
-      0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    },
-    .expected_string = {
-      '0','0','0','0','0','0','0','0','-',
-      '0','0','0','0','-',
-      '7','0','0','0','-',
-      '8','0','0','0','-',
-      '0','0','0','0','0','0','0','0','0','0','0','0'
-    },
-  },
+        .name = "all-zero inputs",
+        .unix_ms = 0,
+        .rand_a_12bit = 0,
+        .rand_b = {0, 0, 0, 0, 0, 0, 0, 0},
+        .expected_bytes = {
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00,
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        .expected_string = {
+              '0', '0', '0', '0', '0', '0', '0', '0', '-',
+              '0', '0', '0', '0', '-',
+              '7', '0', '0', '0', '-',
+              '8', '0', '0', '0', '-',
+            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'},
+      },
   {
-    .name           = "all-max inputs (within RFC ranges)",
-    .unix_ms        = (int64_t) ((1LL << 48) - 1),
-    .rand_a_12bit   = 0x0FFF,
-    .rand_b         = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-    .expected_bytes = {
-      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF,
-      0xBF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-    },
-    .expected_string = {
-      'f','f','f','f','f','f','f','f','-',
-      'f','f','f','f','-',
-      '7','f','f','f','-',
-      'b','f','f','f','-',
-      'f','f','f','f','f','f','f','f','f','f','f','f'
-    },
-  },
+        .name = "all-max inputs (within RFC ranges)",
+        .unix_ms = (int64_t) ((1LL << 48) - 1),
+        .rand_a_12bit = 0x0FFF,
+        .rand_b = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+        .expected_bytes = {
+              0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF,
+            0xBF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+        .expected_string = {
+              'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', '-',
+              'f', 'f', 'f', 'f', '-',
+              '7', 'f', 'f', 'f', '-',
+              'b', 'f', 'f', 'f', '-',
+            'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f'},
+      },
   {
-    .name           = "boundary timestamp unix_ms = 1",
-    .unix_ms        = 1,
-    .rand_a_12bit   = 0x0123,
-    .rand_b         = { 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA },
-    .expected_bytes = {
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x71, 0x23,
-      0xB3, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA
-    },
-    .expected_string = {
-      '0','0','0','0','0','0','0','0','-',
-      '0','0','0','1','-',
-      '7','1','2','3','-',
-      'b','3','4','4','-',
-      '5','5','6','6','7','7','8','8','9','9','a','a'
-    },
-  },
+        .name = "boundary timestamp unix_ms = 1",
+        .unix_ms = 1,
+        .rand_a_12bit = 0x0123,
+        .rand_b = {0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA},
+        .expected_bytes = {
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x71, 0x23,
+            0xB3, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA},
+        .expected_string = {
+              '0', '0', '0', '0', '0', '0', '0', '0', '-',
+              '0', '0', '0', '1', '-',
+              '7', '1', '2', '3', '-',
+              'b', '3', '4', '4', '-',
+            '5', '5', '6', '6', '7', '7', '8', '8', '9', '9', 'a', 'a'},
+      },
   {
-    /* Caller passes 0xFFFF for rand_a; the library MUST mask to 12 bits
-     * and write the version nibble itself. With low 12 bits = 0x0FFF,
-     * byte 6 = 0x7F, byte 7 = 0xFF -- regardless of the high 4 bits the
-     * caller supplied. This vector PROVES the version nibble is
-     * library-controlled. */
-    .name           = "version nibble masking: caller bits ignored",
-    .unix_ms        = (int64_t) 0x000123456789LL,
-    .rand_a_12bit   = (uint16_t) 0xFFFF,
-    .rand_b         = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 },
-    .expected_bytes = {
-      0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0x7F, 0xFF,
-      0x80, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
-    },
-    .expected_string = {
-      '0','0','0','1','2','3','4','5','-',
-      '6','7','8','9','-',
-      '7','f','f','f','-',
-      '8','0','1','1','-',
-      '2','2','3','3','4','4','5','5','6','6','7','7'
-    },
-  },
+        /* Caller passes 0xFFFF for rand_a; the library MUST mask to 12 bits
+         * and write the version nibble itself. With low 12 bits = 0x0FFF,
+         * byte 6 = 0x7F, byte 7 = 0xFF -- regardless of the high 4 bits the
+         * caller supplied. This vector PROVES the version nibble is
+         * library-controlled. */
+        .name = "version nibble masking: caller bits ignored",
+        .unix_ms = (int64_t) 0x000123456789LL,
+        .rand_a_12bit = (uint16_t) 0xFFFF,
+        .rand_b = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77},
+        .expected_bytes = {
+              0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0x7F, 0xFF,
+            0x80, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77},
+        .expected_string = {
+              '0', '0', '0', '1', '2', '3', '4', '5', '-',
+              '6', '7', '8', '9', '-',
+              '7', 'f', 'f', 'f', '-',
+              '8', '0', '1', '1', '-',
+            '2', '2', '3', '3', '4', '4', '5', '5', '6', '6', '7', '7'},
+      },
   {
-    /* rand_b[0] = 0xFF; the library must strip the high 2 bits and
-     * overlay variant 0b10, yielding byte 8 = 0xBF. rand_b[1..7] pass
-     * through verbatim. This vector PROVES the variant bits are
-     * library-controlled. */
-    .name           = "variant bits masking: caller bits ignored",
-    .unix_ms        = (int64_t) 0x010000000000LL,
-    .rand_a_12bit   = 0x0456,
-    .rand_b         = { 0xFF, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11 },
-    .expected_bytes = {
-      0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x74, 0x56,
-      0xBF, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11
-    },
-    .expected_string = {
-      '0','1','0','0','0','0','0','0','-',
-      '0','0','0','0','-',
-      '7','4','5','6','-',
-      'b','f','a','a','-',
-      'b','b','c','c','d','d','e','e','f','f','1','1'
-    },
-  },
+        /* rand_b[0] = 0xFF; the library must strip the high 2 bits and
+         * overlay variant 0b10, yielding byte 8 = 0xBF. rand_b[1..7] pass
+         * through verbatim. This vector PROVES the variant bits are
+         * library-controlled. */
+        .name = "variant bits masking: caller bits ignored",
+        .unix_ms = (int64_t) 0x010000000000LL,
+        .rand_a_12bit = 0x0456,
+        .rand_b = {0xFF, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11},
+        .expected_bytes = {
+              0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x74, 0x56,
+            0xBF, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11},
+        .expected_string = {
+              '0', '1', '0', '0', '0', '0', '0', '0', '-',
+              '0', '0', '0', '0', '-',
+              '7', '4', '5', '6', '-',
+              'b', 'f', 'a', 'a', '-',
+            'b', 'b', 'c', 'c', 'd', 'd', 'e', 'e', 'f', 'f', '1', '1'},
+      },
 };
 
 #define NUM_VECTORS (sizeof (kVectors) / sizeof (kVectors[0]))

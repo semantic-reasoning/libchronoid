@@ -60,19 +60,19 @@ extern "C"
   typedef enum chronoid_uuidv7_err
   {
     CHRONOID_UUIDV7_OK = 0,
-    CHRONOID_UUIDV7_ERR_SIZE = -1,       /* bad binary length                     */
-    CHRONOID_UUIDV7_ERR_STR_SIZE = -2,   /* bad string length                     */
-    CHRONOID_UUIDV7_ERR_STR_VALUE = -3,  /* string contains non-hex / wrong hyphens */
+    CHRONOID_UUIDV7_ERR_SIZE = -1,      /* bad binary length                     */
+    CHRONOID_UUIDV7_ERR_STR_SIZE = -2,  /* bad string length                     */
+    CHRONOID_UUIDV7_ERR_STR_VALUE = -3, /* string contains non-hex / wrong hyphens */
     /* slot -4 reserved (parallel to CHRONOID_KSUID_ERR_PAYLOAD_SIZE; UUIDv7 has   */
     /* no payload-size error today, but the slot is left unallocated to keep      */
     /* enum positions aligned across formats for future cross-format helpers).    */
-    CHRONOID_UUIDV7_ERR_RNG = -5,        /* OS random source unavailable          */
+    CHRONOID_UUIDV7_ERR_RNG = -5,       /* OS random source unavailable          */
     /* slot -6 intentionally not defined: RFC 9562 §6.2 method 1 mandates that    */
     /* counter overflow bumps the timestamp instead of returning an error, so a   */
     /* monotonic UUIDv7 sequence has no "exhausted" state. The slot stays         */
     /* unallocated to leave room for a future cross-format _ERR_EXHAUSTED         */
     /* numeric parity with CHRONOID_KSUID_ERR_EXHAUSTED.                          */
-    CHRONOID_UUIDV7_ERR_TIME_RANGE = -7  /* unix_ms outside 48-bit range          */
+    CHRONOID_UUIDV7_ERR_TIME_RANGE = -7 /* unix_ms outside 48-bit range          */
   } chronoid_uuidv7_err_t;
 
 /* Two forms of the same sentinel values:
@@ -106,12 +106,12 @@ extern "C"
  * Predicates and ordering.
  * -------------------------------------------------------------------------- */
 
-  CHRONOID_PUBLIC bool chronoid_uuidv7_is_nil (const chronoid_uuidv7_t *id);
+  CHRONOID_PUBLIC bool chronoid_uuidv7_is_nil (const chronoid_uuidv7_t * id);
 
 /* Lexicographic comparison over the full 16-byte representation, matching
  * memcmp semantics. Returns <0, 0, or >0. */
-  CHRONOID_PUBLIC int chronoid_uuidv7_compare (const chronoid_uuidv7_t *a,
-      const chronoid_uuidv7_t *b);
+  CHRONOID_PUBLIC int chronoid_uuidv7_compare (const chronoid_uuidv7_t * a,
+      const chronoid_uuidv7_t * b);
 
 /* --------------------------------------------------------------------------
  * Construction from raw inputs.
@@ -119,8 +119,9 @@ extern "C"
 
 /* Copy the binary UUIDv7 at |b| (which must be exactly CHRONOID_UUIDV7_BYTES
  * long) into |out|. On error |out| is left untouched. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_from_bytes (
-      chronoid_uuidv7_t *out, const uint8_t *b, size_t n);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t
+      chronoid_uuidv7_from_bytes (chronoid_uuidv7_t * out, const uint8_t * b,
+      size_t n);
 
 /* Build |out| from a Unix millisecond timestamp, a 12-bit rand_a value,
  * and an 8-byte rand_b buffer, per RFC 9562 §5.7.
@@ -136,8 +137,8 @@ extern "C"
  * (0x7) and variant (0b10) nibbles are written by the library
  * unconditionally; bits 12-15 of |rand_a_12bit| and the top two bits
  * of |rand_b[0]| supplied by the caller are masked off. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_from_parts (
-      chronoid_uuidv7_t *out, int64_t unix_ms,
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t
+      chronoid_uuidv7_from_parts (chronoid_uuidv7_t * out, int64_t unix_ms,
       uint16_t rand_a_12bit, const uint8_t rand_b[8]);
 
 /* --------------------------------------------------------------------------
@@ -147,15 +148,18 @@ extern "C"
 /* The UUIDv7's 48-bit big-endian millisecond timestamp at bytes 0..5,
  * interpreted as Unix milliseconds. The return value fits in 48 bits
  * by construction (no sign extension surprise). */
-  CHRONOID_PUBLIC int64_t chronoid_uuidv7_unix_ms (const chronoid_uuidv7_t *id);
+  CHRONOID_PUBLIC int64_t chronoid_uuidv7_unix_ms (const chronoid_uuidv7_t *
+      id);
 
 /* Version nibble: high 4 bits of byte 6. Reads 0x7 for properly-
  * constructed UUIDv7s. */
-  CHRONOID_PUBLIC uint8_t chronoid_uuidv7_version (const chronoid_uuidv7_t *id);
+  CHRONOID_PUBLIC uint8_t chronoid_uuidv7_version (const chronoid_uuidv7_t *
+      id);
 
 /* Variant: top 2 bits of byte 8. Reads 0b10 (= 2) for properly-
  * constructed UUIDv7s (the RFC 9562 variant). */
-  CHRONOID_PUBLIC uint8_t chronoid_uuidv7_variant (const chronoid_uuidv7_t *id);
+  CHRONOID_PUBLIC uint8_t chronoid_uuidv7_variant (const chronoid_uuidv7_t *
+      id);
 
 /* --------------------------------------------------------------------------
  * Hex string conversion (RFC 9562 §4 canonical 8-4-4-4-12 form).
@@ -172,16 +176,16 @@ extern "C"
  * error the contents of |*out| are guaranteed unchanged -- decoding
  * writes to a stack temporary first and only copies into |out| once
  * the input has been fully validated. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_parse (
-      chronoid_uuidv7_t *out, const char *s, size_t len);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_parse (chronoid_uuidv7_t
+      * out, const char *s, size_t len);
 
 /* Write the 36-character canonical hyphenated lowercase representation
  * of |id| into |out|. The output is NOT NUL-terminated; callers needing
  * a C string should size their buffer to CHRONOID_UUIDV7_STRING_LEN + 1
  * and append '\0' themselves. No error path: every 16-byte UUIDv7
  * encodes by construction. */
-  CHRONOID_PUBLIC void chronoid_uuidv7_format (
-      const chronoid_uuidv7_t *id, char out[CHRONOID_UUIDV7_STRING_LEN]);
+  CHRONOID_PUBLIC void chronoid_uuidv7_format (const chronoid_uuidv7_t * id,
+      char out[CHRONOID_UUIDV7_STRING_LEN]);
 
 /* Bulk variant of chronoid_uuidv7_format. Writes |n| UUIDv7s into
  * |out_36n|, which must be sized to at least n * CHRONOID_UUIDV7_STRING_LEN
@@ -204,8 +208,8 @@ extern "C"
  * is a no-op. Thread-safe for concurrent invocations on disjoint
  * output buffers; callers must not race two threads on the same
  * |out_36n| slice. */
-  CHRONOID_PUBLIC void chronoid_uuidv7_string_batch (
-      const chronoid_uuidv7_t *ids, char *out_36n, size_t n);
+  CHRONOID_PUBLIC void chronoid_uuidv7_string_batch (const chronoid_uuidv7_t *
+      ids, char *out_36n, size_t n);
 
 /* --------------------------------------------------------------------------
  * Generation.
@@ -222,14 +226,14 @@ extern "C"
 /* Generate a new UUIDv7 stamped with the current wall-clock time. Each
  * call is independent -- no cross-call monotonicity. For monotonic
  * runs use chronoid_uuidv7_sequence_t. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_new (
-      chronoid_uuidv7_t *out);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_new (chronoid_uuidv7_t *
+      out);
 
 /* Generate a new UUIDv7 stamped with |unix_ms|. The timestamp must lie
  * in [0, (1LL << 48) - 1] just like chronoid_uuidv7_from_parts;
  * out-of-range returns CHRONOID_UUIDV7_ERR_TIME_RANGE. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_new_with_time (
-      chronoid_uuidv7_t *out, int64_t unix_ms);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t
+      chronoid_uuidv7_new_with_time (chronoid_uuidv7_t * out, int64_t unix_ms);
 
 /* --------------------------------------------------------------------------
  * Monotonic sequence -- RFC 9562 §6.2 method 1 (12-bit sub-ms counter).
@@ -253,7 +257,7 @@ extern "C"
     int64_t last_ms;            /* most recent ms emitted, or 0 if uninitialised */
     uint16_t counter;           /* 12-bit counter, masked to 0x0FFF              */
     uint8_t rand_b[8];          /* 62-bit random tail (top 2 bits of rand_b[0]   */
-                                /* are overwritten with the variant on emit)    */
+    /* are overwritten with the variant on emit)    */
     /* No version / opaque-padding field in this revision; new fields
      * may be appended in the future. Treat the struct as opaque from
      * the consumer's perspective and use chronoid_uuidv7_sequence_init
@@ -268,8 +272,8 @@ extern "C"
  * probability) starting value rather than 0 so consecutive sequences
  * sharing the same start ms are not predictable from each other's
  * tails. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_sequence_init (
-      chronoid_uuidv7_sequence_t *s);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t
+      chronoid_uuidv7_sequence_init (chronoid_uuidv7_sequence_t * s);
 
 /* Emit the next monotonic UUIDv7 from |s| into |*out|. Always returns
  * either CHRONOID_UUIDV7_OK on success or CHRONOID_UUIDV7_ERR_RNG on
@@ -283,8 +287,9 @@ extern "C"
  * so the resulting UUID still strictly succeeds the previous one.
  * The sequence will eventually re-track real wall-clock time once
  * the system clock catches up. */
-  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_sequence_next (
-      chronoid_uuidv7_sequence_t *s, chronoid_uuidv7_t *out);
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t
+      chronoid_uuidv7_sequence_next (chronoid_uuidv7_sequence_t * s,
+      chronoid_uuidv7_t * out);
 
 /* Compute the lexicographic lower and upper bounds of the UUIDv7 that
  * the next chronoid_uuidv7_sequence_next call from |s| could produce
@@ -298,9 +303,9 @@ extern "C"
  *
  * No error path: |*min_out| and |*max_out| are unconditionally written
  * from |s|. Both must be non-NULL. */
-  CHRONOID_PUBLIC void chronoid_uuidv7_sequence_bounds (
-      const chronoid_uuidv7_sequence_t *s,
-      chronoid_uuidv7_t *min_out, chronoid_uuidv7_t *max_out);
+  CHRONOID_PUBLIC void chronoid_uuidv7_sequence_bounds (const
+      chronoid_uuidv7_sequence_t * s, chronoid_uuidv7_t * min_out,
+      chronoid_uuidv7_t * max_out);
 
 #ifdef __cplusplus
 }                               /* extern "C" */
