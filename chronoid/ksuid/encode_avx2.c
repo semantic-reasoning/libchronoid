@@ -54,8 +54,8 @@
 #  include <stdint.h>
 
 #  include <chronoid/byteorder.h>
-#  include <chronoid/divisor_magic.h>
-#  include <chronoid/encode_batch.h>
+#  include <chronoid/ksuid/divisor_magic.h>
+#  include <chronoid/ksuid/encode_batch.h>
 #  include <chronoid/ksuid.h>
 
 /* Same alphabet as chronoid/base62.c; redeclared here to keep this

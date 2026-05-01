@@ -27,7 +27,7 @@
  * (&chronoid_ksuid_string_batch_scalar) and the AVX2 TU is excluded from the
  * build entirely.
  */
-#include <chronoid/encode_batch.h>
+#include <chronoid/ksuid/encode_batch.h>
 
 #include <stdatomic.h>
 #include <stddef.h>

@@ -16,7 +16,7 @@
  * checked-in header was hand-edited. Both modes are blockers for
  * shipping the AVX2 kernel.
  */
-#include <chronoid/divisor_magic.h>
+#include <chronoid/ksuid/divisor_magic.h>
 #include "test_util.h"
 
 /* Reference mulhi64 via __uint128_t. Available on GCC/Clang on

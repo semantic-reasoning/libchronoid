@@ -146,14 +146,14 @@ public_headers = files('chronoid/ksuid.h')
 subdir('chronoid')
 
 core_sources = files(
-  'chronoid/ksuid.c',
-  'chronoid/base62.c',
-  'chronoid/sequence.c',
+  'chronoid/ksuid/ksuid.c',
+  'chronoid/ksuid/base62.c',
+  'chronoid/ksuid/sequence.c',
   'chronoid/rand_os.c',
   'chronoid/rand_tls.c',
   'chronoid/chacha20.c',
-  'chronoid/compare_scalar.c',
-  'chronoid/encode_batch.c',
+  'chronoid/ksuid/compare_scalar.c',
+  'chronoid/ksuid/encode_batch.c',
 )
 
 # SIMD / NEON acceleration. SSE2 is part of the x86_64 ABI baseline
@@ -166,20 +166,20 @@ host_cpu = host_machine.cpu_family()
 if get_option('simd') != 'none'
   if host_cpu == 'x86_64'
     core_sources += files(
-      'chronoid/base62_sse2.c',
-      'chronoid/compare_sse2.c',
+      'chronoid/ksuid/base62_sse2.c',
+      'chronoid/ksuid/compare_sse2.c',
     )
     common_args += '-DCHRONOID_HAVE_SSE2=1'
   elif host_cpu in ['aarch64', 'arm64']
     core_sources += files(
-      'chronoid/base62_neon.c',
-      'chronoid/compare_neon.c',
+      'chronoid/ksuid/base62_neon.c',
+      'chronoid/ksuid/compare_neon.c',
     )
     common_args += '-DCHRONOID_HAVE_NEON=1'
   elif host_cpu == 'arm' and cc.has_argument('-mfpu=neon')
     core_sources += files(
-      'chronoid/base62_neon.c',
-      'chronoid/compare_neon.c',
+      'chronoid/ksuid/base62_neon.c',
+      'chronoid/ksuid/compare_neon.c',
     )
     common_args += '-DCHRONOID_HAVE_NEON=1'
   endif
@@ -188,7 +188,7 @@ endif
 # AVX2 8-wide ksuid_string_batch kernel. Compiled in its own static
 # library with -mavx2 (or /arch:AVX2 on MSVC) so the rest of libchronoid
 # keeps the SSE2 baseline ABI; the kernel is selected at runtime via
-# CPUID inside the dispatcher (chronoid/encode_batch.c). Non-x86_64
+# CPUID inside the dispatcher (chronoid/ksuid/encode_batch.c). Non-x86_64
 # hosts skip this entirely; non-AVX2 x86_64 hosts compile the TU but
 # never call into it.
 have_avx2_batch = false
@@ -218,7 +218,7 @@ if have_avx2_batch
   # PIC required so the same objects can land in both the static and
   # shared variants of `both_libraries('chronoid', ...)` below.
   chronoid_avx2_lib = static_library('chronoid_avx2_batch',
-    'chronoid/encode_avx2.c',
+    'chronoid/ksuid/encode_avx2.c',
     include_directories : inc,
     c_args              : [avx2_arg],
     pic                 : true,

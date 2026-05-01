@@ -11,11 +11,11 @@
  * for libchronoid live in input-character validation and bulk operations,
  * not the divide-and-emit core that runs here.
  */
-#include <chronoid/base62.h>
+#include <chronoid/ksuid/base62.h>
 
 #include <string.h>
 
-#include <chronoid/base62_simd.h>
+#include <chronoid/ksuid/base62_simd.h>
 #include <chronoid/byteorder.h>
 
 /* The NUL terminator at index 62 is intentionally kept (no [62] fixed

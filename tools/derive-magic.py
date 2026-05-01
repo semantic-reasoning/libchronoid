@@ -9,7 +9,7 @@
 #   tools/derive-magic.py <N> <d> [<output-header>]
 #
 # Example:
-#   tools/derive-magic.py 64 62 chronoid/divisor_magic.h
+#   tools/derive-magic.py 64 62 chronoid/ksuid/divisor_magic.h
 #
 # This script exists because every architect/critic in the issue-#13
 # review chain hand-derived a different (and wrong) constant for the

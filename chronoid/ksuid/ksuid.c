@@ -13,9 +13,9 @@
 #include <string.h>
 #include <time.h>
 
-#include <chronoid/base62.h>
+#include <chronoid/ksuid/base62.h>
 #include <chronoid/byteorder.h>
-#include <chronoid/compare_simd.h>
+#include <chronoid/ksuid/compare_simd.h>
 #include <chronoid/rand.h>
 
 /* Drive both definitions from the public KSUID_*_INIT macros so the

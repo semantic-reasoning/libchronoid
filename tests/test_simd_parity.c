@@ -13,7 +13,7 @@
  * consistency check, which is still useful (it asserts the kernel
  * doesn't regress).
  */
-#include <chronoid/base62_simd.h>
+#include <chronoid/ksuid/base62_simd.h>
 #include "test_util.h"
 
 #include <stdint.h>

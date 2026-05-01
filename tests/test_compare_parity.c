@@ -17,7 +17,7 @@
  *   - "almost equal" pairs that share a long prefix and differ only
  *     at byte 19, the case random testing rarely produces
  */
-#include <chronoid/compare_simd.h>
+#include <chronoid/ksuid/compare_simd.h>
 #include "test_util.h"
 
 #include <string.h>

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#include <chronoid/base62.h>
+#include <chronoid/ksuid/base62.h>
 #include "test_util.h"
 
 /* Golden vectors from segmentio/ksuid:
