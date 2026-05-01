@@ -157,6 +157,7 @@ core_sources = files(
   'chronoid/uuidv7/uuidv7.c',
   'chronoid/uuidv7/uuidv7_sequence.c',
   'chronoid/uuidv7/hex.c',
+  'chronoid/uuidv7/hex_batch.c',
 )
 
 # SIMD / NEON acceleration. SSE2 is part of the x86_64 ABI baseline
@@ -237,6 +238,20 @@ if get_option('simd') != 'none' and host_cpu == 'x86_64'
   endif
 endif
 
+# AVX2 4-wide hex encode kernel for chronoid_uuidv7_string_batch. Uses
+# the same -Davx2_batch detection / -mavx2 flag plumbing as the KSUID
+# AVX2 batch kernel above; the two kernels share the option and the
+# CHRONOID_FORCE_SCALAR runtime env-var override, but each gets its own
+# feature macro (CHRONOID_HAVE_AVX2_BATCH for KSUID,
+# CHRONOID_HAVE_HEX_AVX2 for UUIDv7) so the dispatcher in
+# chronoid/uuidv7/hex_batch.c can compile-out its AVX2 branch
+# independently if a future host disables one without the other.
+have_hex_avx2 = false
+if have_avx2_batch
+  have_hex_avx2 = true
+  common_args += '-DCHRONOID_HAVE_HEX_AVX2=1'
+endif
+
 # Apply collected defines + warnings only after the per-arch SIMD
 # section has had its chance to push CHRONOID_HAVE_SSE2 / _NEON /
 # _AVX2_BATCH.
@@ -275,10 +290,28 @@ if have_avx2_batch
   avx2_lib_dep = [chronoid_avx2_lib]
 endif
 
+# UUIDv7 hex AVX2 kernel: separate static_library with -mavx2 so the
+# rest of libchronoid keeps the SSE2 baseline ABI. Critic R6.2: this
+# TU MUST NOT land in core_sources, or non-AVX2 hosts segfault on
+# library load. link_whole below ties the resolved kernel symbol into
+# the final shared object even though it's only referenced via the
+# atomic function pointer in chronoid/uuidv7/hex_batch.c.
+hex_avx2_lib_dep = []
+if have_hex_avx2
+  chronoid_hex_avx2_lib = static_library('chronoid_hex_avx2',
+    'chronoid/uuidv7/hex_avx2.c',
+    include_directories : inc,
+    c_args              : [avx2_arg],
+    pic                 : true,
+    install             : false,
+  )
+  hex_avx2_lib_dep = [chronoid_hex_avx2_lib]
+endif
+
 chronoid_lib = both_libraries('chronoid', core_sources,
   include_directories : inc,
   dependencies        : extra_link_deps,
-  link_whole          : hex_ssse3_lib_dep + avx2_lib_dep,
+  link_whole          : hex_ssse3_lib_dep + avx2_lib_dep + hex_avx2_lib_dep,
   version             : meson.project_version(),
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the

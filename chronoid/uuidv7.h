@@ -183,6 +183,30 @@ extern "C"
   CHRONOID_PUBLIC void chronoid_uuidv7_format (
       const chronoid_uuidv7_t *id, char out[CHRONOID_UUIDV7_STRING_LEN]);
 
+/* Bulk variant of chronoid_uuidv7_format. Writes |n| UUIDv7s into
+ * |out_36n|, which must be sized to at least n * CHRONOID_UUIDV7_STRING_LEN
+ * bytes -- 36 bytes per UUIDv7, no NUL terminator anywhere in the buffer.
+ * The UUID at index i lands at out_36n[i * 36 .. (i+1) * 36 - 1].
+ *
+ * Dispatch is resolved lazily on the first call (atomic, thread-safe)
+ * and the resolved pointer is reused for the lifetime of the process.
+ * On x86_64 hosts that advertise AVX2 the dispatcher resolves to a
+ * 4-wide AVX2 kernel (4 UUIDs per outer iteration); on other hosts
+ * (including non-AVX2 x86_64) the dispatcher resolves to a per-UUID
+ * scalar loop equivalent to chronoid_uuidv7_format() N times. Output
+ * is byte-identical across kernels.
+ *
+ * The CHRONOID_FORCE_SCALAR environment variable (shared with
+ * chronoid_ksuid_string_batch) pins the dispatcher to the scalar
+ * path at first dispatch.
+ *
+ * No error path: every 16-byte UUIDv7 encodes by construction. n == 0
+ * is a no-op. Thread-safe for concurrent invocations on disjoint
+ * output buffers; callers must not race two threads on the same
+ * |out_36n| slice. */
+  CHRONOID_PUBLIC void chronoid_uuidv7_string_batch (
+      const chronoid_uuidv7_t *ids, char *out_36n, size_t n);
+
 /* --------------------------------------------------------------------------
  * Generation.
  *
