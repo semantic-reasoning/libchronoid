@@ -1,22 +1,25 @@
 # libchronoid
 
-A C11 toolkit for time-ordered identifiers. Today it ships a pure-C
-port of [`segmentio/ksuid`](https://github.com/segmentio/ksuid)
-(20-byte KSUID, 27-char base62, segmentio wire-compatible). UUIDv7
-([RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562)) lands on
-the road to 1.0 and is the reason this project exists as something
-broader than a single-format port. Both formats share one CSPRNG, one
-SIMD dispatch lane, and one set of wipe/fork-aware safety primitives.
+A C11 toolkit for time-ordered identifiers. Ships two sibling formats
+under one library: a pure-C port of
+[`segmentio/ksuid`](https://github.com/segmentio/ksuid) (20-byte
+KSUID, 27-char base62, segmentio wire-compatible) and a UUIDv7
+implementation per
+[RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562) (16-byte,
+36-char canonical hyphenated hex, 48-bit ms timestamp + 12-bit
+sub-ms counter monotonic sequence). Both formats share one CSPRNG,
+one SIMD dispatch lane, and one set of wipe/fork-aware safety
+primitives.
 
 ## Status
 
-**0.9.0 — pre-release.** Held at 0.9.0 until UUIDv7 ships and parity
-tests stabilize, at which point the project cuts **1.0.0** and freezes
-the SONAME at `libchronoid.so.1`. During the 0.9.x window the ABI is
-**additive only** (no removals, no signature changes); the SONAME is
-`libchronoid.so.0` and downstream consumers should expect to rebuild
-when 1.0 lands. The KSUID API surface inherited from libksuid 1.0.0 is
-already feature-complete and tested.
+**0.9.x — pre-release.** UUIDv7 generation, parsing, formatting,
+monotonic sequence, and bulk encoding all ship in 0.9.x alongside the
+KSUID surface inherited from libksuid 1.0.0. During the 0.9.x window
+the ABI is **additive only** (no removals, no signature changes); the
+SONAME is `libchronoid.so.0` and downstream consumers should expect
+to rebuild when the SONAME advances. Both KSUID and UUIDv7 surfaces
+are feature-complete and tested.
 
 ## Provenance
 
@@ -40,8 +43,11 @@ of `libksuid.so.1`) move.
   binary layout, same 27-character base62 string encoding, same epoch
   (1400000000 = 2014-05-13 16:53:20 UTC), same ordering invariants.
 - **Honest SIMD**: the base62 long-division core is sequential and is
-  not vectorizable; SSE2/NEON paths accelerate input validation
-  (16-byte packed range tests, sentinel-fill on miss).
+  not vectorizable; SSE2/NEON paths accelerate KSUID input validation
+  (16-byte packed range tests, sentinel-fill on miss). UUIDv7 hex
+  encoding has an SSSE3 single-UUID kernel and a 4-wide AVX2 bulk
+  kernel; both share the same lazy-init dispatcher trampoline as the
+  KSUID bulk path.
 - **Cross-platform RNG**:
   - Linux: `getrandom(2)` with `/dev/urandom` fallback
   - macOS: `getentropy(3)` (10.12+) with `/dev/urandom` fallback
@@ -94,13 +100,16 @@ A release build on x86_64 produces (post-`strip --strip-unneeded`):
 | libchronoid.a          | 35 212 |
 | chronoid-gen (CLI)     | 22 920 |
 
-(Numbers carried over from libksuid 1.0.0; the rebrand commit changed
-no compiled bytes. They will move when UUIDv7 + hex codec land.)
+(KSUID-only baseline carried over from libksuid 1.0.0. UUIDv7 and the
+shared hex codec add roughly 6-8 KB of `.text` to the shared library
+in the AVX2 build; rebuild and `size` locally for current numbers.)
 
 The bulk-encode AVX2 kernel from `chronoid/ksuid/encode_avx2.c` accounts for
-roughly 8 KB of the shared-library size; non-AVX2 hosts compile and
-link the kernel but never call into it, so the CPUID-gated dispatch
-adds no runtime cost to those targets.
+roughly 8 KB of the shared-library size, and the UUIDv7 hex AVX2
+kernel from `chronoid/uuidv7/hex_avx2.c` adds a similar amount;
+non-AVX2 hosts compile and link both kernels but never call into
+them, so the CPUID-gated dispatch adds no runtime cost to those
+targets.
 
 The shared library has zero runtime dependencies beyond the C library
 and, on Windows, `bcrypt.lib`.
@@ -130,7 +139,47 @@ COMPONENTS:
     Payload: B5A1CD34B5F99D1154FB6853345C9735
 ```
 
-The full flag set is `-n N`, `-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See `chronoid-gen -h` for details.
+UUIDv7 generation and round-trip:
+
+```sh
+$ chronoid-gen --format=uuidv7
+019de2b2-7c56-7e59-98be-2ed3cffbd12e
+
+$ chronoid-gen --format=uuidv7 -n 3
+019de2b2-7c8d-7c2c-9d55-7a1d3a4f6e02
+019de2b2-7c8d-7c2d-9c01-bb4e2f1a8c7d
+019de2b2-7c8d-7c2e-9b03-4c8f9d2e1a05
+
+$ chronoid-gen -f inspect 017f22e2-79b0-7cc3-98c4-dc0c0c07398f
+
+REPRESENTATION:
+
+  String: 017f22e2-79b0-7cc3-98c4-dc0c0c07398f
+     Raw: 017F22E279B07CC398C4DC0C0C07398F
+
+COMPONENTS:
+
+       Time: 2022-02-22 19:22:22.000 +0000 UTC
+  Timestamp: 1645557742000
+    Version: 7
+    Variant: 0b10 (RFC 4122 / 9562)
+     rand_a: 0xCC3
+     rand_b: 98C4DC0C0C07398F
+```
+
+A positional argument is auto-detected by length: 27 characters →
+KSUID, 36 characters → UUIDv7. `--format=ksuid|uuidv7` selects the
+ID format on the generation path (default `ksuid`, preserving the
+pre-UUIDv7 invocation `chronoid-gen` with no flags). `--format` and
+positional length must agree in parse mode; a mismatch is a hard
+error rather than a silent coercion.
+
+`-f raw` emits the unencoded byte image of the ID -- 20 bytes for
+KSUID, 16 bytes for UUIDv7 -- suitable for `> file.bin`.
+
+The full flag set is `--format={ksuid,uuidv7}`, `-n N`,
+`-f {string,inspect,time,timestamp,payload,raw}`, `-v`, `-h`. See
+`chronoid-gen -h` for details.
 
 The Go upstream's `-f template` is intentionally not supported -- a
 faithful re-implementation of Go's `text/template` grammar in C is
@@ -175,38 +224,144 @@ lane-swap detection corpus.
 
 Setting the environment variable `CHRONOID_FORCE_SCALAR=1` pins the
 dispatcher to the scalar path at first call (runtime kill switch
-without rebuilding the library).
+without rebuilding the library). The same env var governs both
+`chronoid_ksuid_string_batch` and `chronoid_uuidv7_string_batch`.
+
+## UUIDv7
+
+A 16-byte UUIDv7 per [RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562)
+(May 2024). Lex-sortable by binary representation; the leading 48
+bits are an unsigned big-endian Unix millisecond timestamp, so two
+UUIDv7s minted in different ms compare in time order via plain
+`memcmp` over their byte form.
+
+### Wire format
+
+```
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++---------------------------------------------------------------+
+|                       unix_ts_ms (48b)                        |
+|                                                               |
++-------------------------------+-------------------------------+
+|         unix_ts_ms            |  ver(0x7) |     rand_a (12b)  |
++-------------------------------+-------------------------------+
+| var(0b10) |                rand_b (62 bits)                   |
++---------------------------------------------------------------+
+|                          rand_b                               |
++---------------------------------------------------------------+
+```
+
+- bytes 0..5 — 48-bit Unix millisecond timestamp, big-endian.
+- byte 6 high nibble = `0x7` (version), low nibble = top 4 bits of
+  `rand_a`.
+- byte 7 = bottom 8 bits of `rand_a` (12 bits total).
+- byte 8 top 2 bits = `0b10` (RFC 9562 variant), bottom 6 bits of
+  byte 8 plus bytes 9..15 = `rand_b` (62 bits total).
+
+### String form
+
+36-character canonical hyphenated lowercase hex
+(`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, group lengths 8-4-4-4-12).
+Parsing is case-insensitive (`'A'..'F'` and `'a'..'f'` produce the
+same nibble); formatting always emits lowercase. The output is NOT
+NUL-terminated -- size buffers to `CHRONOID_UUIDV7_STRING_LEN + 1`
+and append `'\0'` when a C string is needed.
+
+### API example
+
+```c
+#include <chronoid/uuidv7.h>
+
+chronoid_uuidv7_t id;
+if (chronoid_uuidv7_new (&id) != CHRONOID_UUIDV7_OK) { /* handle */ }
+
+char s[CHRONOID_UUIDV7_STRING_LEN + 1];
+chronoid_uuidv7_format (&id, s);
+s[CHRONOID_UUIDV7_STRING_LEN] = '\0';
+/* s is "xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx" with y in {8,9,a,b}. */
+```
+
+`chronoid_uuidv7_new` reads the wall clock and draws fresh random
+bytes from the per-thread CSPRNG. For monotonic runs within the
+same process, use the sequence type below.
+
+### Bulk encode
+
+`chronoid_uuidv7_string_batch` mirrors `chronoid_ksuid_string_batch`:
+it formats `n` UUIDv7s into a contiguous output buffer of
+`n * CHRONOID_UUIDV7_STRING_LEN` bytes (no NUL terminators). On
+x86_64 + AVX2 the dispatcher resolves to a 4-wide AVX2 hex kernel
+(4 UUIDs per outer iteration); on other hosts it resolves to a
+per-UUID scalar loop. Output is byte-identical across kernels and
+is cross-checked by a differential parity test over ≥ 2²⁰
+pseudo-random UUIDv7s. `CHRONOID_FORCE_SCALAR=1` pins the
+dispatcher to the scalar path.
+
+### Monotonic sequence
+
+`chronoid_uuidv7_sequence_t` implements RFC 9562 §6.2 method 1: a
+12-bit sub-ms counter occupying the `rand_a` field acts as a
+monotonic tiebreaker within a single millisecond, and
+`chronoid_uuidv7_sequence_next` redraws the 62-bit `rand_b` tail on
+every real ms-tick. On counter overflow within a single ms the
+sequence bumps the embedded timestamp by 1 ms and reseeds the
+counter (RFC option (a)) -- it never returns "exhausted" and never
+stalls. If the system clock moves backwards (NTP step, VM resume)
+the sequence clamps to its last emitted ms so monotonicity is
+preserved.
+
+The sequence type is **NOT thread-safe**: one
+`chronoid_uuidv7_sequence_t` instance per thread. Concurrent calls
+from multiple threads on the same instance are undefined behaviour;
+multiple threads should each own their own.
+
+### CSPRNG
+
+Random bytes for both `chronoid_uuidv7_new` and the sequence redraw
+come from the per-thread ChaCha20 CSPRNG keyed from the OS entropy
+source (the same CSPRNG that backs `chronoid_ksuid_new`). The
+`chronoid_set_rand` override registered for KSUID generation
+governs UUIDv7 random draws as well -- one global hookup serves
+both formats.
 
 ## Layout
 
-Public headers (`chronoid/ksuid.h`, and later `chronoid/uuidv7.h`)
-live at the top of `chronoid/`; format-specific implementation TUs
-live in per-format subdirectories so the tree advertises the scope
-expansion at the source level. Shared infrastructure (CSPRNG, wipe,
-byte-order helpers) sits at the top of `chronoid/` because it serves
-every format.
+Public headers (`chronoid/ksuid.h`, `chronoid/uuidv7.h`) live at
+the top of `chronoid/`; format-specific implementation TUs live in
+per-format subdirectories so the tree advertises the scope at the
+source level. Shared infrastructure (CSPRNG, wipe, byte-order
+helpers) sits at the top of `chronoid/` because it serves every
+format.
 
 ```c
 #include <chronoid/ksuid.h>             /* public KSUID API */
+#include <chronoid/uuidv7.h>            /* public UUIDv7 API */
 #include <chronoid/ksuid/base62.h>      /* internal KSUID helper */
 ```
 
-After install the public header lands at
-`${prefix}/include/chronoid/ksuid.h`, so downstream consumers use the
-exact same include line that the in-tree sources do.
+After install the public headers land at
+`${prefix}/include/chronoid/ksuid.h` and
+`${prefix}/include/chronoid/uuidv7.h`, so downstream consumers use
+the exact same include lines that the in-tree sources do.
 
 ```
 chronoid/
 ├── ksuid.h                   public — <chronoid/ksuid.h>
+├── uuidv7.h                  public — <chronoid/uuidv7.h>
 ├── chronoid_version.h.in
 ├── byteorder.h, chacha20.{c,h}, rand.h, rand_os.c, rand_tls.c, wipe.h
 │                             shared infra (CSPRNG / wipe / endian)
-└── ksuid/                    KSUID implementation TUs
-    ├── ksuid.c, sequence.c
-    ├── base62.{c,h}, base62_simd.h, base62_{sse2,neon}.c
-    ├── compare_simd.h, compare_{scalar,sse2,neon}.c
-    ├── encode_batch.{c,h}, encode_avx2.c
-    └── divisor_magic.h
+├── ksuid/                    KSUID implementation TUs
+│   ├── ksuid.c, sequence.c
+│   ├── base62.{c,h}, base62_simd.h, base62_{sse2,neon}.c
+│   ├── compare_simd.h, compare_{scalar,sse2,neon}.c
+│   ├── encode_batch.{c,h}, encode_avx2.c
+│   └── divisor_magic.h
+└── uuidv7/                   UUIDv7 implementation TUs
+    ├── uuidv7.c, uuidv7_sequence.c
+    ├── hex.{c,h}, hex_simd.h, hex_ssse3.c, hex_avx2.c
+    └── hex_batch.{c,h}
 examples/                     example consumers; chronoid-gen CLI
 tests/                        unit + integration tests
 tools/                        build tooling (derive-magic.py, gst-indent)
@@ -223,7 +378,12 @@ that prior art.
 
 The UUIDv7 wire format and monotonicity guidance come from
 [RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562) (May 2024,
-P. Leach et al.).
+P. Leach et al.). The §5.7 byte layout (timestamp, version, variant,
+`rand_a`, `rand_b` fields) is pinned by `tests/test_uuidv7_rfc_layout.c`
+against the RFC §6.13 published example
+`017F22E2-79B0-7CC3-98C4-DC0C0C07398F`, so any future refactor of
+the encode/decode paths that drifts from the RFC fails the test
+suite before shipping.
 
 The KSUID half of this codebase was first published as
 [`libksuid` 1.0.0](https://github.com/semantic-reasoning/libksuid)
