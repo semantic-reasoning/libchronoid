@@ -144,6 +144,67 @@ jobs:
           echo "Status: **${{ job.status }}** (non-blocking)" >> "$GITHUB_STEP_SUMMARY"
 
   # ==========================================================================
+  # Phase 2b: Scalar fallback monitoring (issue #6)
+  # Mirrors the blocking PR-gate jobs in ci-pr.yml's `scalar-fallback`
+  # matrix. Adds a Clang variant per lane so a Clang-specific scalar
+  # codegen regression that GCC would not catch surfaces here. Runs
+  # non-blocking; the PR-gate enforces correctness, this lane provides
+  # compiler diversity.
+  # ==========================================================================
+  scalar-fallback:
+    name: Scalar fallback / ${{ matrix.lane }} / ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        lane: [no-avx2, no-ssse3, force-scalar]
+        include:
+          - lane: no-avx2
+            setup_args: -Davx2_batch=disabled
+            test_env: ''
+          - lane: no-ssse3
+            setup_args: -Dssse3=disabled -Davx2_batch=disabled
+            test_env: ''
+          - lane: force-scalar
+            setup_args: ''
+            test_env: CHRONOID_FORCE_SCALAR=1
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y clang
+          fi
+
+      - name: Configure (${{ matrix.lane }})
+        run: meson setup builddir-${{ matrix.lane }} ${{ matrix.setup_args }}
+        env:
+          CC: ${{ matrix.compiler }}
+
+      - name: Build
+        run: meson compile -C builddir-${{ matrix.lane }}
+
+      - name: Test
+        run: |
+          if [ -n "${{ matrix.test_env }}" ]; then
+            env ${{ matrix.test_env }} meson test -C builddir-${{ matrix.lane }} --print-errorlogs
+          else
+            meson test -C builddir-${{ matrix.lane }} --print-errorlogs
+          fi
+
+      - name: Publish results
+        if: always()
+        run: |
+          echo "## Scalar Fallback: ${{ matrix.lane }} / ${{ matrix.compiler }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: **${{ job.status }}** (non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+
+  # ==========================================================================
   # Phase 3: Sanitizers (ASan + UBSan, non-blocking)
   # ==========================================================================
   sanitizers:
