@@ -188,6 +188,32 @@ if get_option('simd') != 'none'
   endif
 endif
 
+# SSSE3 hex encode kernel for chronoid_uuidv7_format. Compiled in its
+# own static library with -mssse3 because SSSE3 is NOT in the AMD64
+# psABI v1 baseline (only SSE2 is); per-file flag isolation mirrors
+# how the AVX2 kernel below is wired. SSSE3 is universally available
+# on every CPU shipped since 2006 (Intel Core 2, AMD K10), so we treat
+# it as compile-time-guaranteed on x86_64 with no runtime CPUID gate.
+have_hex_ssse3 = false
+ssse3_arg = ''
+if get_option('simd') != 'none' and host_cpu == 'x86_64'
+  if cc.get_argument_syntax() == 'msvc'
+    # MSVC has no /arch:SSSE3 switch; SSE2 is its lowest baseline and
+    # SSSE3 intrinsics are unconditionally available when SSE2 is
+    # enabled (which is default on x86_64). No flag needed.
+    have_hex_ssse3 = true
+  else
+    candidate = '-mssse3'
+    if cc.has_argument(candidate)
+      have_hex_ssse3 = true
+      ssse3_arg = candidate
+    endif
+  endif
+  if have_hex_ssse3
+    common_args += '-DCHRONOID_HAVE_HEX_SSSE3=1'
+  endif
+endif
+
 # AVX2 8-wide ksuid_string_batch kernel. Compiled in its own static
 # library with -mavx2 (or /arch:AVX2 on MSVC) so the rest of libchronoid
 # keeps the SSE2 baseline ABI; the kernel is selected at runtime via
@@ -216,6 +242,20 @@ endif
 # _AVX2_BATCH.
 add_project_arguments(common_args, language : 'c')
 
+hex_ssse3_lib_dep = []
+if have_hex_ssse3
+  # PIC required so the same objects can land in both the static and
+  # shared variants of `both_libraries('chronoid', ...)` below.
+  chronoid_hex_ssse3_lib = static_library('chronoid_hex_ssse3',
+    'chronoid/uuidv7/hex_ssse3.c',
+    include_directories : inc,
+    c_args              : ssse3_arg != '' ? [ssse3_arg] : [],
+    pic                 : true,
+    install             : false,
+  )
+  hex_ssse3_lib_dep = [chronoid_hex_ssse3_lib]
+endif
+
 avx2_lib_dep = []
 if have_avx2_batch
   # PIC required so the same objects can land in both the static and
@@ -238,7 +278,7 @@ endif
 chronoid_lib = both_libraries('chronoid', core_sources,
   include_directories : inc,
   dependencies        : extra_link_deps,
-  link_whole          : avx2_lib_dep,
+  link_whole          : hex_ssse3_lib_dep + avx2_lib_dep,
   version             : meson.project_version(),
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the

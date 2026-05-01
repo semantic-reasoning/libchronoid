@@ -8,6 +8,21 @@
 #include <chronoid/uuidv7.h>
 #include "test_util.h"
 
+/* Direct kernel access for the SIMD-vs-scalar parity test. Both
+ * symbols are defined unconditionally on x86_64 (scalar in hex.c,
+ * SSSE3 in hex_ssse3.c); on other hosts the SSSE3 prototype is not
+ * declared and the parity sub-test compiles out via the
+ * CHRONOID_HAVE_HEX_SSSE3 guard below. We declare the prototypes
+ * locally rather than pulling chronoid/uuidv7/hex_simd.h in so the
+ * test stays at the public surface area level (the dispatcher macro
+ * is already exercised implicitly by every format/roundtrip case). */
+extern void chronoid_hex_encode_lower_scalar (char out[36],
+                                              const uint8_t in[16]);
+#if defined(CHRONOID_HAVE_HEX_SSSE3)
+extern void chronoid_hex_encode_lower_ssse3 (char out[36],
+                                             const uint8_t in[16]);
+#endif
+
 /* Known 16-byte vector with version nibble 0x7 (high nibble of byte 6
  * = 0x7) and variant 0b10 (top two bits of byte 8 = 0x80). The
  * canonical text below is therefore a syntactically valid UUIDv7. */
@@ -268,6 +283,82 @@ test_parse_failure_does_not_mutate_out (void)
   ASSERT_EQ_BYTES (id.b, pre.b, CHRONOID_UUIDV7_BYTES);
 }
 
+#if defined(CHRONOID_HAVE_HEX_SSSE3)
+static void
+test_ssse3_vs_scalar_parity (void)
+{
+  /* R5.1: pin the high/low nibble order with a known vector. A swapped
+   * nibble ordering (low-then-high) would produce
+   * "00100302-0504-0706-0908-0a..." instead, and this assertion would
+   * fail loudly. */
+  static const uint8_t kKnownIn[16] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  };
+  /* 36 bytes, no NUL. Use a byte-array literal to avoid the
+   * -Wunterminated-string-initialization diagnostic that fires when a
+   * 36+1 byte string literal is dropped into a 36-byte char array. */
+  static const char kKnownOut[36] = {
+    '0','0','0','1','0','2','0','3','-',
+    '0','4','0','5','-',
+    '0','6','0','7','-',
+    '0','8','0','9','-',
+    '0','a','0','b','0','c','0','d','0','e','0','f'
+  };
+  /* Sanity: the offsets of the four hyphens. */
+  ASSERT_EQ_INT (kKnownOut[8],  '-');
+  ASSERT_EQ_INT (kKnownOut[13], '-');
+  ASSERT_EQ_INT (kKnownOut[18], '-');
+  ASSERT_EQ_INT (kKnownOut[23], '-');
+
+  char s_scalar[36];
+  char s_ssse3[36];
+  chronoid_hex_encode_lower_scalar (s_scalar, kKnownIn);
+  chronoid_hex_encode_lower_ssse3  (s_ssse3,  kKnownIn);
+  ASSERT_EQ_BYTES (s_scalar, kKnownOut, 36);
+  ASSERT_EQ_BYTES (s_ssse3,  kKnownOut, 36);
+  ASSERT_EQ_BYTES (s_scalar, s_ssse3,   36);
+
+  /* R5.4: fuzz parity loop. Both kernels are called directly, so an
+   * accidental dispatch-macro divergence (e.g. kernel A returns one
+   * shape, kernel B another) cannot hide behind the dispatcher. The
+   * PRNG is a host-deterministic xorshift64* seeded with a fixed
+   * constant; we deliberately do NOT use the production CSPRNG so this
+   * test stays reproducible across runs and platforms. */
+  uint64_t state = (uint64_t) 0x123456789abcdef0ULL;
+  const uint32_t kIters = 1u << 20;
+  for (uint32_t i = 0; i < kIters; ++i) {
+    uint8_t in[16];
+    for (int k = 0; k < 16; k += 8) {
+      /* xorshift64* step. */
+      uint64_t x = state;
+      x ^= x >> 12;
+      x ^= x << 25;
+      x ^= x >> 27;
+      state = x;
+      uint64_t r = x * (uint64_t) 0x2545f4914f6cdd1dULL;
+      in[k + 0] = (uint8_t) (r >>  0);
+      in[k + 1] = (uint8_t) (r >>  8);
+      in[k + 2] = (uint8_t) (r >> 16);
+      in[k + 3] = (uint8_t) (r >> 24);
+      in[k + 4] = (uint8_t) (r >> 32);
+      in[k + 5] = (uint8_t) (r >> 40);
+      in[k + 6] = (uint8_t) (r >> 48);
+      in[k + 7] = (uint8_t) (r >> 56);
+    }
+    chronoid_hex_encode_lower_scalar (s_scalar, in);
+    chronoid_hex_encode_lower_ssse3  (s_ssse3,  in);
+    if (memcmp (s_scalar, s_ssse3, 36) != 0) {
+      fprintf (stderr, "  parity mismatch at iter %u\n", i);
+      fprintf (stderr, "  scalar: \"%.*s\"\n", 36, s_scalar);
+      fprintf (stderr, "  ssse3 : \"%.*s\"\n", 36, s_ssse3);
+      ASSERT_EQ_BYTES (s_scalar, s_ssse3, 36);
+      return;
+    }
+  }
+}
+#endif /* CHRONOID_HAVE_HEX_SSSE3 */
+
 static void
 test_unix_ms_reads_only_first_six_bytes (void)
 {
@@ -311,5 +402,8 @@ main (void)
   RUN_TEST (test_parse_rejects_whitespace);
   RUN_TEST (test_parse_failure_does_not_mutate_out);
   RUN_TEST (test_unix_ms_reads_only_first_six_bytes);
+#if defined(CHRONOID_HAVE_HEX_SSSE3)
+  RUN_TEST (test_ssse3_vs_scalar_parity);
+#endif
   TEST_MAIN_END ();
 }

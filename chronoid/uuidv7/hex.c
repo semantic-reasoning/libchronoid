@@ -9,6 +9,7 @@
  * No upstream lineage; the layout and alphabet are RFC 9562 §4.
  */
 #include <chronoid/uuidv7/hex.h>
+#include <chronoid/uuidv7/hex_simd.h>
 
 #include <string.h>
 
@@ -86,7 +87,7 @@ static const uint8_t kHexValue[256] = {
  *   chars 24..35 = bytes 10..15 (12 hex digits) */
 
 void
-chronoid_hex_encode_lower (char out[36], const uint8_t in[16])
+chronoid_hex_encode_lower_scalar (char out[36], const uint8_t in[16])
 {
   /* Map byte index -> character offset of its high nibble. The
    * hyphens at 8, 13, 18, 23 partition the 16 bytes into groups of
@@ -111,6 +112,16 @@ chronoid_hex_encode_lower (char out[36], const uint8_t in[16])
   out[13] = '-';
   out[18] = '-';
   out[23] = '-';
+}
+
+/* Public-internal entry point. Resolves at compile time to the SSSE3
+ * kernel on x86_64 and to the scalar reference everywhere else; see
+ * chronoid/uuidv7/hex_simd.h. Decode (chronoid_hex_decode below) is
+ * scalar-only -- there is no SIMD validation kernel yet. */
+void
+chronoid_hex_encode_lower (char out[36], const uint8_t in[16])
+{
+  CHRONOID_HEX_ENCODE16_LOWER (out, in);
 }
 
 int
