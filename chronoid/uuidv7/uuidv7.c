@@ -10,6 +10,7 @@
 
 #include <string.h>
 
+#include <chronoid/rand.h>
 #include <chronoid/uuidv7/hex.h>
 
 /* Drive both definitions from the public *_INIT macros so the runtime
@@ -150,4 +151,41 @@ chronoid_uuidv7_parse (chronoid_uuidv7_t *out, const char *s, size_t len)
 
   memcpy (out->b, tmp, CHRONOID_UUIDV7_BYTES);
   return CHRONOID_UUIDV7_OK;
+}
+
+/* --------------------------------------------------------------------------
+ * Generation: chronoid_uuidv7_new / chronoid_uuidv7_new_with_time.
+ *
+ * Each call is independent; no inter-call monotonicity guarantee. For
+ * monotonic runs use chronoid_uuidv7_sequence_t. The 12-bit rand_a
+ * field is filled with two random bytes (high 4 bits masked off by
+ * chronoid_uuidv7_from_parts), the 8-byte rand_b tail is filled
+ * directly. All ten random bytes come from one chronoid_internal_fill_random
+ * draw so a partial RNG failure cannot produce a half-random ID.
+ * -------------------------------------------------------------------------- */
+
+chronoid_uuidv7_err_t
+chronoid_uuidv7_new_with_time (chronoid_uuidv7_t *out, int64_t unix_ms)
+{
+  if (unix_ms < 0 || unix_ms > UUIDV7_MAX_UNIX_MS)
+    return CHRONOID_UUIDV7_ERR_TIME_RANGE;
+
+  /* Single contiguous draw: 2 bytes for rand_a (12 bits used) + 8
+   * bytes for rand_b. Fail fast and leave |*out| untouched if the
+   * RNG declines. */
+  uint8_t rnd[10];
+  if (chronoid_internal_fill_random (rnd, sizeof rnd) != 0)
+    return CHRONOID_UUIDV7_ERR_RNG;
+
+  uint16_t rand_a_12bit = (uint16_t) (((uint16_t) rnd[0] << 8) | rnd[1]);
+  return chronoid_uuidv7_from_parts (out, unix_ms, rand_a_12bit, rnd + 2);
+}
+
+chronoid_uuidv7_err_t
+chronoid_uuidv7_new (chronoid_uuidv7_t *out)
+{
+  int64_t now = chronoid_now_ms ();
+  if (now < 0 || now > UUIDV7_MAX_UNIX_MS)
+    return CHRONOID_UUIDV7_ERR_TIME_RANGE;
+  return chronoid_uuidv7_new_with_time (out, now);
 }

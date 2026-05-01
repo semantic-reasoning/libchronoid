@@ -66,7 +66,12 @@ extern "C"
     /* slot -4 reserved (parallel to CHRONOID_KSUID_ERR_PAYLOAD_SIZE; UUIDv7 has   */
     /* no payload-size error today, but the slot is left unallocated to keep      */
     /* enum positions aligned across formats for future cross-format helpers).    */
-    /* RNG (-5) / EXHAUSTED (-6) added in later commits */
+    CHRONOID_UUIDV7_ERR_RNG = -5,        /* OS random source unavailable          */
+    /* slot -6 intentionally not defined: RFC 9562 §6.2 method 1 mandates that    */
+    /* counter overflow bumps the timestamp instead of returning an error, so a   */
+    /* monotonic UUIDv7 sequence has no "exhausted" state. The slot stays         */
+    /* unallocated to leave room for a future cross-format _ERR_EXHAUSTED         */
+    /* numeric parity with CHRONOID_KSUID_ERR_EXHAUSTED.                          */
     CHRONOID_UUIDV7_ERR_TIME_RANGE = -7  /* unix_ms outside 48-bit range          */
   } chronoid_uuidv7_err_t;
 
@@ -177,6 +182,101 @@ extern "C"
  * encodes by construction. */
   CHRONOID_PUBLIC void chronoid_uuidv7_format (
       const chronoid_uuidv7_t *id, char out[CHRONOID_UUIDV7_STRING_LEN]);
+
+/* --------------------------------------------------------------------------
+ * Generation.
+ *
+ * Random bytes come from the per-thread ChaCha20 CSPRNG keyed from
+ * the OS entropy source (getrandom on Linux, getentropy on macOS,
+ * BCryptGenRandom on Windows). The same chronoid_set_rand override
+ * registered for KSUID generation also routes UUIDv7 random draws --
+ * one global CSPRNG hookup serves both formats. On entropy-source
+ * failure the function returns CHRONOID_UUIDV7_ERR_RNG and leaves
+ * |*out| untouched.
+ * -------------------------------------------------------------------------- */
+
+/* Generate a new UUIDv7 stamped with the current wall-clock time. Each
+ * call is independent -- no cross-call monotonicity. For monotonic
+ * runs use chronoid_uuidv7_sequence_t. */
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_new (
+      chronoid_uuidv7_t *out);
+
+/* Generate a new UUIDv7 stamped with |unix_ms|. The timestamp must lie
+ * in [0, (1LL << 48) - 1] just like chronoid_uuidv7_from_parts;
+ * out-of-range returns CHRONOID_UUIDV7_ERR_TIME_RANGE. */
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_new_with_time (
+      chronoid_uuidv7_t *out, int64_t unix_ms);
+
+/* --------------------------------------------------------------------------
+ * Monotonic sequence -- RFC 9562 §6.2 method 1 (12-bit sub-ms counter).
+ *
+ * Within a single millisecond, the 12-bit counter (rand_a field) acts
+ * as a monotonic sub-ms tiebreaker; the 62 bits of rand_b are
+ * redrawn on every real ms-tick. On counter overflow within a single
+ * ms the sequence bumps the embedded timestamp by 1 ms and reseeds
+ * the counter, per RFC option (a) -- it NEVER returns an
+ * "exhausted" error and never stalls. If the system clock moves
+ * backwards (NTP step, VM resume) the sequence clamps to its last
+ * emitted ms so monotonicity is preserved.
+ *
+ * NOT thread-safe: one chronoid_uuidv7_sequence_t instance per thread.
+ * Concurrent calls from multiple threads on the same instance are
+ * undefined behaviour; multiple threads should each own their own.
+ * -------------------------------------------------------------------------- */
+
+  typedef struct chronoid_uuidv7_sequence
+  {
+    int64_t last_ms;            /* most recent ms emitted, or 0 if uninitialised */
+    uint16_t counter;           /* 12-bit counter, masked to 0x0FFF              */
+    uint8_t rand_b[8];          /* 62-bit random tail (top 2 bits of rand_b[0]   */
+                                /* are overwritten with the variant on emit)    */
+    /* No version / opaque-padding field in this revision; new fields
+     * may be appended in the future. Treat the struct as opaque from
+     * the consumer's perspective and use chronoid_uuidv7_sequence_init
+     * to set it up. */
+  } chronoid_uuidv7_sequence_t;
+
+/* Initialise |s| with a fresh CSPRNG-drawn 12-bit counter and rand_b.
+ * Returns CHRONOID_UUIDV7_ERR_RNG on entropy-source failure; on failure
+ * |*s| is left untouched. The first chronoid_uuidv7_sequence_next call
+ * after init reads the wall clock and emits at the current ms; the
+ * counter is initialised to a random non-zero (with overwhelming
+ * probability) starting value rather than 0 so consecutive sequences
+ * sharing the same start ms are not predictable from each other's
+ * tails. */
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_sequence_init (
+      chronoid_uuidv7_sequence_t *s);
+
+/* Emit the next monotonic UUIDv7 from |s| into |*out|. Always returns
+ * either CHRONOID_UUIDV7_OK on success or CHRONOID_UUIDV7_ERR_RNG on
+ * entropy-source failure (during a redraw on real ms-tick or counter
+ * overflow). Never returns "exhausted": counter overflow is handled
+ * internally per RFC 9562 §6.2 method 1 option (a) by bumping the
+ * embedded timestamp by 1 ms.
+ *
+ * Clock-backward clamp: if the wall clock is observed to move
+ * backwards (NTP step, VM resume), |s|'s last emitted ms is reused
+ * so the resulting UUID still strictly succeeds the previous one.
+ * The sequence will eventually re-track real wall-clock time once
+ * the system clock catches up. */
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_sequence_next (
+      chronoid_uuidv7_sequence_t *s, chronoid_uuidv7_t *out);
+
+/* Compute the lexicographic lower and upper bounds of the UUIDv7 that
+ * the next chronoid_uuidv7_sequence_next call from |s| could produce
+ * given its current |last_ms| and |counter| state. The bounds assume
+ * the next call lands in the same ms (no real ms-tick observed): the
+ * counter increments deterministically by 1, and rand_b spans its
+ * full 62-bit range. After a real ms-tick or counter overflow the
+ * actual emit may land outside [min, max] (later ms => greater
+ * lexicographically), but every call within the same observed ms
+ * stays inside the bounds.
+ *
+ * No error path: |*min_out| and |*max_out| are unconditionally written
+ * from |s|. Both must be non-NULL. */
+  CHRONOID_PUBLIC void chronoid_uuidv7_sequence_bounds (
+      const chronoid_uuidv7_sequence_t *s,
+      chronoid_uuidv7_t *min_out, chronoid_uuidv7_t *max_out);
 
 #ifdef __cplusplus
 }                               /* extern "C" */

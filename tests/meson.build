@@ -14,7 +14,7 @@ base_tests = ['test_smoke', 'test_parts', 'test_base62', 'test_parse_format',
               'test_chacha20', 'test_new', 'test_simd_parity',
               'test_wipe', 'test_compare_parity', 'test_string_batch',
               'test_uuidv7_smoke', 'test_uuidv7_parts',
-              'test_uuidv7_parse_format']
+              'test_uuidv7_parse_format', 'test_uuidv7_new']
 
 # test_divisor_magic verifies the auto-generated divisor_magic.h
 # (Granlund-Moeller floor + correction reciprocal) against straight
@@ -52,6 +52,21 @@ if have_uint128
   )
   test('test_divisor_magic', exe, timeout : 30)
 endif
+
+# test_uuidv7_sequence uses the CHRONOID_TESTING-gated time-source
+# override (chronoid_set_time_source_for_testing) to pin the wall
+# clock for the sub-ms counter / overflow / clock-backward branches
+# in chronoid_uuidv7_sequence_next. The override prototype is gated
+# behind -DCHRONOID_TESTING=1 in chronoid/rand.h, so the test TU must
+# build with that flag. The library itself unconditionally defines
+# the override slot (one acquire-load per chronoid_now_ms call,
+# ~1 ns), so no separate testing-enabled library object is required.
+exe = executable('test_uuidv7_sequence', 'test_uuidv7_sequence.c',
+  include_directories : test_inc,
+  link_with : test_link,
+  c_args : ['-DCHRONOID_TESTING=1'],
+)
+test('test_uuidv7_sequence', exe, timeout : 30)
 
 if have_threads_h and threads_dep.found()
   # test_rand_tls compiles with -DCHRONOID_TESTING=1 only when the

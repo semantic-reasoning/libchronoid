@@ -155,6 +155,7 @@ core_sources = files(
   'chronoid/ksuid/compare_scalar.c',
   'chronoid/ksuid/encode_batch.c',
   'chronoid/uuidv7/uuidv7.c',
+  'chronoid/uuidv7/uuidv7_sequence.c',
   'chronoid/uuidv7/hex.c',
 )
 

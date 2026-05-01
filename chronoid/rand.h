@@ -29,6 +29,32 @@ int chronoid_random_bytes (uint8_t * buf, size_t n);
  * its next chronoid_random_bytes call. */
 void chronoid_random_force_reseed (void);
 
+/* Wall-clock time in milliseconds since the Unix epoch. Internal helper
+ * used by chronoid_uuidv7_new / chronoid_uuidv7_sequence_next. The
+ * implementation calls timespec_get(TIME_UTC) and combines tv_sec /
+ * tv_nsec into ms; on clock_gettime failure it returns -1. Callers
+ * surface that sentinel as CHRONOID_UUIDV7_ERR_TIME_RANGE.
+ *
+ * NOT exported from the shared library; the prototype lives here only
+ * because rand_tls.c is the natural home for the wall-clock helper
+ * (it already abstracts timespec_get for the reseed cadence) and
+ * uuidv7_sequence.c plus uuidv7.c need to call it from a sibling TU. */
+int64_t chronoid_now_ms (void);
+
+/* Internal: fill |buf| with |n| bytes of random data, routing through
+ * the chronoid_set_rand override if installed and otherwise through
+ * the per-thread CSPRNG (chronoid_random_bytes). Returns 0 on success
+ * and non-zero on failure. The function pointer + ctx slots backing
+ * the override are private to ksuid.c (where chronoid_set_rand is
+ * defined to honour the public ksuid.h ABI), so this helper exists
+ * to give uuidv7.c / uuidv7_sequence.c access to the same override
+ * without duplicating the override slots.
+ *
+ * The same override governs both formats: a single chronoid_set_rand
+ * call routes both chronoid_ksuid_new and chronoid_uuidv7_new through
+ * the supplied function. */
+int chronoid_internal_fill_random (uint8_t *buf, size_t n);
+
 /* Issue #4 thread-exit hook. Wipes the calling thread's CSPRNG
  * state in place via chronoid_explicit_bzero so the 64-byte ChaCha20
  * state and the 64-byte keystream window do not survive the thread
@@ -70,6 +96,17 @@ void chronoid_random_thread_state_peek_for_testing (uint8_t * out, size_t out_le
 
 /* Size in bytes that a peek buffer must accommodate. */
 size_t chronoid_random_thread_state_size_for_testing (void);
+
+/* Test-only: replace the wall-clock source used by chronoid_uuidv7_*
+ * generation. Pass a non-NULL fn to install; pass NULL to restore the
+ * default timespec_get-backed source. The override is process-global
+ * and atomic-pointer-protected, so tests can swap it mid-flight
+ * race-free; tests are responsible for restoring the default before
+ * exiting. fn returns ms since the Unix epoch. The override must be
+ * thread-safe if multiple threads exercise UUIDv7 generation
+ * concurrently. */
+typedef int64_t (*chronoid_time_source_fn) (void);
+void chronoid_set_time_source_for_testing (chronoid_time_source_fn fn);
 #endif
 
 #endif /* CHRONOID_RAND_H */

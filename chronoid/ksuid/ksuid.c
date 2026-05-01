@@ -129,8 +129,16 @@ chronoid_set_rand (chronoid_rng_fn fn, void *ctx)
   atomic_store_explicit (&g_rng_fn, fn, memory_order_release);
 }
 
-static int
-chronoid_ksuid_fill_payload (uint8_t *buf, size_t n)
+/* Renamed from the original file-static chronoid_ksuid_fill_payload --
+ * still resolves the chronoid_set_rand override the same way, but is
+ * now reachable as a hidden-visibility internal symbol so the UUIDv7
+ * generator path (chronoid/uuidv7/uuidv7.c, chronoid/uuidv7/
+ * uuidv7_sequence.c) can route through the same override. The
+ * function pointer + ctx slots stay file-scope here because
+ * chronoid_set_rand itself is part of the KSUID public ABI and its
+ * single source of truth is this TU. */
+int
+chronoid_internal_fill_random (uint8_t *buf, size_t n)
 {
   chronoid_rng_fn fn = atomic_load_explicit (&g_rng_fn, memory_order_acquire);
   if (fn != NULL) {
@@ -149,7 +157,7 @@ chronoid_ksuid_new_with_time (chronoid_ksuid_t *out, int64_t unix_seconds)
   /* Fill the payload first into a temporary so a partial RNG failure
    * cannot leak half a payload into |*out|. */
   uint8_t payload[CHRONOID_KSUID_PAYLOAD_LEN];
-  if (chronoid_ksuid_fill_payload (payload, CHRONOID_KSUID_PAYLOAD_LEN) != 0)
+  if (chronoid_internal_fill_random (payload, CHRONOID_KSUID_PAYLOAD_LEN) != 0)
     return CHRONOID_KSUID_ERR_RNG;
   chronoid_be32_store (out->b, (uint32_t) corrected);
   memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload, CHRONOID_KSUID_PAYLOAD_LEN);

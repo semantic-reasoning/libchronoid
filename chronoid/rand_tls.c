@@ -248,6 +248,44 @@ chronoid_now_seconds (void)
   return (int64_t) ts.tv_sec;
 }
 
+/* Atomic-pointer test-source override slot for chronoid_now_ms. The
+ * counter only matters to the UUIDv7 path, which exclusively reads
+ * via chronoid_now_ms; the CSPRNG reseed predicate stays on
+ * chronoid_now_seconds (no override) so test time-warps cannot make
+ * the RNG decide to reseed mid-test.
+ *
+ * The slot is always defined (production builds carry one
+ * acquire-load on every chronoid_now_ms call, ~1 ns on x86_64). The
+ * setter prototype is gated behind CHRONOID_TESTING in rand.h, so
+ * production callers cannot install one; the slot stays NULL in
+ * production and the load resolves to the timespec_get path. */
+static _Atomic chronoid_time_source_fn chronoid_time_source_override_;
+
+int64_t
+chronoid_now_ms (void)
+{
+  chronoid_time_source_fn fn =
+      atomic_load_explicit (&chronoid_time_source_override_,
+      memory_order_acquire);
+  if (fn != NULL)
+    return fn ();
+  struct timespec ts;
+  if (timespec_get (&ts, TIME_UTC) != TIME_UTC)
+    return -1;
+  /* tv_sec fits comfortably in int64_t for any wall clock the host
+   * can produce; tv_nsec is in [0, 999999999]. The product
+   * tv_sec * 1000 cannot overflow int64_t until year 292278994 AD,
+   * so no widening is needed. */
+  return (int64_t) ts.tv_sec * 1000 + (int64_t) (ts.tv_nsec / 1000000);
+}
+
+void
+chronoid_set_time_source_for_testing (chronoid_time_source_fn fn)
+{
+  atomic_store_explicit (&chronoid_time_source_override_, fn,
+      memory_order_release);
+}
+
 static int
 chronoid_tls_rng_seed (chronoid_tls_rng_t *r)
 {
