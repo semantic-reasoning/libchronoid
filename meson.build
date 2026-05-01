@@ -199,7 +199,14 @@ endif
 # it as compile-time-guaranteed on x86_64 with no runtime CPUID gate.
 have_hex_ssse3 = false
 ssse3_arg = ''
-if get_option('simd') != 'none' and host_cpu == 'x86_64'
+# The -Dssse3 feature option (value: 'auto' by default) wraps BOTH the
+# MSVC and GCC/Clang branches so a `-Dssse3=disabled` flag actually
+# disables the kernel everywhere, including on Windows where SSSE3
+# intrinsics are normally on by default with no flag. Without this
+# outer gate the non-SSSE3 CI lane silently keeps the SSSE3 kernel on
+# MSVC builds.
+if get_option('simd') != 'none' and host_cpu == 'x86_64' \
+    and get_option('ssse3').allowed()
   if cc.get_argument_syntax() == 'msvc'
     # MSVC has no /arch:SSSE3 switch; SSE2 is its lowest baseline and
     # SSSE3 intrinsics are unconditionally available when SSE2 is
