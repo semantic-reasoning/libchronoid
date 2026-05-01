@@ -7,6 +7,15 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-05-01
+
+A pre-1.0 hygiene release: a contract-tightening for the
+`chronoid-gen -f payload` projection on UUIDv7, a thread-safety
+docstring fix for `chronoid_set_rand`, and CI lanes that exercise
+the scalar fallback path. No public-API additions, no SONAME bump,
+no behaviour change for callers who were not relying on the rejected
+`-f payload` UUIDv7 projection.
+
 ### Changed (BREAKING — pre-1.0 contract tightening)
 
 - `chronoid-gen -f payload` is now KSUID-only. Combining `-f payload`
@@ -22,7 +31,7 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
   released-API contract honest. The `-f payload` projection for
   KSUID is unchanged (16 bytes). Closes #3.
 
-### Changed (docs-only — no behavior change)
+### Changed (docs-only — no behaviour change)
 
 - Clarify the thread-safety contract for `chronoid_set_rand` in
   `chronoid/ksuid.h`: the override is held in two independent atomic
@@ -32,6 +41,36 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
   `chronoid_ksuid_new` / `chronoid_uuidv7_new` calls before swapping
   the override or freeing `ctx`. Cross-referenced from the UUIDv7
   generation prose in `chronoid/uuidv7.h`. No ABI change. Closes #5.
+
+### Added (build / CI)
+
+- New `-Dssse3` meson `feature` option (default `auto`) gating the
+  SSSE3 hex-encode kernel for `chronoid_uuidv7_format` on x86_64.
+  Default behaviour is byte-identical to 0.10.0 on every supported
+  platform; `-Dssse3=disabled` lets packagers and CI exercise the
+  scalar fallback in `chronoid/uuidv7/hex.c`. The option gate wraps
+  both the MSVC and GCC/Clang branches so the disable actually takes
+  effect on Windows.
+- Three new blocking PR-gate jobs (`scalar-fallback / no-avx2`,
+  `/ no-ssse3`, `/ force-scalar`) in `.github/workflows/ci-pr.yml`,
+  mirrored non-blocking with GCC + Clang in `.github/workflows/ci-main.yml`.
+  Catches scalar-arm regressions that the SIMD-vs-scalar parity
+  tests would otherwise mask on every existing CI lane (where the
+  parity test reduces to scalar-vs-scalar because the SIMD kernel is
+  compiled in). Closes #6.
+
+### Footprint
+
+A release build on x86_64 (post-`strip --strip-unneeded`):
+
+| Artifact              | Bytes  |
+| :-------------------- | -----: |
+| libchronoid.so.0.10.1 | 39 072 |
+| libchronoid.a         | 55 246 |
+| chronoid-gen (CLI)    | 31 136 |
+
+Byte-identical to 0.10.0 on x86_64 GCC; the `-f payload` rejection
+landed without a measurable size delta after strip.
 
 ## [0.10.0] — 2026-05-01
 

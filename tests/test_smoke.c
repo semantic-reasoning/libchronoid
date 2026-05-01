@@ -96,8 +96,8 @@ test_version_macros_are_consistent (void)
    * these four asserts in the same commit. */
   ASSERT_EQ_INT (CHRONOID_VERSION_MAJOR, 0);
   ASSERT_EQ_INT (CHRONOID_VERSION_MINOR, 10);
-  ASSERT_EQ_INT (CHRONOID_VERSION_PATCH, 0);
-  ASSERT_EQ_STR (CHRONOID_VERSION_STRING, "0.10.0");
+  ASSERT_EQ_INT (CHRONOID_VERSION_PATCH, 1);
+  ASSERT_EQ_STR (CHRONOID_VERSION_STRING, "0.10.1");
 
   /* The composite CHRONOID_VERSION must equal the documented
    * (MAJOR << 16) | (MINOR << 8) | PATCH layout for `#if
