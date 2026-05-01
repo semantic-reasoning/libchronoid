@@ -63,7 +63,7 @@ extern "C"
       "chronoid_ksuid_t must be exactly CHRONOID_KSUID_BYTES; KSUID_*_INIT macros depend on it");
 #endif
 
-  typedef enum ksuid_err
+  typedef enum chronoid_ksuid_err
   {
     CHRONOID_KSUID_OK = 0,
     CHRONOID_KSUID_ERR_SIZE = -1,        /* bad binary length                     */

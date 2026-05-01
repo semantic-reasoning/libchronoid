@@ -15,8 +15,8 @@
  * baselines and the architect plan's atomic function-pointer
  * scaffolding is reserved for the eventual AVX2 / SVE upgrades.
  */
-#ifndef KSUID_BASE62_SIMD_H
-#define KSUID_BASE62_SIMD_H
+#ifndef CHRONOID_KSUID_BASE62_SIMD_H
+#define CHRONOID_KSUID_BASE62_SIMD_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -33,4 +33,4 @@ int chronoid_base62_translate16_neon (uint8_t out[16], const uint8_t in[16]);
 #  define CHRONOID_BASE62_TRANSLATE16(out, in) chronoid_base62_translate16_scalar ((out), (in))
 #endif
 
-#endif /* KSUID_BASE62_SIMD_H */
+#endif /* CHRONOID_KSUID_BASE62_SIMD_H */

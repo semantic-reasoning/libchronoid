@@ -47,7 +47,7 @@
 #if defined(CHRONOID_HAVE_BCRYPT)
 
 static int
-ksuid_random_via_bcrypt (uint8_t *buf, size_t n)
+chronoid_random_via_bcrypt (uint8_t *buf, size_t n)
 {
   /* BCryptGenRandom takes a ULONG length. On 64-bit Windows ULONG
    * stays 32 bits, so we loop for buffers >= 4 GiB even though the
@@ -65,18 +65,18 @@ ksuid_random_via_bcrypt (uint8_t *buf, size_t n)
 }
 
 int
-ksuid_os_random_bytes (uint8_t *buf, size_t n)
+chronoid_os_random_bytes (uint8_t *buf, size_t n)
 {
   if (n == 0)
     return 0;
-  return ksuid_random_via_bcrypt (buf, n);
+  return chronoid_random_via_bcrypt (buf, n);
 }
 
 #else /* POSIX path */
 
 #  if defined(CHRONOID_HAVE_GETRANDOM)
 static int
-ksuid_random_via_getrandom (uint8_t *buf, size_t n)
+chronoid_random_via_getrandom (uint8_t *buf, size_t n)
 {
   size_t off = 0;
   while (off < n) {
@@ -94,7 +94,7 @@ ksuid_random_via_getrandom (uint8_t *buf, size_t n)
 
 #  if defined(CHRONOID_HAVE_GETENTROPY)
 static int
-ksuid_random_via_getentropy (uint8_t *buf, size_t n)
+chronoid_random_via_getentropy (uint8_t *buf, size_t n)
 {
   /* getentropy() is documented to fail for n > 256. */
   size_t off = 0;
@@ -109,7 +109,7 @@ ksuid_random_via_getentropy (uint8_t *buf, size_t n)
 #  endif
 
 static int
-ksuid_random_via_urandom (uint8_t *buf, size_t n)
+chronoid_random_via_urandom (uint8_t *buf, size_t n)
 {
   int fd;
   do {
@@ -140,22 +140,22 @@ ksuid_random_via_urandom (uint8_t *buf, size_t n)
 }
 
 int
-ksuid_os_random_bytes (uint8_t *buf, size_t n)
+chronoid_os_random_bytes (uint8_t *buf, size_t n)
 {
   if (n == 0)
     return 0;
 
 #  if defined(CHRONOID_HAVE_GETRANDOM)
-  if (ksuid_random_via_getrandom (buf, n) == 0)
+  if (chronoid_random_via_getrandom (buf, n) == 0)
     return 0;
 #  endif
 
 #  if defined(CHRONOID_HAVE_GETENTROPY)
-  if (ksuid_random_via_getentropy (buf, n) == 0)
+  if (chronoid_random_via_getentropy (buf, n) == 0)
     return 0;
 #  endif
 
-  return ksuid_random_via_urandom (buf, n);
+  return chronoid_random_via_urandom (buf, n);
 }
 
 #endif /* POSIX path */

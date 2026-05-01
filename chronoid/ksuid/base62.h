@@ -5,8 +5,8 @@
  *   - base62.go:39-82 (fastEncodeBase62)
  *   - base62.go:102-175 (fastDecodeBase62)
  */
-#ifndef KSUID_BASE62_H
-#define KSUID_BASE62_H
+#ifndef CHRONOID_KSUID_BASE62_H
+#define CHRONOID_KSUID_BASE62_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -28,4 +28,4 @@ void chronoid_base62_encode (uint8_t out[CHRONOID_KSUID_STRING_LEN],
 chronoid_ksuid_err_t chronoid_base62_decode (uint8_t out[CHRONOID_KSUID_BYTES],
     const uint8_t in[CHRONOID_KSUID_STRING_LEN]);
 
-#endif /* KSUID_BASE62_H */
+#endif /* CHRONOID_KSUID_BASE62_H */

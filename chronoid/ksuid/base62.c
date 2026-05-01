@@ -81,11 +81,11 @@ chronoid_base62_encode (uint8_t out[CHRONOID_KSUID_STRING_LEN],
 {
   /* Treat the 20-byte input as five base-2^32 limbs, MSB first. */
   uint32_t bp[5] = {
-    ksuid_be32_load (in + 0),
-    ksuid_be32_load (in + 4),
-    ksuid_be32_load (in + 8),
-    ksuid_be32_load (in + 12),
-    ksuid_be32_load (in + 16),
+    chronoid_be32_load (in + 0),
+    chronoid_be32_load (in + 4),
+    chronoid_be32_load (in + 8),
+    chronoid_be32_load (in + 12),
+    chronoid_be32_load (in + 16),
   };
   size_t bp_len = 5;
   uint32_t bq[5];

@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #if defined(CHRONOID_HAVE_AVX2_BATCH) && (defined(__GNUC__) || defined(__clang__))
-#  define KSUID_TEST_AVX2_PARITY 1
+#  define CHRONOID_KSUID_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
  * so default-hidden visibility does not exclude these symbols. */
 extern void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, char *out_27n,
@@ -34,7 +34,7 @@ extern void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, ch
 extern void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids, char *out_27n,
     size_t n);
 #else
-#  define KSUID_TEST_AVX2_PARITY 0
+#  define CHRONOID_KSUID_TEST_AVX2_PARITY 0
 #endif
 
 static void
@@ -135,7 +135,7 @@ test_batch_pinned_corners (void)
   }
 }
 
-#if KSUID_TEST_AVX2_PARITY
+#if CHRONOID_KSUID_TEST_AVX2_PARITY
 static int
 host_supports_avx2 (void)
 {
@@ -286,7 +286,7 @@ test_avx2_parity_one_million_lcg (void)
       if (memcmp (out_s + i * CHRONOID_KSUID_STRING_LEN,
               out_a + i * CHRONOID_KSUID_STRING_LEN, CHRONOID_KSUID_STRING_LEN) != 0) {
         fprintf (stderr, "  AVX2 parity diverged at lane %zu of %zu\n", i, n);
-        ksuid_test_failures_++;
+        chronoid_test_failures_++;
         break;
       }
     }
@@ -295,7 +295,7 @@ test_avx2_parity_one_million_lcg (void)
   free (out_s);
   free (out_a);
 }
-#endif /* KSUID_TEST_AVX2_PARITY */
+#endif /* CHRONOID_KSUID_TEST_AVX2_PARITY */
 
 int
 main (void)
@@ -308,7 +308,7 @@ main (void)
   RUN_TEST (test_batch_64);
   RUN_TEST (test_batch_257_misaligned);
   RUN_TEST (test_batch_pinned_corners);
-#if KSUID_TEST_AVX2_PARITY
+#if CHRONOID_KSUID_TEST_AVX2_PARITY
   RUN_TEST (test_avx2_parity_n_in_block_boundaries);
   RUN_TEST (test_avx2_parity_lane_swap_detection);
   RUN_TEST (test_avx2_parity_corner_values);

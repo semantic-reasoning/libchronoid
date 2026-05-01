@@ -37,25 +37,25 @@
  * widen to int64_t for storage so the comparison is unambiguous. */
 #if defined(_WIN32)
 #  include <process.h>
-#  define KSUID_GETPID() ((int64_t) _getpid ())
+#  define CHRONOID_GETPID() ((int64_t) _getpid ())
 #else
 #  include <sys/types.h>
 #  include <unistd.h>
-#  define KSUID_GETPID() ((int64_t) getpid ())
+#  define CHRONOID_GETPID() ((int64_t) getpid ())
 #endif
 
 #include <chronoid/chacha20.h>
 #include <chronoid/wipe.h>
 
-/* Thread-exit residue policy: the per-thread ksuid_tls_rng_t below
+/* Thread-exit residue policy: the per-thread chronoid_tls_rng_t below
  * holds 64 bytes of ChaCha20 state plus a 64-byte keystream window.
  * On platforms with a thread-exit hook (glibc 2.18+
  * __cxa_thread_atexit_impl, MUSL >= 1.2.0, libc++abi on macOS, FLS
  * on Windows -- detected and registered in commit 2 of issue #4)
- * ksuid_random_thread_state_wipe is invoked automatically at thread
+ * chronoid_random_thread_state_wipe is invoked automatically at thread
  * teardown. On platforms without such a hook the residue persists
  * until the OS reclaims the TLS block; callers requiring stronger
- * guarantees should call ksuid_random_force_reseed() before joining
+ * guarantees should call chronoid_random_force_reseed() before joining
  * the worker thread.
  *
  * The wipe entry point itself is implemented in this file (commit 1)
@@ -63,8 +63,8 @@
  * via the CHRONOID_TESTING-gated for_testing helpers added in commit 3.
  */
 
-#define KSUID_RNG_RESEED_BYTES   (1u << 20)     /* 1 MiB                   */
-#define KSUID_RNG_RESEED_SECONDS 3600   /* 1 hour                  */
+#define CHRONOID_RNG_RESEED_BYTES   (1u << 20)     /* 1 MiB                   */
+#define CHRONOID_RNG_RESEED_SECONDS 3600   /* 1 hour                  */
 
 typedef struct
 {
@@ -76,63 +76,63 @@ typedef struct
   int64_t seed_pid;             /* getpid()/_getpid() at last seed       */
   bool seeded;
   bool destructor_registered;   /* thread-exit wipe registered yet?      */
-} ksuid_tls_rng_t;
+} chronoid_tls_rng_t;
 
-static _Thread_local ksuid_tls_rng_t ksuid_tls_rng_;
+static _Thread_local chronoid_tls_rng_t chronoid_tls_rng_;
 
-/* Re-entry guard for ksuid_random_thread_state_wipe. A future change
+/* Re-entry guard for chronoid_random_thread_state_wipe. A future change
  * that adds, e.g., a debug-log call inside the wipe path could call
- * back into ksuid_random_bytes; the guarded ksuid_random_bytes path
+ * back into chronoid_random_bytes; the guarded chronoid_random_bytes path
  * returns the RNG-failure sentinel rather than reseeding into a slot
  * that is in the middle of being torn down. */
-static _Thread_local bool ksuid_tls_in_destructor_;
+static _Thread_local bool chronoid_tls_in_destructor_;
 
 /* Atomic counter incremented on every entry to
- * ksuid_random_thread_state_wipe. Always defined and always
+ * chronoid_random_thread_state_wipe. Always defined and always
  * incremented, regardless of CHRONOID_TESTING -- the cost is one
  * relaxed atomic increment per wipe (~5 ns on x86_64) and the
  * counter only matters to the test harness, which sees it through
  * the CHRONOID_TESTING-gated extern declaration in rand.h. */
 #include <stdatomic.h>
-_Atomic int ksuid_thread_exit_wipes_observed;
+_Atomic int chronoid_thread_exit_wipes_observed;
 
 void
-ksuid_random_thread_state_wipe (void)
+chronoid_random_thread_state_wipe (void)
 {
-  ksuid_tls_in_destructor_ = true;
-  ksuid_explicit_bzero (&ksuid_tls_rng_, sizeof ksuid_tls_rng_);
-  ksuid_tls_in_destructor_ = false;
-  atomic_fetch_add_explicit (&ksuid_thread_exit_wipes_observed, 1,
+  chronoid_tls_in_destructor_ = true;
+  chronoid_explicit_bzero (&chronoid_tls_rng_, sizeof chronoid_tls_rng_);
+  chronoid_tls_in_destructor_ = false;
+  atomic_fetch_add_explicit (&chronoid_thread_exit_wipes_observed, 1,
       memory_order_relaxed);
 }
 
 void
-ksuid_random_thread_state_set_sentinel_for_testing (void)
+chronoid_random_thread_state_set_sentinel_for_testing (void)
 {
   /* The test must have already triggered registration on this
    * thread (via a real draw). We deliberately preserve the
    * destructor_registered flag so the previously-registered hook
    * still fires; the seeded flag is also kept true so the next
    * draw doesn't overwrite the sentinel through the seed path. */
-  bool registered = ksuid_tls_rng_.destructor_registered;
-  memset (&ksuid_tls_rng_, 0xa5, sizeof ksuid_tls_rng_);
-  ksuid_tls_rng_.seeded = true;
-  ksuid_tls_rng_.destructor_registered = registered;
+  bool registered = chronoid_tls_rng_.destructor_registered;
+  memset (&chronoid_tls_rng_, 0xa5, sizeof chronoid_tls_rng_);
+  chronoid_tls_rng_.seeded = true;
+  chronoid_tls_rng_.destructor_registered = registered;
 }
 
 void
-ksuid_random_thread_state_peek_for_testing (uint8_t *out, size_t out_len)
+chronoid_random_thread_state_peek_for_testing (uint8_t *out, size_t out_len)
 {
-  size_t n = sizeof ksuid_tls_rng_;
+  size_t n = sizeof chronoid_tls_rng_;
   if (out_len < n)
     n = out_len;
-  memcpy (out, &ksuid_tls_rng_, n);
+  memcpy (out, &chronoid_tls_rng_, n);
 }
 
 size_t
-ksuid_random_thread_state_size_for_testing (void)
+chronoid_random_thread_state_size_for_testing (void)
 {
-  return sizeof ksuid_tls_rng_;
+  return sizeof chronoid_tls_rng_;
 }
 
 /* Per-platform thread-exit registration. Glibc / libc++abi /
@@ -155,14 +155,14 @@ extern int __cxa_thread_atexit_impl (void (*fn) (void *), void *arg, void *dso);
 extern void *__dso_handle;
 
 static void
-ksuid_tls_atexit_trampoline (void *unused)
+chronoid_tls_atexit_trampoline (void *unused)
 {
   (void) unused;
-  ksuid_random_thread_state_wipe ();
+  chronoid_random_thread_state_wipe ();
 }
 
 static void
-ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
+chronoid_tls_register_thread_exit (chronoid_tls_rng_t *r)
 {
   if (r->destructor_registered)
     return;
@@ -172,7 +172,7 @@ ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
    * __dso_handle is `void *`, so we pass its address (a `void **`)
    * cast to the `void *` ABI parameter via an explicit cast --
    * silencing bugprone-multi-level-implicit-pointer-conversion. */
-  (void) __cxa_thread_atexit_impl (ksuid_tls_atexit_trampoline, NULL,
+  (void) __cxa_thread_atexit_impl (chronoid_tls_atexit_trampoline, NULL,
       (void *) &__dso_handle);
 }
 
@@ -181,8 +181,8 @@ ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 
-static DWORD ksuid_fls_index_ = FLS_OUT_OF_INDEXES;
-static INIT_ONCE ksuid_fls_init_ = INIT_ONCE_STATIC_INIT;
+static DWORD chronoid_fls_index_ = FLS_OUT_OF_INDEXES;
+static INIT_ONCE chronoid_fls_init_ = INIT_ONCE_STATIC_INIT;
 
 /* FlsAlloc callback signature is (PVOID) under NTAPI calling
  * convention; mismatching it would corrupt the stack on x86_32 MSVC.
@@ -191,43 +191,43 @@ static INIT_ONCE ksuid_fls_init_ = INIT_ONCE_STATIC_INIT;
  * _Thread_local storage and is reachable from the same thread
  * during teardown, before the runtime tears down its TLS. */
 static VOID NTAPI
-ksuid_fls_destroy (PVOID p)
+chronoid_fls_destroy (PVOID p)
 {
   (void) p;
-  ksuid_random_thread_state_wipe ();
+  chronoid_random_thread_state_wipe ();
 }
 
 static BOOL CALLBACK
-ksuid_fls_init_once (PINIT_ONCE init_once, PVOID parameter, PVOID *context)
+chronoid_fls_init_once (PINIT_ONCE init_once, PVOID parameter, PVOID *context)
 {
   (void) init_once;
   (void) parameter;
   (void) context;
-  ksuid_fls_index_ = FlsAlloc (ksuid_fls_destroy);
+  chronoid_fls_index_ = FlsAlloc (chronoid_fls_destroy);
   return TRUE;
 }
 
 static void
-ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
+chronoid_tls_register_thread_exit (chronoid_tls_rng_t *r)
 {
   if (r->destructor_registered)
     return;
-  InitOnceExecuteOnce (&ksuid_fls_init_, ksuid_fls_init_once, NULL, NULL);
-  if (ksuid_fls_index_ == FLS_OUT_OF_INDEXES)
+  InitOnceExecuteOnce (&chronoid_fls_init_, chronoid_fls_init_once, NULL, NULL);
+  if (chronoid_fls_index_ == FLS_OUT_OF_INDEXES)
     return;
   /* FlsSetValue with a non-NULL sentinel marks this thread as
-   * participating; ksuid_fls_destroy fires on thread exit. */
-  if (FlsSetValue (ksuid_fls_index_, (PVOID) (uintptr_t) 1))
+   * participating; chronoid_fls_destroy fires on thread exit. */
+  if (FlsSetValue (chronoid_fls_index_, (PVOID) (uintptr_t) 1))
     r->destructor_registered = true;
 }
 
 #else /* No thread-exit hook on this platform */
 
 static void
-ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
+chronoid_tls_register_thread_exit (chronoid_tls_rng_t *r)
 {
   /* Documented residue path: nothing to register. The bounded
-   * reseed cadence and ksuid_random_force_reseed are the only
+   * reseed cadence and chronoid_random_force_reseed are the only
    * mitigations. */
   (void) r;
 }
@@ -240,7 +240,7 @@ ksuid_tls_register_thread_exit (ksuid_tls_rng_t *r)
  * choice when the clock is unreadable. timespec_get is C11 standard
  * and available on glibc 2.16+, MSVC 2015+, and macOS 10.15+. */
 static int64_t
-ksuid_now_seconds (void)
+chronoid_now_seconds (void)
 {
   struct timespec ts;
   if (timespec_get (&ts, TIME_UTC) != TIME_UTC)
@@ -249,18 +249,18 @@ ksuid_now_seconds (void)
 }
 
 static int
-ksuid_tls_rng_seed (ksuid_tls_rng_t *r)
+chronoid_tls_rng_seed (chronoid_tls_rng_t *r)
 {
   uint8_t kn[44];               /* 32 key + 12 nonce */
-  if (ksuid_os_random_bytes (kn, sizeof kn) < 0) {
+  if (chronoid_os_random_bytes (kn, sizeof kn) < 0) {
     /* Wipe partial seed bytes before returning. */
-    ksuid_explicit_bzero (kn, sizeof kn);
+    chronoid_explicit_bzero (kn, sizeof kn);
     return -1;
   }
-  r->state[0] = KSUID_CHACHA20_C0;
-  r->state[1] = KSUID_CHACHA20_C1;
-  r->state[2] = KSUID_CHACHA20_C2;
-  r->state[3] = KSUID_CHACHA20_C3;
+  r->state[0] = CHRONOID_CHACHA20_C0;
+  r->state[1] = CHRONOID_CHACHA20_C1;
+  r->state[2] = CHRONOID_CHACHA20_C2;
+  r->state[3] = CHRONOID_CHACHA20_C3;
   for (int i = 0; i < 8; ++i) {
     r->state[4 + i] = (uint32_t) kn[i * 4 + 0]
         | ((uint32_t) kn[i * 4 + 1] << 8)
@@ -277,7 +277,7 @@ ksuid_tls_rng_seed (ksuid_tls_rng_t *r)
   /* Wipe seed material from local. The chacha state itself stays in
    * TLS, but at least we limit the residue from leaving on the
    * stack frame after this function returns. */
-  ksuid_explicit_bzero (kn, sizeof kn);
+  chronoid_explicit_bzero (kn, sizeof kn);
 
   /* r->buf is about to be overwritten by the first chacha block; the
    * memset is initialisation, not secret-erasure, so plain memset is
@@ -285,71 +285,71 @@ ksuid_tls_rng_seed (ksuid_tls_rng_t *r)
   memset (r->buf, 0, sizeof r->buf);
   r->buf_pos = sizeof r->buf;   /* empty buffer, force first block */
   r->bytes_emitted = 0;
-  r->seed_pid = KSUID_GETPID ();
-  r->seed_time = ksuid_now_seconds ();
+  r->seed_pid = CHRONOID_GETPID ();
+  r->seed_time = chronoid_now_seconds ();
   /* Register the thread-exit wipe BEFORE flipping the seeded flag
    * -- if registration fails partway and the thread later exits we
    * must not have a half-wired state where the TLS slot looks
    * seeded but the destructor never fires. The registration is
    * idempotent via r->destructor_registered, so calling it on
    * every reseed is cheap. */
-  ksuid_tls_register_thread_exit (r);
+  chronoid_tls_register_thread_exit (r);
   r->seeded = true;
   return 0;
 }
 
 static bool
-ksuid_tls_rng_should_reseed (const ksuid_tls_rng_t *r)
+chronoid_tls_rng_should_reseed (const chronoid_tls_rng_t *r)
 {
   if (!r->seeded)
     return true;
-  if (r->bytes_emitted >= KSUID_RNG_RESEED_BYTES)
+  if (r->bytes_emitted >= CHRONOID_RNG_RESEED_BYTES)
     return true;
-  if (KSUID_GETPID () != r->seed_pid)
+  if (CHRONOID_GETPID () != r->seed_pid)
     return true;
-  int64_t now = ksuid_now_seconds ();
+  int64_t now = chronoid_now_seconds ();
   /* now == -1 (clock failure) makes this branch fire -- safer to
    * burn an extra reseed than to keep streaming from stale state. */
   if (now < r->seed_time)
     return true;
-  if (now - r->seed_time >= KSUID_RNG_RESEED_SECONDS)
+  if (now - r->seed_time >= CHRONOID_RNG_RESEED_SECONDS)
     return true;
   return false;
 }
 
 void
-ksuid_random_force_reseed (void)
+chronoid_random_force_reseed (void)
 {
-  ksuid_tls_rng_.seeded = false;
+  chronoid_tls_rng_.seeded = false;
 }
 
 int
-ksuid_random_bytes (uint8_t *buf, size_t n)
+chronoid_random_bytes (uint8_t *buf, size_t n)
 {
-  /* Re-entry from inside ksuid_random_thread_state_wipe is a bug:
+  /* Re-entry from inside chronoid_random_thread_state_wipe is a bug:
    * it would reseed into a TLS slot that is being torn down. Bail
    * with the RNG-failure sentinel so the caller surfaces the
    * problem. */
-  if (ksuid_tls_in_destructor_)
+  if (chronoid_tls_in_destructor_)
     return -1;
-  ksuid_tls_rng_t *r = &ksuid_tls_rng_;
-  if (ksuid_tls_rng_should_reseed (r)) {
-    if (ksuid_tls_rng_seed (r) < 0)
+  chronoid_tls_rng_t *r = &chronoid_tls_rng_;
+  if (chronoid_tls_rng_should_reseed (r)) {
+    if (chronoid_tls_rng_seed (r) < 0)
       return -1;
   }
   while (n > 0) {
     if (r->buf_pos == sizeof r->buf) {
-      ksuid_chacha20_block (r->buf, r->state);
+      chronoid_chacha20_block (r->buf, r->state);
       r->buf_pos = 0;
     }
     size_t avail = sizeof r->buf - r->buf_pos;
     size_t chunk = (n < avail) ? n : avail;
     memcpy (buf, r->buf + r->buf_pos, chunk);
     /* Wipe consumed keystream to limit forward exposure if memory is
-     * later inspected. ksuid_explicit_bzero blocks DSE here -- a
+     * later inspected. chronoid_explicit_bzero blocks DSE here -- a
      * plain memset would be elided by -O2 because the wiped bytes
      * are not subsequently read. */
-    ksuid_explicit_bzero (r->buf + r->buf_pos, chunk);
+    chronoid_explicit_bzero (r->buf + r->buf_pos, chunk);
     r->buf_pos += chunk;
     buf += chunk;
     n -= chunk;

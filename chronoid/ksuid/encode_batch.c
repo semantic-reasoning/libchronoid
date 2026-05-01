@@ -60,7 +60,7 @@ chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t *ids, char *out_27n, 
  * preserve YMM state (rare but real on misconfigured embedded
  * builds) would corrupt registers across system calls. */
 static int
-ksuid_cpu_supports_avx2 (void)
+chronoid_ksuid_cpu_supports_avx2 (void)
 {
 #  if defined(__GNUC__) || defined(__clang__)
   /* glibc's __builtin_cpu_supports requires __builtin_cpu_init
@@ -112,7 +112,7 @@ static _Atomic chronoid_ksuid_string_batch_fn g_batch_impl =
  * disables the AVX2 kernel. NULL or unset = use the best kernel
  * available on the host. */
 static int
-ksuid_force_scalar_env (void)
+chronoid_force_scalar_env (void)
 {
   const char *v = getenv ("CHRONOID_FORCE_SCALAR");
   if (v == NULL || v[0] == '\0')
@@ -128,10 +128,10 @@ chronoid_ksuid_string_batch_init_trampoline (const chronoid_ksuid_t *ids, char *
 {
   chronoid_ksuid_string_batch_fn resolved = &chronoid_ksuid_string_batch_scalar;
 #if defined(CHRONOID_HAVE_AVX2_BATCH)
-  if (!ksuid_force_scalar_env () && ksuid_cpu_supports_avx2 ())
+  if (!chronoid_force_scalar_env () && chronoid_ksuid_cpu_supports_avx2 ())
     resolved = &chronoid_ksuid_string_batch_avx2;
 #else
-  (void) ksuid_force_scalar_env;        /* silence unused-static warning */
+  (void) chronoid_force_scalar_env;        /* silence unused-static warning */
 #endif
   atomic_store_explicit (&g_batch_impl, resolved, memory_order_release);
   resolved (ids, out_27n, n);

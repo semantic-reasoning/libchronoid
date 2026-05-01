@@ -11,8 +11,8 @@ static void
 test_rfc8439_block (void)
 {
   uint32_t state[16] = {
-    KSUID_CHACHA20_C0, KSUID_CHACHA20_C1,
-    KSUID_CHACHA20_C2, KSUID_CHACHA20_C3,
+    CHRONOID_CHACHA20_C0, CHRONOID_CHACHA20_C1,
+    CHRONOID_CHACHA20_C2, CHRONOID_CHACHA20_C3,
     /* key as 8 little-endian uint32s */
     0x03020100u, 0x07060504u, 0x0b0a0908u, 0x0f0e0d0cu,
     0x13121110u, 0x17161514u, 0x1b1a1918u, 0x1f1e1d1cu,
@@ -33,7 +33,7 @@ test_rfc8439_block (void)
   };
 
   uint8_t out[64];
-  ksuid_chacha20_block (out, state);
+  chronoid_chacha20_block (out, state);
   ASSERT_EQ_BYTES (out, expected, 64);
   /* Counter should have advanced from 1 to 2. */
   ASSERT_EQ_INT (state[12], 2);
@@ -43,16 +43,16 @@ static void
 test_block_increments_counter (void)
 {
   uint32_t state[16] = {
-    KSUID_CHACHA20_C0, KSUID_CHACHA20_C1,
-    KSUID_CHACHA20_C2, KSUID_CHACHA20_C3,
+    CHRONOID_CHACHA20_C0, CHRONOID_CHACHA20_C1,
+    CHRONOID_CHACHA20_C2, CHRONOID_CHACHA20_C3,
     0, 0, 0, 0, 0, 0, 0, 0,
     0,                          /* counter */
     0, 0, 0,
   };
   uint8_t out[64];
-  ksuid_chacha20_block (out, state);
+  chronoid_chacha20_block (out, state);
   ASSERT_EQ_INT (state[12], 1);
-  ksuid_chacha20_block (out, state);
+  chronoid_chacha20_block (out, state);
   ASSERT_EQ_INT (state[12], 2);
 }
 
@@ -60,8 +60,8 @@ static void
 test_distinct_counters_yield_distinct_blocks (void)
 {
   uint32_t s1[16] = {
-    KSUID_CHACHA20_C0, KSUID_CHACHA20_C1,
-    KSUID_CHACHA20_C2, KSUID_CHACHA20_C3,
+    CHRONOID_CHACHA20_C0, CHRONOID_CHACHA20_C1,
+    CHRONOID_CHACHA20_C2, CHRONOID_CHACHA20_C3,
     1, 2, 3, 4, 5, 6, 7, 8,
     0,
     9, 10, 11,
@@ -71,8 +71,8 @@ test_distinct_counters_yield_distinct_blocks (void)
   s2[12] = 1;                   /* different counter value */
 
   uint8_t b1[64], b2[64];
-  ksuid_chacha20_block (b1, s1);
-  ksuid_chacha20_block (b2, s2);
+  chronoid_chacha20_block (b1, s1);
+  chronoid_chacha20_block (b2, s2);
   ASSERT_TRUE (memcmp (b1, b2, 64) != 0);
 }
 

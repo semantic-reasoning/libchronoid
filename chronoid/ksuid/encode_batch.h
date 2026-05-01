@@ -13,8 +13,8 @@
  * are harmless. Subsequent calls take a single acquire-load and an
  * indirect call -- ~free vs the ~20 cycles of the encode body.
  */
-#ifndef KSUID_ENCODE_BATCH_H
-#define KSUID_ENCODE_BATCH_H
+#ifndef CHRONOID_KSUID_ENCODE_BATCH_H
+#define CHRONOID_KSUID_ENCODE_BATCH_H
 
 #include <stddef.h>
 
@@ -34,4 +34,4 @@ void chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t * ids, char *out
 void chronoid_ksuid_string_batch_avx2 (const chronoid_ksuid_t * ids, char *out_27n, size_t n);
 #endif
 
-#endif /* KSUID_ENCODE_BATCH_H */
+#endif /* CHRONOID_KSUID_ENCODE_BATCH_H */

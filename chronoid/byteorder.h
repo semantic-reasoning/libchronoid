@@ -4,8 +4,8 @@
  * so the same code is correct on big- and little-endian hosts and on
  * targets with strict alignment requirements.
  */
-#ifndef KSUID_BYTEORDER_H
-#define KSUID_BYTEORDER_H
+#ifndef CHRONOID_BYTEORDER_H
+#define CHRONOID_BYTEORDER_H
 
 #include <stdint.h>
 
@@ -16,7 +16,7 @@ _Static_assert (sizeof (uint32_t) == 4, "uint32_t must be exactly 4 bytes");
 _Static_assert (sizeof (uint64_t) == 8, "uint64_t must be exactly 8 bytes");
 
 static inline uint32_t
-ksuid_be32_load (const uint8_t *p)
+chronoid_be32_load (const uint8_t *p)
 {
   return ((uint32_t) p[0] << 24)
       | ((uint32_t) p[1] << 16)
@@ -25,7 +25,7 @@ ksuid_be32_load (const uint8_t *p)
 }
 
 static inline void
-ksuid_be32_store (uint8_t *p, uint32_t v)
+chronoid_be32_store (uint8_t *p, uint32_t v)
 {
   p[0] = (uint8_t) (v >> 24);
   p[1] = (uint8_t) (v >> 16);
@@ -34,7 +34,7 @@ ksuid_be32_store (uint8_t *p, uint32_t v)
 }
 
 static inline uint64_t
-ksuid_be64_load (const uint8_t *p)
+chronoid_be64_load (const uint8_t *p)
 {
   return ((uint64_t) p[0] << 56)
       | ((uint64_t) p[1] << 48)
@@ -47,7 +47,7 @@ ksuid_be64_load (const uint8_t *p)
 }
 
 static inline void
-ksuid_be64_store (uint8_t *p, uint64_t v)
+chronoid_be64_store (uint8_t *p, uint64_t v)
 {
   p[0] = (uint8_t) (v >> 56);
   p[1] = (uint8_t) (v >> 48);
@@ -59,4 +59,4 @@ ksuid_be64_store (uint8_t *p, uint64_t v)
   p[7] = (uint8_t) (v);
 }
 
-#endif /* KSUID_BYTEORDER_H */
+#endif /* CHRONOID_BYTEORDER_H */

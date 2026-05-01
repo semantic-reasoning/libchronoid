@@ -13,8 +13,8 @@ static void
 test_two_calls_produce_distinct_output (void)
 {
   uint8_t a[16], b[16];
-  ASSERT_EQ_INT (ksuid_random_bytes (a, sizeof a), 0);
-  ASSERT_EQ_INT (ksuid_random_bytes (b, sizeof b), 0);
+  ASSERT_EQ_INT (chronoid_random_bytes (a, sizeof a), 0);
+  ASSERT_EQ_INT (chronoid_random_bytes (b, sizeof b), 0);
   ASSERT_TRUE (memcmp (a, b, sizeof a) != 0);
 }
 
@@ -22,7 +22,7 @@ static void
 test_zero_length_call_is_noop (void)
 {
   uint8_t buf[1] = { 0xab };
-  ASSERT_EQ_INT (ksuid_random_bytes (buf, 0), 0);
+  ASSERT_EQ_INT (chronoid_random_bytes (buf, 0), 0);
   ASSERT_EQ_INT (buf[0], 0xab);
 }
 
@@ -33,7 +33,7 @@ test_large_buffer_spans_multiple_chacha_blocks (void)
    * reseed boundary too. */
   uint8_t *buf = malloc (1u << 20);
   ASSERT_TRUE (buf != NULL);
-  ASSERT_EQ_INT (ksuid_random_bytes (buf, 1u << 20), 0);
+  ASSERT_EQ_INT (chronoid_random_bytes (buf, 1u << 20), 0);
   size_t nonzero = 0;
   for (size_t i = 0; i < (1u << 20); ++i)
     if (buf[i] != 0)
@@ -47,9 +47,9 @@ static void
 test_force_reseed_stays_random (void)
 {
   uint8_t a[16], b[16];
-  ASSERT_EQ_INT (ksuid_random_bytes (a, sizeof a), 0);
-  ksuid_random_force_reseed ();
-  ASSERT_EQ_INT (ksuid_random_bytes (b, sizeof b), 0);
+  ASSERT_EQ_INT (chronoid_random_bytes (a, sizeof a), 0);
+  chronoid_random_force_reseed ();
+  ASSERT_EQ_INT (chronoid_random_bytes (b, sizeof b), 0);
   ASSERT_TRUE (memcmp (a, b, sizeof a) != 0);
 }
 
@@ -57,34 +57,34 @@ test_force_reseed_stays_random (void)
  * verifies all four buffers are pairwise distinct. This is the
  * concrete demonstration that _Thread_local state isolates streams
  * without any pthread synchronisation. */
-#define KSUID_TEST_THREADS 4
+#define CHRONOID_TEST_THREADS 4
 typedef struct
 {
   uint8_t out[64];
   int rc;
-} ksuid_thread_arg_t;
+} chronoid_thread_arg_t;
 
 static int
 thread_body (void *opaque)
 {
-  ksuid_thread_arg_t *a = opaque;
-  a->rc = ksuid_random_bytes (a->out, sizeof a->out);
+  chronoid_thread_arg_t *a = opaque;
+  a->rc = chronoid_random_bytes (a->out, sizeof a->out);
   return 0;
 }
 
 static void
 test_threads_get_independent_streams (void)
 {
-  thrd_t t[KSUID_TEST_THREADS];
-  ksuid_thread_arg_t args[KSUID_TEST_THREADS] = { 0 };
-  for (size_t i = 0; i < KSUID_TEST_THREADS; ++i)
+  thrd_t t[CHRONOID_TEST_THREADS];
+  chronoid_thread_arg_t args[CHRONOID_TEST_THREADS] = { 0 };
+  for (size_t i = 0; i < CHRONOID_TEST_THREADS; ++i)
     ASSERT_EQ_INT (thrd_create (&t[i], thread_body, &args[i]), thrd_success);
-  for (size_t i = 0; i < KSUID_TEST_THREADS; ++i)
+  for (size_t i = 0; i < CHRONOID_TEST_THREADS; ++i)
     ASSERT_EQ_INT (thrd_join (t[i], NULL), thrd_success);
 
-  for (size_t i = 0; i < KSUID_TEST_THREADS; ++i) {
+  for (size_t i = 0; i < CHRONOID_TEST_THREADS; ++i) {
     ASSERT_EQ_INT (args[i].rc, 0);
-    for (size_t j = i + 1; j < KSUID_TEST_THREADS; ++j) {
+    for (size_t j = i + 1; j < CHRONOID_TEST_THREADS; ++j) {
       ASSERT_TRUE (memcmp (args[i].out, args[j].out, 64) != 0);
     }
   }
@@ -95,7 +95,7 @@ test_threads_get_independent_streams (void)
  * 0xa5 sentinel pattern in the TLS state, peeks to confirm the
  * sentinel is in place, then exits. The platform-registered
  * destructor is supposed to fire during thrd_join, calling
- * ksuid_random_thread_state_wipe and incrementing the observed
+ * chronoid_random_thread_state_wipe and incrementing the observed
  * counter. The main thread asserts the counter ticked.
  *
  * On platforms that don't have a thread-exit hook (the documented-
@@ -112,18 +112,18 @@ sentinel_thread_body (void *opaque)
    * destructor_registered flag is false and the destructor never
    * fires on thread exit. */
   uint8_t one[1];
-  if (ksuid_random_bytes (one, 1) != 0)
+  if (chronoid_random_bytes (one, 1) != 0)
     return -1;
   /* Now overwrite the live state with the sentinel pattern. The
    * registered destructor still fires at thread exit and wipes
    * whatever is in the slot. */
-  ksuid_random_thread_state_set_sentinel_for_testing ();
+  chronoid_random_thread_state_set_sentinel_for_testing ();
   /* Sanity check: the sentinel landed in the slot. */
-  size_t n = ksuid_random_thread_state_size_for_testing ();
+  size_t n = chronoid_random_thread_state_size_for_testing ();
   uint8_t *peek = malloc (n);
   if (peek == NULL)
     return -1;
-  ksuid_random_thread_state_peek_for_testing (peek, n);
+  chronoid_random_thread_state_peek_for_testing (peek, n);
   size_t a5_count = 0;
   for (size_t i = 0; i < n; ++i)
     if (peek[i] == 0xa5)
@@ -140,17 +140,17 @@ sentinel_thread_body (void *opaque)
 static void
 test_thread_exit_wipes_tls_state (void)
 {
-  int before = atomic_load_explicit (&ksuid_thread_exit_wipes_observed,
+  int before = atomic_load_explicit (&chronoid_thread_exit_wipes_observed,
       memory_order_relaxed);
   thrd_t t;
   ASSERT_EQ_INT (thrd_create (&t, sentinel_thread_body, NULL), thrd_success);
   int rc = -999;
   ASSERT_EQ_INT (thrd_join (t, &rc), thrd_success);
   ASSERT_EQ_INT (rc, 0);
-  /* The platform thread-exit hook runs ksuid_random_thread_state_wipe
+  /* The platform thread-exit hook runs chronoid_random_thread_state_wipe
    * inside thrd_join's teardown. The atomic counter must have ticked
    * by exactly 1. */
-  int after = atomic_load_explicit (&ksuid_thread_exit_wipes_observed,
+  int after = atomic_load_explicit (&chronoid_thread_exit_wipes_observed,
       memory_order_relaxed);
   ASSERT_EQ_INT (after - before, 1);
 }

@@ -1,25 +1,25 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
-#ifndef KSUID_TEST_UTIL_H
-#define KSUID_TEST_UTIL_H
+#ifndef CHRONOID_TEST_UTIL_H
+#define CHRONOID_TEST_UTIL_H
 
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int ksuid_test_failures_ = 0;
+static int chronoid_test_failures_ = 0;
 
 #define RUN_TEST(fn) do {                                                   \
-    int before_ = ksuid_test_failures_;                                     \
+    int before_ = chronoid_test_failures_;                                     \
     fprintf(stderr, "[RUN ] %s\n", #fn);                                    \
     fn();                                                                   \
     fprintf(stderr, "[%s] %s\n",                                            \
-        (ksuid_test_failures_ == before_) ? " OK " : "FAIL", #fn);          \
+        (chronoid_test_failures_ == before_) ? " OK " : "FAIL", #fn);          \
 } while (0)
 
 #define FAIL_(msg) do {                                                     \
     fprintf(stderr, "  ASSERT %s:%d: %s\n", __FILE__, __LINE__, msg);       \
-    ksuid_test_failures_++;                                                 \
+    chronoid_test_failures_++;                                                 \
 } while (0)
 
 #define ASSERT_TRUE(x) do {                                                 \
@@ -65,6 +65,6 @@ static int ksuid_test_failures_ = 0;
     }                                                                       \
 } while (0)
 
-#define TEST_MAIN_END() return ksuid_test_failures_ ? EXIT_FAILURE : EXIT_SUCCESS
+#define TEST_MAIN_END() return chronoid_test_failures_ ? EXIT_FAILURE : EXIT_SUCCESS
 
-#endif /* KSUID_TEST_UTIL_H */
+#endif /* CHRONOID_TEST_UTIL_H */

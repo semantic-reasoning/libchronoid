@@ -15,7 +15,7 @@ test_wipe_zeroes_a_full_buffer (void)
   uint8_t buf[64];
   for (size_t i = 0; i < sizeof buf; ++i)
     buf[i] = (uint8_t) (i ^ 0xa5);
-  ksuid_explicit_bzero (buf, sizeof buf);
+  chronoid_explicit_bzero (buf, sizeof buf);
   for (size_t i = 0; i < sizeof buf; ++i)
     ASSERT_EQ_INT (buf[i], 0);
 }
@@ -25,7 +25,7 @@ test_wipe_zeroes_a_subrange (void)
 {
   uint8_t buf[16];
   memset (buf, 0xff, sizeof buf);
-  ksuid_explicit_bzero (buf + 4, 8);
+  chronoid_explicit_bzero (buf + 4, 8);
   ASSERT_EQ_INT (buf[3], 0xff);
   for (size_t i = 4; i < 12; ++i)
     ASSERT_EQ_INT (buf[i], 0);
@@ -36,7 +36,7 @@ static void
 test_wipe_handles_zero_length (void)
 {
   uint8_t buf[4] = { 1, 2, 3, 4 };
-  ksuid_explicit_bzero (buf, 0);
+  chronoid_explicit_bzero (buf, 0);
   ASSERT_EQ_INT (buf[0], 1);
   ASSERT_EQ_INT (buf[3], 4);
 }
@@ -46,8 +46,8 @@ test_wipe_handles_null_pointer (void)
 {
   /* Documented contract: the shim is a no-op on (NULL, n) and on
    * (p, 0). Neither must crash. */
-  ksuid_explicit_bzero (NULL, 0);
-  ksuid_explicit_bzero (NULL, 64);
+  chronoid_explicit_bzero (NULL, 0);
+  chronoid_explicit_bzero (NULL, 64);
 }
 
 int

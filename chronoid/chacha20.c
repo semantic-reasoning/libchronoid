@@ -24,7 +24,7 @@
   } while (0)
 
 void
-ksuid_chacha20_block (uint8_t out[64], uint32_t state[16])
+chronoid_chacha20_block (uint8_t out[64], uint32_t state[16])
 {
   uint32_t x[16];
   memcpy (x, state, sizeof x);
@@ -63,5 +63,5 @@ ksuid_chacha20_block (uint8_t out[64], uint32_t state[16])
    * with a stack-read primitive could lift. Defense in depth: cost
    * is ~64 bytes wiped per 64-byte block, dominated by the chacha
    * computation itself. */
-  ksuid_explicit_bzero (x, sizeof x);
+  chronoid_explicit_bzero (x, sizeof x);
 }

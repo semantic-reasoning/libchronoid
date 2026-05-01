@@ -6,7 +6,7 @@
  * material (CSPRNG seed, ChaCha20 internal state, freshly-drawn key
  * bytes) that is exactly the wrong outcome.
  *
- * ksuid_explicit_bzero picks the strongest DSE-immune primitive the
+ * chronoid_explicit_bzero picks the strongest DSE-immune primitive the
  * compile target offers, in this order:
  *
  *   1. explicit_bzero  (glibc 2.25+, MUSL, *BSD, macOS 14.4+)
@@ -39,19 +39,19 @@
  * rand_tls.c, 64-byte keystream chunks, 16-word ChaCha state).
  * Long-lived TLS state at thread-exit is issue #4.
  */
-#ifndef KSUID_WIPE_H
-#define KSUID_WIPE_H
+#ifndef CHRONOID_WIPE_H
+#define CHRONOID_WIPE_H
 
 #include <stddef.h>
 #include <string.h>
 
-/* The KSUID_FORCE_VOLATILE_FALLBACK build flag bypasses every
+/* The CHRONOID_FORCE_VOLATILE_FALLBACK build flag bypasses every
  * platform-specific primitive and forces the indirect-call-through-
  * volatile path. It exists so CI can exercise the fallback even on
  * a host that has explicit_bzero / SecureZeroMemory available --
  * without it the fallback ships unverified on every supported
  * matrix lane. Production builds never set this. */
-#if !defined(KSUID_FORCE_VOLATILE_FALLBACK)
+#if !defined(CHRONOID_FORCE_VOLATILE_FALLBACK)
 #  if defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRINGS_H)
 #    include <strings.h>
 #  elif defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRING_H)
@@ -68,19 +68,19 @@
 #endif
 
 static inline void
-ksuid_explicit_bzero (void *p, size_t n)
+chronoid_explicit_bzero (void *p, size_t n)
 {
   if (p == NULL || n == 0)
     return;
 
-#if !defined(KSUID_FORCE_VOLATILE_FALLBACK) && \
+#if !defined(CHRONOID_FORCE_VOLATILE_FALLBACK) && \
     (defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRINGS_H) \
      || defined(CHRONOID_HAVE_EXPLICIT_BZERO_STRING_H))
   explicit_bzero (p, n);
-#elif !defined(KSUID_FORCE_VOLATILE_FALLBACK) && \
+#elif !defined(CHRONOID_FORCE_VOLATILE_FALLBACK) && \
     (defined(_WIN32) || defined(__CYGWIN__))
   SecureZeroMemory (p, n);
-#elif !defined(KSUID_FORCE_VOLATILE_FALLBACK) \
+#elif !defined(CHRONOID_FORCE_VOLATILE_FALLBACK) \
     && defined(CHRONOID_HAVE_MEMSET_S)
   memset_s (p, n, 0, n);
 #else
@@ -93,12 +93,12 @@ ksuid_explicit_bzero (void *p, size_t n)
    * On MSVC <intrin.h>'s _ReadWriteBarrier serves the same role,
    * but MSVC builds use the SecureZeroMemory branch above so this
    * fallback is GCC/Clang in practice. */
-  static void *(*const volatile ksuid_memset_v) (void *, int, size_t) = memset;
-  ksuid_memset_v (p, 0, n);
+  static void *(*const volatile chronoid_memset_v) (void *, int, size_t) = memset;
+  chronoid_memset_v (p, 0, n);
 #  if defined(__GNUC__) || defined(__clang__)
   __asm__ __volatile__ (""::"r" (p):"memory");
 #  endif
 #endif
 }
 
-#endif /* KSUID_WIPE_H */
+#endif /* CHRONOID_WIPE_H */

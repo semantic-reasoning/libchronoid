@@ -19,7 +19,7 @@
 #if defined(_MSC_VER) && !defined(__clang__)
 #  include <intrin.h>
 static inline int
-ksuid_ctz32 (unsigned x)
+chronoid_ksuid_ctz32 (unsigned x)
 {
   unsigned long idx;
   _BitScanForward (&idx, x);
@@ -27,7 +27,7 @@ ksuid_ctz32 (unsigned x)
 }
 #else
 static inline int
-ksuid_ctz32 (unsigned x)
+chronoid_ksuid_ctz32 (unsigned x)
 {
   return __builtin_ctz (x);
 }
@@ -37,12 +37,12 @@ ksuid_ctz32 (unsigned x)
  * (1 == equal in lane), return the index of the first DIFFERING
  * byte, or 16 if all 16 lanes were equal. */
 static inline int
-ksuid_first_diff_sse2 (int eq_mask)
+chronoid_ksuid_first_diff_sse2 (int eq_mask)
 {
   unsigned diff = (~(unsigned) eq_mask) & 0xffffu;
   if (diff == 0)
     return 16;
-  return ksuid_ctz32 (diff);
+  return chronoid_ksuid_ctz32 (diff);
 }
 
 int
@@ -57,7 +57,7 @@ chronoid_ksuid_compare20_sse2 (const uint8_t a[20], const uint8_t b[20])
   __m128i vb = _mm_loadu_si128 ((const __m128i *) b);
   __m128i veq = _mm_cmpeq_epi8 (va, vb);
   int eq_mask = _mm_movemask_epi8 (veq);
-  int idx = ksuid_first_diff_sse2 (eq_mask);
+  int idx = chronoid_ksuid_first_diff_sse2 (eq_mask);
   if (idx < 16)
     return (a[idx] < b[idx]) ? -1 : 1;
   /* Tail: bytes 16..19. Compare byte-by-byte; the 4-byte difference

@@ -62,7 +62,7 @@ chronoid_ksuid_from_parts (chronoid_ksuid_t *out,
   int64_t corrected = unix_seconds - CHRONOID_KSUID_EPOCH_SECONDS;
   if (corrected < 0 || corrected > (int64_t) UINT32_MAX)
     return CHRONOID_KSUID_ERR_TIME_RANGE;
-  ksuid_be32_store (out->b, (uint32_t) corrected);
+  chronoid_be32_store (out->b, (uint32_t) corrected);
   memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload, CHRONOID_KSUID_PAYLOAD_LEN);
   return CHRONOID_KSUID_OK;
 }
@@ -70,7 +70,7 @@ chronoid_ksuid_from_parts (chronoid_ksuid_t *out,
 uint32_t
 chronoid_ksuid_timestamp (const chronoid_ksuid_t *id)
 {
-  return ksuid_be32_load (id->b);
+  return chronoid_be32_load (id->b);
 }
 
 int64_t
@@ -130,14 +130,14 @@ chronoid_set_rand (chronoid_rng_fn fn, void *ctx)
 }
 
 static int
-ksuid_fill_payload (uint8_t *buf, size_t n)
+chronoid_ksuid_fill_payload (uint8_t *buf, size_t n)
 {
   chronoid_rng_fn fn = atomic_load_explicit (&g_rng_fn, memory_order_acquire);
   if (fn != NULL) {
     void *ctx = atomic_load_explicit (&g_rng_ctx, memory_order_acquire);
     return fn (ctx, buf, n);
   }
-  return ksuid_random_bytes (buf, n);
+  return chronoid_random_bytes (buf, n);
 }
 
 chronoid_ksuid_err_t
@@ -149,9 +149,9 @@ chronoid_ksuid_new_with_time (chronoid_ksuid_t *out, int64_t unix_seconds)
   /* Fill the payload first into a temporary so a partial RNG failure
    * cannot leak half a payload into |*out|. */
   uint8_t payload[CHRONOID_KSUID_PAYLOAD_LEN];
-  if (ksuid_fill_payload (payload, CHRONOID_KSUID_PAYLOAD_LEN) != 0)
+  if (chronoid_ksuid_fill_payload (payload, CHRONOID_KSUID_PAYLOAD_LEN) != 0)
     return CHRONOID_KSUID_ERR_RNG;
-  ksuid_be32_store (out->b, (uint32_t) corrected);
+  chronoid_be32_store (out->b, (uint32_t) corrected);
   memcpy (out->b + CHRONOID_KSUID_TIMESTAMP_LEN, payload, CHRONOID_KSUID_PAYLOAD_LEN);
   return CHRONOID_KSUID_OK;
 }

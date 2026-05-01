@@ -16,8 +16,8 @@
  * semantics as chronoid_ksuid_compare; see chronoid/ksuid.h for the public
  * documentation of the ordering invariant.
  */
-#ifndef KSUID_COMPARE_SIMD_H
-#define KSUID_COMPARE_SIMD_H
+#ifndef CHRONOID_KSUID_COMPARE_SIMD_H
+#define CHRONOID_KSUID_COMPARE_SIMD_H
 
 #include <stdint.h>
 
@@ -33,4 +33,4 @@ int chronoid_ksuid_compare20_neon (const uint8_t a[20], const uint8_t b[20]);
 #  define CHRONOID_KSUID_COMPARE20(a, b) chronoid_ksuid_compare20_scalar ((a), (b))
 #endif
 
-#endif /* KSUID_COMPARE_SIMD_H */
+#endif /* CHRONOID_KSUID_COMPARE_SIMD_H */

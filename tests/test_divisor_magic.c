@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later
  *
- * Verifies that the auto-generated KSUID_DIV62_M magic constant in
+ * Verifies that the auto-generated CHRONOID_KSUID_DIV62_M magic constant in
  * chronoid/divisor_magic.h, plugged into a Granlund-Moeller scalar
  * reciprocal, agrees with straight integer division by 62 for every
  * tested input. Builds the floor/correction algorithm from scratch
@@ -28,13 +28,13 @@ _Static_assert (sizeof (unsigned __int128) == 16, "test requires __uint128_t");
 /* Compile-time pin of the deriver's contract. If the header was
  * hand-edited or regenerated for a different divisor, this fails
  * the build before any test runs. */
-_Static_assert (KSUID_DIV62_M_BITS == 64,
-    "KSUID_DIV62_M expected to be 64-bit");
-_Static_assert (KSUID_DIV62_M * (uint64_t) 62
-    + KSUID_DIV62_M_2N_MINUS_M_TIMES_D == 0,
-    "KSUID_DIV62_M does not satisfy 2^64 - M * 62 = "
-    "KSUID_DIV62_M_2N_MINUS_M_TIMES_D");
-_Static_assert (KSUID_DIV62_M_2N_MINUS_M_TIMES_D < 62,
+_Static_assert (CHRONOID_KSUID_DIV62_M_BITS == 64,
+    "CHRONOID_KSUID_DIV62_M expected to be 64-bit");
+_Static_assert (CHRONOID_KSUID_DIV62_M * (uint64_t) 62
+    + CHRONOID_KSUID_DIV62_M_2N_MINUS_M_TIMES_D == 0,
+    "CHRONOID_KSUID_DIV62_M does not satisfy 2^64 - M * 62 = "
+    "CHRONOID_KSUID_DIV62_M_2N_MINUS_M_TIMES_D");
+_Static_assert (CHRONOID_KSUID_DIV62_M_2N_MINUS_M_TIMES_D < 62,
     "deficit must be in [0, d - 1]; "
     "anything else means M is not floor(2^64 / 62)");
 
@@ -47,7 +47,7 @@ mulhi64_ref (uint64_t a, uint64_t b)
 static uint64_t
 div62_via_magic (uint64_t value)
 {
-  uint64_t q = mulhi64_ref (value, KSUID_DIV62_M);
+  uint64_t q = mulhi64_ref (value, CHRONOID_KSUID_DIV62_M);
   uint64_t r = value - q * 62;
   /* mulhi may underestimate by exactly 1; never overestimates
    * because M is the FLOOR. The correction is unconditional in
@@ -63,7 +63,7 @@ div62_via_magic (uint64_t value)
 static uint64_t
 mod62_via_magic (uint64_t value)
 {
-  uint64_t q = mulhi64_ref (value, KSUID_DIV62_M);
+  uint64_t q = mulhi64_ref (value, CHRONOID_KSUID_DIV62_M);
   uint64_t r = value - q * 62;
   if (r >= 62)
     r -= 62;
@@ -85,7 +85,7 @@ check_one (uint64_t value)
         (unsigned long long) value,
         (unsigned long long) q_ref, (unsigned long long) r_ref,
         (unsigned long long) q_mag, (unsigned long long) r_mag);
-    ksuid_test_failures_++;
+    chronoid_test_failures_++;
   }
 }
 

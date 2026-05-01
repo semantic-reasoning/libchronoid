@@ -56,12 +56,12 @@ typedef struct
 {
   uint8_t fill;
   int call_count;
-} ksuid_test_rng_ctx_t;
+} chronoid_test_rng_ctx_t;
 
 static int
 test_rng_fixed (void *opaque, uint8_t *buf, size_t n)
 {
-  ksuid_test_rng_ctx_t *c = opaque;
+  chronoid_test_rng_ctx_t *c = opaque;
   ++c->call_count;
   memset (buf, c->fill, n);
   return 0;
@@ -79,7 +79,7 @@ test_rng_failing (void *opaque, uint8_t *buf, size_t n)
 static void
 test_set_rand_overrides_default_source (void)
 {
-  ksuid_test_rng_ctx_t ctx = {.fill = 0xa5,.call_count = 0 };
+  chronoid_test_rng_ctx_t ctx = {.fill = 0xa5,.call_count = 0 };
   chronoid_set_rand (test_rng_fixed, &ctx);
 
   chronoid_ksuid_t id;

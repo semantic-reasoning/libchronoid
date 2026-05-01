@@ -10,21 +10,21 @@
  * http://cr.yp.to/chacha.html); this implementation is contributed
  * under LGPL-3.0-or-later along with the rest of libchronoid.
  */
-#ifndef KSUID_CHACHA20_H
-#define KSUID_CHACHA20_H
+#ifndef CHRONOID_CHACHA20_H
+#define CHRONOID_CHACHA20_H
 
 #include <stdint.h>
 
 /* ChaCha20 IETF block constants ("expand 32-byte k", little-endian). */
-#define KSUID_CHACHA20_C0 0x61707865u
-#define KSUID_CHACHA20_C1 0x3320646eu
-#define KSUID_CHACHA20_C2 0x79622d32u
-#define KSUID_CHACHA20_C3 0x6b206574u
+#define CHRONOID_CHACHA20_C0 0x61707865u
+#define CHRONOID_CHACHA20_C1 0x3320646eu
+#define CHRONOID_CHACHA20_C2 0x79622d32u
+#define CHRONOID_CHACHA20_C3 0x6b206574u
 
 /* Run one ChaCha20 block. |state| is 16 32-bit words; on entry it holds
  * the block input (constants, key, counter, nonce); on exit |out| is
  * filled with 64 bytes of keystream and |state[12]| has been
  * incremented by 1 (with carry into |state[13]|). */
-void ksuid_chacha20_block (uint8_t out[64], uint32_t state[16]);
+void chronoid_chacha20_block (uint8_t out[64], uint32_t state[16]);
 
-#endif /* KSUID_CHACHA20_H */
+#endif /* CHRONOID_CHACHA20_H */
