@@ -143,6 +143,13 @@ if [ "$n_uniq" -ne 3 ]; then
   exit 1
 fi
 while IFS= read -r line; do
+  # Strip trailing CR. Windows MSVC's chronoid-gen.exe writes its
+  # text output through stdio in text mode, which converts the
+  # newline terminator to "\r\n". `read -r` consumes the LF but
+  # leaves the CR in place, inflating ${#line} by 1 on Windows.
+  # Stripping a possible trailing CR makes the length check
+  # platform-independent.
+  line="${line%$'\r'}"
   if [ "${#line}" -ne 36 ]; then
     echo "uuidv7 generation produced a non-36-char line: $line" >&2
     exit 1
