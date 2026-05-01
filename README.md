@@ -327,12 +327,23 @@ both formats.
 
 ## Layout
 
-Public headers (`chronoid/ksuid.h`, `chronoid/uuidv7.h`) live at
-the top of `chronoid/`; format-specific implementation TUs live in
-per-format subdirectories so the tree advertises the scope at the
-source level. Shared infrastructure (CSPRNG, wipe, byte-order
-helpers) sits at the top of `chronoid/` because it serves every
-format.
+Public headers (`chronoid/chronoid.h`, `chronoid/ksuid.h`,
+`chronoid/uuidv7.h`) live at the top of `chronoid/`; format-specific
+implementation TUs live in per-format subdirectories so the tree
+advertises the scope at the source level. Shared infrastructure
+(CSPRNG, wipe, byte-order helpers) sits at the top of `chronoid/`
+because it serves every format.
+
+For convenience, `<chronoid/chronoid.h>` is an umbrella header that
+pulls in every public surface of libchronoid. Downstream consumers
+that want both formats can write a single include:
+
+```c
+#include <chronoid/chronoid.h>          /* KSUID + UUIDv7 + version */
+```
+
+For TUs that only need one format, prefer the narrower form to keep
+compile units lean:
 
 ```c
 #include <chronoid/ksuid.h>             /* public KSUID API */
@@ -341,12 +352,13 @@ format.
 ```
 
 After install the public headers land at
-`${prefix}/include/chronoid/ksuid.h` and
-`${prefix}/include/chronoid/uuidv7.h`, so downstream consumers use
-the exact same include lines that the in-tree sources do.
+`${prefix}/include/chronoid/{chronoid,ksuid,uuidv7}.h`, so downstream
+consumers use the exact same include lines that the in-tree sources
+do.
 
 ```
 chronoid/
+├── chronoid.h                public umbrella — <chronoid/chronoid.h>
 ├── ksuid.h                   public — <chronoid/ksuid.h>
 ├── uuidv7.h                  public — <chronoid/uuidv7.h>
 ├── chronoid_version.h.in
