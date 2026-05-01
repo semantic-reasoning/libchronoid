@@ -10,6 +10,8 @@
 
 #include <string.h>
 
+#include <chronoid/uuidv7/hex.h>
+
 /* Drive both definitions from the public *_INIT macros so the runtime
  * symbols and the static-storage initializer form can never drift out
  * of byte-for-byte agreement -- mirrors the convention used in
@@ -116,4 +118,36 @@ uint8_t
 chronoid_uuidv7_variant (const chronoid_uuidv7_t *id)
 {
   return (uint8_t) ((id->b[8] >> 6) & 0x03);
+}
+
+void
+chronoid_uuidv7_format (const chronoid_uuidv7_t *id,
+    char out[CHRONOID_UUIDV7_STRING_LEN])
+{
+  /* The hex codec is the wire-format authority -- this wrapper is
+   * just a type-safe entry point that fans the public chronoid_uuidv7_t
+   * pointer into the raw 16-byte view the codec expects. No NUL
+   * terminator: caller's buffer is exactly 36 bytes. */
+  chronoid_hex_encode_lower (out, id->b);
+}
+
+chronoid_uuidv7_err_t
+chronoid_uuidv7_parse (chronoid_uuidv7_t *out, const char *s, size_t len)
+{
+  /* Length is the cheap upfront check; do it first so the wrong-length
+   * branch never touches the codec. The codec also length-checks
+   * internally, but distinguishing STR_SIZE from STR_VALUE at the
+   * public-API surface requires the split. */
+  if (len != CHRONOID_UUIDV7_STRING_LEN)
+    return CHRONOID_UUIDV7_ERR_STR_SIZE;
+
+  /* The codec writes to a stack-local temp on its own (see hex.c)
+   * and only commits via memcpy on full-success, so |*out| is
+   * guaranteed untouched on the failure path. */
+  uint8_t tmp[CHRONOID_UUIDV7_BYTES];
+  if (chronoid_hex_decode (tmp, s, len) != 0)
+    return CHRONOID_UUIDV7_ERR_STR_VALUE;
+
+  memcpy (out->b, tmp, CHRONOID_UUIDV7_BYTES);
+  return CHRONOID_UUIDV7_OK;
 }

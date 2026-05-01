@@ -155,6 +155,7 @@ core_sources = files(
   'chronoid/ksuid/compare_scalar.c',
   'chronoid/ksuid/encode_batch.c',
   'chronoid/uuidv7/uuidv7.c',
+  'chronoid/uuidv7/hex.c',
 )
 
 # SIMD / NEON acceleration. SSE2 is part of the x86_64 ABI baseline

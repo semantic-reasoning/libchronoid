@@ -61,8 +61,13 @@ extern "C"
   {
     CHRONOID_UUIDV7_OK = 0,
     CHRONOID_UUIDV7_ERR_SIZE = -1,       /* bad binary length                     */
+    CHRONOID_UUIDV7_ERR_STR_SIZE = -2,   /* bad string length                     */
+    CHRONOID_UUIDV7_ERR_STR_VALUE = -3,  /* string contains non-hex / wrong hyphens */
+    /* slot -4 reserved (parallel to CHRONOID_KSUID_ERR_PAYLOAD_SIZE; UUIDv7 has   */
+    /* no payload-size error today, but the slot is left unallocated to keep      */
+    /* enum positions aligned across formats for future cross-format helpers).    */
+    /* RNG (-5) / EXHAUSTED (-6) added in later commits */
     CHRONOID_UUIDV7_ERR_TIME_RANGE = -7  /* unix_ms outside 48-bit range          */
-    /* STR_SIZE / STR_VALUE / RNG / EXHAUSTED added in later commits */
   } chronoid_uuidv7_err_t;
 
 /* Two forms of the same sentinel values:
@@ -146,6 +151,32 @@ extern "C"
 /* Variant: top 2 bits of byte 8. Reads 0b10 (= 2) for properly-
  * constructed UUIDv7s (the RFC 9562 variant). */
   CHRONOID_PUBLIC uint8_t chronoid_uuidv7_variant (const chronoid_uuidv7_t *id);
+
+/* --------------------------------------------------------------------------
+ * Hex string conversion (RFC 9562 §4 canonical 8-4-4-4-12 form).
+ * -------------------------------------------------------------------------- */
+
+/* Decode |len| characters of |s| (which must be exactly
+ * CHRONOID_UUIDV7_STRING_LEN, i.e. 36 chars in canonical
+ * xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx form, no NUL terminator
+ * required) into |out|. Returns CHRONOID_UUIDV7_ERR_STR_SIZE if |len|
+ * is wrong, or CHRONOID_UUIDV7_ERR_STR_VALUE if the input contains a
+ * non-hex digit at a hex position, a non-'-' byte at a hyphen position
+ * (offsets 8, 13, 18, 23), or any whitespace. Parsing is case-
+ * insensitive: 'A'..'F' and 'a'..'f' produce the same nibble. On any
+ * error the contents of |*out| are guaranteed unchanged -- decoding
+ * writes to a stack temporary first and only copies into |out| once
+ * the input has been fully validated. */
+  CHRONOID_PUBLIC chronoid_uuidv7_err_t chronoid_uuidv7_parse (
+      chronoid_uuidv7_t *out, const char *s, size_t len);
+
+/* Write the 36-character canonical hyphenated lowercase representation
+ * of |id| into |out|. The output is NOT NUL-terminated; callers needing
+ * a C string should size their buffer to CHRONOID_UUIDV7_STRING_LEN + 1
+ * and append '\0' themselves. No error path: every 16-byte UUIDv7
+ * encodes by construction. */
+  CHRONOID_PUBLIC void chronoid_uuidv7_format (
+      const chronoid_uuidv7_t *id, char out[CHRONOID_UUIDV7_STRING_LEN]);
 
 #ifdef __cplusplus
 }                               /* extern "C" */
