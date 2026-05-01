@@ -254,6 +254,65 @@ jobs:
           meson test -C "$src/build" --print-errorlogs
 
   # ==========================================================================
+  # Phase 2d: Scalar fallback coverage (issue #6)
+  # Every other lane in this workflow builds with full AVX2 + SSSE3,
+  # so the parity tests in tests/test_uuidv7_string_batch.c (gated on
+  # CHRONOID_HAVE_HEX_AVX2) and tests/test_uuidv7_parse_format.c (gated
+  # on CHRONOID_HAVE_HEX_SSSE3) only ever exercise the SIMD-vs-scalar
+  # comparison on hosts where the SIMD kernel is compiled in. A bug in
+  # the scalar fallback that the SIMD path masks would ship undetected.
+  # This matrix forces three scalar configurations and asserts the full
+  # 23-test suite still passes:
+  #   - no-avx2: -Davx2_batch=disabled, scalar batch encode
+  #   - no-ssse3: -Dssse3=disabled -Davx2_batch=disabled, fully scalar
+  #     UUIDv7 hex (both single-UUID and batch)
+  #   - force-scalar: default config, CHRONOID_FORCE_SCALAR=1 env at
+  #     test time, exercises the runtime-pin scalar branch in the
+  #     batch dispatcher (encode_batch.c / hex_batch.c)
+  # All three pin Linux GCC: scalar-codegen regressions surface there
+  # cheaply; ci-main.yml mirrors the same matrix non-blocking with
+  # additional compiler/OS coverage.
+  # ==========================================================================
+  scalar-fallback:
+    name: Scalar fallback / ${{ matrix.lane }}
+    needs: [lint]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: no-avx2
+            setup_args: -Davx2_batch=disabled
+            test_env: ''
+          - lane: no-ssse3
+            setup_args: -Dssse3=disabled -Davx2_batch=disabled
+            test_env: ''
+          - lane: force-scalar
+            setup_args: ''
+            test_env: CHRONOID_FORCE_SCALAR=1
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build
+
+      - name: Configure (${{ matrix.lane }})
+        run: meson setup builddir-${{ matrix.lane }} ${{ matrix.setup_args }}
+
+      - name: Build
+        run: meson compile -C builddir-${{ matrix.lane }}
+
+      - name: Test
+        run: |
+          if [ -n "${{ matrix.test_env }}" ]; then
+            env ${{ matrix.test_env }} meson test -C builddir-${{ matrix.lane }} --print-errorlogs
+          else
+            meson test -C builddir-${{ matrix.lane }} --print-errorlogs
+          fi
+
+  # ==========================================================================
   # Phase 3: Sanitizers (ASan + UBSan)
   # Depends on Phase 2 build matrix passing.
   # ==========================================================================
