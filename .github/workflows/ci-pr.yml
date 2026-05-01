@@ -149,9 +149,9 @@ jobs:
           # Architecture-independent paths are stable.
           test -f staging/usr/local/include/chronoid/ksuid.h
           test -f staging/usr/local/include/chronoid/chronoid_version.h
-          test -f staging/usr/local/share/doc/chronoid/LICENSE
-          test -f staging/usr/local/share/doc/chronoid/LICENSE.MIT
-          test -f staging/usr/local/share/doc/chronoid/NOTICE
+          test -f staging/usr/local/share/doc/libchronoid/LICENSE
+          test -f staging/usr/local/share/doc/libchronoid/LICENSE.MIT
+          test -f staging/usr/local/share/doc/libchronoid/NOTICE
           # libchronoid.pc / libchronoid.a / libchronoid.so live under
           # ${libdir}, which on Debian-derived distros expands to
           # lib/<triplet>/ (lib/x86_64-linux-gnu, etc.). Search
