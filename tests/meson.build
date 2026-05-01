@@ -15,7 +15,7 @@ base_tests = ['test_smoke', 'test_parts', 'test_base62', 'test_parse_format',
               'test_wipe', 'test_compare_parity', 'test_string_batch',
               'test_uuidv7_smoke', 'test_uuidv7_parts',
               'test_uuidv7_parse_format', 'test_uuidv7_new',
-              'test_uuidv7_string_batch']
+              'test_uuidv7_string_batch', 'test_uuidv7_rfc_layout']
 
 # test_divisor_magic verifies the auto-generated divisor_magic.h
 # (Granlund-Moeller floor + correction reciprocal) against straight
