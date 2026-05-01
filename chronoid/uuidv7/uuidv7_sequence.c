@@ -51,7 +51,16 @@ chronoid_uuidv7_sequence_draw_counter (uint16_t *out)
       chronoid_uuidv7_sequence_draw_random (two, sizeof two);
   if (e != CHRONOID_UUIDV7_OK)
     return e;
-  *out = (uint16_t) ((((uint16_t) two[0] << 8) | two[1]) & UUIDV7_COUNTER_MASK);
+  /* Cast the high byte to unsigned int (not uint16_t) before the
+   * shift so the entire AND with UUIDV7_COUNTER_MASK (which is
+   * `unsigned int` per the 'u' suffix on 0x0FFFu) stays in
+   * unsigned-int land throughout. Without this cast the C integer
+   * promotion rule turns the shifted value into `int`, and the
+   * subsequent AND triggers an implicit int -> unsigned int
+   * conversion that clang-tidy's sign-conversion check rejects. */
+  *out =
+      (uint16_t) ((((unsigned int) two[0] << 8) | two[1]) &
+      UUIDV7_COUNTER_MASK);
   return CHRONOID_UUIDV7_OK;
 }
 
