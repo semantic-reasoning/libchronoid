@@ -137,7 +137,9 @@ endif
 # uniformly for in-tree builds, downstream consumers, and the
 # generated install tree (${prefix}/include/chronoid/ksuid.h).
 inc = include_directories('.')
-public_headers = files('chronoid/ksuid.h', 'chronoid/uuidv7.h')
+public_headers = files('chronoid/chronoid.h',
+                       'chronoid/ksuid.h',
+                       'chronoid/uuidv7.h')
 
 # Generate chronoid/chronoid_version.h alongside the source tree's
 # chronoid/. The configure_file lives in chronoid/meson.build so
