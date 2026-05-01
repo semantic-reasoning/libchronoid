@@ -258,13 +258,34 @@ extern "C"
 
 /* Replace the global random source. The default source is the
  * per-thread ChaCha20 CSPRNG; calling this with a non-NULL |fn|
- * routes chronoid_ksuid_new through |fn(ctx, buf, n)| instead. |fn| must
- * return 0 on success and non-zero on failure. Passing NULL restores
- * the default source.
+ * routes chronoid_ksuid_new -- and chronoid_uuidv7_new, which shares
+ * the same override slot -- through |fn(ctx, buf, n)| instead. |fn|
+ * must return 0 on success and non-zero on failure. Passing NULL for
+ * |fn| restores the default source.
  *
- * The override is global and atomic-pointer-protected, so swapping
- * mid-flight is race-free; however, |fn| itself MUST be thread-safe
- * if multiple threads will call chronoid_ksuid_new concurrently. */
+ * Thread-safety contract. The override is held in two independent
+ * atomic pointers (one for |fn|, one for |ctx|), each loaded with
+ * acquire ordering on every draw and stored with release ordering by
+ * chronoid_set_rand. Each pointer in isolation therefore loads as a
+ * coherent value -- never garbage -- and the swap is process-global.
+ * The (fn, ctx) pair is NOT a single atomic snapshot, however: a
+ * draw racing a swap from (old_fn, old_ctx) to (new_fn, new_ctx)
+ * can observe a crossed pairing such as (old_fn, new_ctx), with the
+ * old hook being invoked against the new context's data. Callers
+ * that need to change |fn| and |ctx| together MUST quiesce all
+ * in-flight chronoid_ksuid_new / chronoid_uuidv7_new calls before
+ * swapping (the install-once-at-process-start pattern is the easiest
+ * way to honour this).
+ *
+ * |fn| itself MUST be thread-safe if multiple threads will call
+ * chronoid_ksuid_new or chronoid_uuidv7_new concurrently while the
+ * override is installed.
+ *
+ * The lifetime of |ctx| MUST exceed every draw that could still be
+ * holding it. To free |ctx| safely, install a different |fn| (or
+ * NULL) via chronoid_set_rand, then quiesce all generator threads
+ * (or wait for every started draw to return) before releasing the
+ * storage. */
   typedef int (*chronoid_rng_fn) (void *ctx, uint8_t * buf, size_t n);
   CHRONOID_PUBLIC void chronoid_set_rand (chronoid_rng_fn fn, void *ctx);
 

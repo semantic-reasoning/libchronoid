@@ -218,9 +218,12 @@ extern "C"
  * the OS entropy source (getrandom on Linux, getentropy on macOS,
  * BCryptGenRandom on Windows). The same chronoid_set_rand override
  * registered for KSUID generation also routes UUIDv7 random draws --
- * one global CSPRNG hookup serves both formats. On entropy-source
- * failure the function returns CHRONOID_UUIDV7_ERR_RNG and leaves
- * |*out| untouched.
+ * one global CSPRNG hookup serves both formats. See the full
+ * thread-safety contract for chronoid_set_rand in chronoid/ksuid.h
+ * (the (fn, ctx) pair is NOT a single atomic snapshot, so callers
+ * must quiesce in-flight draws before swapping the override or
+ * freeing |ctx|). On entropy-source failure the function returns
+ * CHRONOID_UUIDV7_ERR_RNG and leaves |*out| untouched.
  * -------------------------------------------------------------------------- */
 
 /* Generate a new UUIDv7 stamped with the current wall-clock time. Each

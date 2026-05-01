@@ -22,6 +22,17 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
   released-API contract honest. The `-f payload` projection for
   KSUID is unchanged (16 bytes). Closes #3.
 
+### Changed (docs-only — no behavior change)
+
+- Clarify the thread-safety contract for `chronoid_set_rand` in
+  `chronoid/ksuid.h`: the override is held in two independent atomic
+  pointers (one for `fn`, one for `ctx`), not a single atomic pair,
+  so a draw racing a swap can observe a crossed `(old_fn, new_ctx)`
+  pairing. Callers must quiesce all in-flight
+  `chronoid_ksuid_new` / `chronoid_uuidv7_new` calls before swapping
+  the override or freeing `ctx`. Cross-referenced from the UUIDv7
+  generation prose in `chronoid/uuidv7.h`. No ABI change. Closes #5.
+
 ## [0.10.0] — 2026-05-01
 
 ### Added — UUIDv7 support
