@@ -1,0 +1,119 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * libchronoid -- C11 toolkit for time-ordered identifiers.
+ * UUIDv7 (RFC 9562) implementation. No upstream lineage.
+ *
+ * Core type, constants, accessors, and ordering primitives. Format/parse,
+ * monotonic sequence, and SIMD hex are split into later commits.
+ */
+#include <chronoid/uuidv7.h>
+
+#include <string.h>
+
+/* Drive both definitions from the public *_INIT macros so the runtime
+ * symbols and the static-storage initializer form can never drift out
+ * of byte-for-byte agreement -- mirrors the convention used in
+ * chronoid/ksuid/ksuid.c. The smoke test pins the equivalence at
+ * runtime, but a single source of truth at the definition site
+ * removes the possibility entirely. */
+CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_NIL = CHRONOID_UUIDV7_NIL_INIT;
+CHRONOID_PUBLIC const chronoid_uuidv7_t CHRONOID_UUIDV7_MAX = CHRONOID_UUIDV7_MAX_INIT;
+
+/* Inclusive upper bound on the 48-bit Unix-ms timestamp encodable in
+ * bytes 0..5 of a UUIDv7. Anything outside [0, UUIDV7_MAX_UNIX_MS] is
+ * rejected by chronoid_uuidv7_from_parts with CHRONOID_UUIDV7_ERR_TIME_RANGE. */
+#define UUIDV7_MAX_UNIX_MS ((int64_t) ((1LL << 48) - 1))
+
+bool
+chronoid_uuidv7_is_nil (const chronoid_uuidv7_t *id)
+{
+  static const uint8_t zero[CHRONOID_UUIDV7_BYTES] = { 0 };
+  return memcmp (id->b, zero, CHRONOID_UUIDV7_BYTES) == 0;
+}
+
+int
+chronoid_uuidv7_compare (const chronoid_uuidv7_t *a, const chronoid_uuidv7_t *b)
+{
+  /* Lexicographic over the 16-byte representation. A SIMD kernel may
+   * land in a later commit; for now memcmp is the contract. */
+  return memcmp (a->b, b->b, CHRONOID_UUIDV7_BYTES);
+}
+
+chronoid_uuidv7_err_t
+chronoid_uuidv7_from_bytes (chronoid_uuidv7_t *out, const uint8_t *b, size_t n)
+{
+  if (n != CHRONOID_UUIDV7_BYTES)
+    return CHRONOID_UUIDV7_ERR_SIZE;
+  memcpy (out->b, b, CHRONOID_UUIDV7_BYTES);
+  return CHRONOID_UUIDV7_OK;
+}
+
+chronoid_uuidv7_err_t
+chronoid_uuidv7_from_parts (chronoid_uuidv7_t *out,
+    int64_t unix_ms, uint16_t rand_a_12bit, const uint8_t rand_b[8])
+{
+  if (unix_ms < 0 || unix_ms > UUIDV7_MAX_UNIX_MS)
+    return CHRONOID_UUIDV7_ERR_TIME_RANGE;
+
+  /* Build into a stack temporary so a successful return is the only
+   * path that mutates |*out|. Mirrors chronoid_ksuid_from_parts'
+   * "untouched on failure" guarantee even though the only failure
+   * mode (time range) is checked up front -- keeps the pattern
+   * uniform for future error cases that interleave with byte
+   * writes. */
+  chronoid_uuidv7_t tmp;
+  uint64_t ms = (uint64_t) unix_ms;
+
+  /* Bytes 0..5: 48-bit big-endian timestamp. Byte-by-byte writes
+   * (no host-endian uint64_t cast) so the same code is correct on
+   * big- and little-endian hosts and on strict-alignment targets. */
+  tmp.b[0] = (uint8_t) (ms >> 40);
+  tmp.b[1] = (uint8_t) (ms >> 32);
+  tmp.b[2] = (uint8_t) (ms >> 24);
+  tmp.b[3] = (uint8_t) (ms >> 16);
+  tmp.b[4] = (uint8_t) (ms >> 8);
+  tmp.b[5] = (uint8_t) (ms);
+
+  /* Mask the caller's rand_a to 12 bits before splitting: bits 12-15
+   * are not part of the rand_a field, and the version nibble is
+   * library-controlled regardless of what the caller passes. */
+  uint16_t rand_a = rand_a_12bit & 0x0FFF;
+  tmp.b[6] = (uint8_t) (0x70 | ((rand_a >> 8) & 0x0F));
+  tmp.b[7] = (uint8_t) (rand_a & 0xFF);
+
+  /* Byte 8: top 2 bits = 0b10 variant, bottom 6 bits from rand_b[0]. */
+  tmp.b[8] = (uint8_t) (0x80 | (rand_b[0] & 0x3F));
+
+  /* Bytes 9..15: remaining seven bytes of rand_b verbatim. */
+  memcpy (tmp.b + 9, rand_b + 1, 7);
+
+  memcpy (out->b, tmp.b, CHRONOID_UUIDV7_BYTES);
+  return CHRONOID_UUIDV7_OK;
+}
+
+int64_t
+chronoid_uuidv7_unix_ms (const chronoid_uuidv7_t *id)
+{
+  /* Read bytes 0..5 as a 48-bit big-endian unsigned integer. The
+   * top two bytes of the returned int64_t are 0 by construction, so
+   * the value is non-negative and fits in 48 bits. */
+  uint64_t ms = ((uint64_t) id->b[0] << 40)
+      | ((uint64_t) id->b[1] << 32)
+      | ((uint64_t) id->b[2] << 24)
+      | ((uint64_t) id->b[3] << 16)
+      | ((uint64_t) id->b[4] << 8)
+      | ((uint64_t) id->b[5]);
+  return (int64_t) ms;
+}
+
+uint8_t
+chronoid_uuidv7_version (const chronoid_uuidv7_t *id)
+{
+  return (uint8_t) ((id->b[6] >> 4) & 0x0F);
+}
+
+uint8_t
+chronoid_uuidv7_variant (const chronoid_uuidv7_t *id)
+{
+  return (uint8_t) ((id->b[8] >> 6) & 0x03);
+}

@@ -17,6 +17,7 @@
  * was filed about. */
 
 #include <chronoid/ksuid.h>
+#include <chronoid/uuidv7.h>
 #include "test_util.h"
 
 /* File-scope static storage from the macro form. On Windows DLL
@@ -25,6 +26,8 @@
  * regression we are guarding against. */
 static const chronoid_ksuid_t kSharedNilInit = CHRONOID_KSUID_NIL_INIT;
 static const chronoid_ksuid_t kSharedMaxInit = CHRONOID_KSUID_MAX_INIT;
+static const chronoid_uuidv7_t kSharedUuidv7NilInit = CHRONOID_UUIDV7_NIL_INIT;
+static const chronoid_uuidv7_t kSharedUuidv7MaxInit = CHRONOID_UUIDV7_MAX_INIT;
 
 static void
 test_macros_at_static_storage_match_shared_symbols (void)
@@ -36,6 +39,19 @@ test_macros_at_static_storage_match_shared_symbols (void)
   ASSERT_EQ_BYTES (kSharedNilInit.b, CHRONOID_KSUID_NIL.b, CHRONOID_KSUID_BYTES);
   ASSERT_EQ_BYTES (kSharedMaxInit.b, CHRONOID_KSUID_MAX.b, CHRONOID_KSUID_BYTES);
   ASSERT_TRUE (chronoid_ksuid_is_nil (&kSharedNilInit));
+
+  /* Same regression guard for the UUIDv7 sentinels: with
+   * CHRONOID_BUILDING undefined here, CHRONOID_UUIDV7_NIL /
+   * CHRONOID_UUIDV7_MAX resolve via __declspec(dllimport) on Windows
+   * and are NOT constant expressions in this TU. The macro form must
+   * still work as a static-storage initializer and yield byte-for-byte
+   * equal contents. */
+  ASSERT_EQ_BYTES (kSharedUuidv7NilInit.b, CHRONOID_UUIDV7_NIL.b,
+                   CHRONOID_UUIDV7_BYTES);
+  ASSERT_EQ_BYTES (kSharedUuidv7MaxInit.b, CHRONOID_UUIDV7_MAX.b,
+                   CHRONOID_UUIDV7_BYTES);
+  ASSERT_TRUE (chronoid_uuidv7_is_nil (&kSharedUuidv7NilInit));
+  ASSERT_FALSE (chronoid_uuidv7_is_nil (&kSharedUuidv7MaxInit));
 }
 
 int

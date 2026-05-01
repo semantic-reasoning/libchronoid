@@ -12,7 +12,8 @@ threads_dep = dependency('threads', required : false)
 base_tests = ['test_smoke', 'test_parts', 'test_base62', 'test_parse_format',
               'test_sequence', 'test_rand_os',
               'test_chacha20', 'test_new', 'test_simd_parity',
-              'test_wipe', 'test_compare_parity', 'test_string_batch']
+              'test_wipe', 'test_compare_parity', 'test_string_batch',
+              'test_uuidv7_smoke', 'test_uuidv7_parts']
 
 # test_divisor_magic verifies the auto-generated divisor_magic.h
 # (Granlund-Moeller floor + correction reciprocal) against straight

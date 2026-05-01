@@ -137,7 +137,7 @@ endif
 # uniformly for in-tree builds, downstream consumers, and the
 # generated install tree (${prefix}/include/chronoid/ksuid.h).
 inc = include_directories('.')
-public_headers = files('chronoid/ksuid.h')
+public_headers = files('chronoid/ksuid.h', 'chronoid/uuidv7.h')
 
 # Generate chronoid/chronoid_version.h alongside the source tree's
 # chronoid/. The configure_file lives in chronoid/meson.build so
@@ -154,6 +154,7 @@ core_sources = files(
   'chronoid/chacha20.c',
   'chronoid/ksuid/compare_scalar.c',
   'chronoid/ksuid/encode_batch.c',
+  'chronoid/uuidv7/uuidv7.c',
 )
 
 # SIMD / NEON acceleration. SSE2 is part of the x86_64 ABI baseline
