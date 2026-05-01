@@ -310,9 +310,17 @@ main (void)
    * up the override. The env is consulted exactly once per process
    * for the lifetime of the dispatcher. The KSUID dispatcher consults
    * its own copy independently; setting it here pins both, but the
-   * KSUID tests do not run from this binary. */
+   * KSUID tests do not run from this binary.
+   *
+   * MSVC has no setenv(); the equivalent is _putenv_s() in <stdlib.h>
+   * (the test file already includes it indirectly via test_util.h). */
+#if defined(_WIN32)
+  if (_putenv_s ("CHRONOID_FORCE_SCALAR", "1") == 0)
+    test_force_scalar_setup_done = 1;
+#else
   if (setenv ("CHRONOID_FORCE_SCALAR", "1", 1) == 0)
     test_force_scalar_setup_done = 1;
+#endif
 
   RUN_TEST (test_batch_zero_count_is_noop);
   RUN_TEST (test_batch_one);
