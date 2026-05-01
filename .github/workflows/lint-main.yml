@@ -37,10 +37,10 @@ jobs:
 
       - name: Run gst-indent
         run: |
-          find libchronoid examples tests \
+          find chronoid examples tests \
             \( -name '*.c' -o -name '*.h' \) -print0 \
             | xargs -0 -r ./tools/gst-indent
-          find libchronoid examples tests -name '*~' -delete
+          find chronoid examples tests -name '*~' -delete
           git diff > format-results.txt || true
 
       - name: Publish results

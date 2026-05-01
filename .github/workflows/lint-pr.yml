@@ -44,12 +44,12 @@ jobs:
           set -o pipefail
           # Format every C source/header in-place using the same
           # wrapper the pre-commit hook validates against.
-          find libchronoid examples tests \
+          find chronoid examples tests \
             \( -name '*.c' -o -name '*.h' \) -print0 \
             | xargs -0 -r ./tools/gst-indent
           # GNU indent leaves ~ backup files; clean them up so the
           # diff check below only sees real reformatting deltas.
-          find libchronoid examples tests -name '*~' -delete
+          find chronoid examples tests -name '*~' -delete
           if ! git diff --exit-code; then
             echo "::error::gst-indent introduced changes. Run \
               ./tools/gst-indent on the affected files locally and \

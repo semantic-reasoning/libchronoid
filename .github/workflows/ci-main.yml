@@ -130,7 +130,7 @@ jobs:
             echo ''
             echo '| Artifact | Bytes |'
             echo '|---|---:|'
-            for f in build-rel/libchronoid.so.* build-rel/libchronoid.a build-rel/ksuid-gen; do
+            for f in build-rel/libchronoid.so.* build-rel/libchronoid.a build-rel/chronoid-gen; do
               [ -e "$f" ] && printf '| %s | %s |\n' "$(basename "$f")" "$(stat -c '%s' "$f")"
             done
           } >> "$GITHUB_STEP_SUMMARY"
