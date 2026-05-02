@@ -207,12 +207,23 @@ ssse3_arg = ''
 # MSVC builds.
 if get_option('simd') != 'none' and host_cpu == 'x86_64' \
     and get_option('ssse3').allowed()
-  if cc.get_argument_syntax() == 'msvc'
-    # MSVC has no /arch:SSSE3 switch; SSE2 is its lowest baseline and
-    # SSSE3 intrinsics are unconditionally available when SSE2 is
-    # enabled (which is default on x86_64). No flag needed.
+  # Discriminate on cc.get_id() not cc.get_argument_syntax():
+  # clang-cl reports 'msvc' argument syntax (it speaks /W4, /MD)
+  # but inherits Clang's strict per-feature target-attribute model,
+  # so _mm_shuffle_epi8 still requires explicit -mssse3 there. Only
+  # real MSVC (cl.exe) gets free SSSE3 intrinsics off the SSE2
+  # baseline; clang-cl, intel-cl, and intel-llvm-cl take the
+  # gcc/clang branch below. Issue #12.
+  if cc.get_id() == 'msvc'
+    # cl.exe has no /arch:SSSE3 switch and SSSE3 intrinsics are
+    # unconditionally available once SSE2 is on (default on x86_64).
     have_hex_ssse3 = true
   else
+    # gcc / clang / clang-cl / intel-llvm-cl: clang-cl forwards
+    # -m... flags to the clang driver, so cc.has_argument('-mssse3')
+    # round-trips through to the real target-feature gate. If the
+    # probe fails (e.g. classic intel-cl) have_hex_ssse3 stays false
+    # and the dispatcher uses the scalar fallback in hex.c.
     candidate = '-mssse3'
     if cc.has_argument(candidate)
       have_hex_ssse3 = true
@@ -234,7 +245,13 @@ have_avx2_batch = false
 avx2_arg = ''
 if get_option('simd') != 'none' and host_cpu == 'x86_64'
   if get_option('avx2_batch').allowed()
-    if cc.get_argument_syntax() == 'msvc'
+    # cc.get_id() == 'msvc' for the same reason as in the SSSE3 block
+    # above: cl.exe gets /arch:AVX2 (the only way to enable AVX2 in
+    # MSVC's flag dialect), while clang-cl falls through to -mavx2 so
+    # Clang's per-feature target gate is satisfied. Real cl.exe is
+    # unchanged from the previous cc.get_argument_syntax() check.
+    # Issue #12.
+    if cc.get_id() == 'msvc'
       candidate = '/arch:AVX2'
     else
       candidate = '-mavx2'

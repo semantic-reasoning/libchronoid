@@ -9,6 +9,29 @@ every binary-incompatible change, and the major version bumps with it.
 
 ## [Unreleased]
 
+### Fixed (build)
+
+- `meson.build` SSSE3 hex-encode kernel and AVX2 batch kernel
+  discriminator switched from `cc.get_argument_syntax() == 'msvc'` to
+  `cc.get_id() == 'msvc'`. The previous predicate was true for both
+  real MSVC `cl.exe` (which gets free SSSE3 intrinsics off the SSE2
+  baseline and needs no flag) AND for `clang-cl` (which inherits
+  Clang's strict per-feature target gate and therefore must compile
+  the SSSE3 TU with explicit `-mssse3`). On `windows-latest +
+  CC=clang-cl` the SSSE3 kernel was hitting `error: always_inline
+  function '_mm_shuffle_epi8' requires target feature 'ssse3', but
+  would be inlined into function 'chronoid_hex_encode_lower_ssse3'
+  that is compiled without support for 'ssse3'`. The fix routes
+  clang-cl through the gcc/clang branch where
+  `cc.has_argument('-mssse3')` succeeds because clang-cl forwards
+  `-m...` flags to its underlying clang driver. The same rewrite is
+  applied to the AVX2 block for symmetry; real `cl.exe` keeps its
+  `/arch:AVX2` path unchanged. The two other
+  `cc.get_argument_syntax() == 'msvc'` checks in `meson.build` (for
+  `/experimental:c11atomics` and for `-W…` warning suppression) are
+  about flag syntax, not target-feature gating, and remain
+  unchanged. No ABI, public-API, or installed-header impact. Closes #12.
+
 ## [1.0.0] — 2026-05-02
 
 The first stable release. KSUID (segmentio wire-compatible) and
