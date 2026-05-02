@@ -7,7 +7,7 @@ name: CI Main
 #
 # Phases:
 #   Phase 1 (Lint):       lint-main.yml — gst-indent + clang-tidy
-#   Phase 2 (Build/Test): Linux GCC + Clang, macOS, Windows MSVC, ARM64 GCC
+#   Phase 2 (Build/Test): Linux GCC + Clang, macOS, Windows MSVC + clang-cl, ARM64 GCC
 #   Phase 3 (Sanitizers): Linux + macOS ASan + UBSan
 #   Phase 4 (Footprint):  size table for the stripped library
 
@@ -50,6 +50,13 @@ jobs:
           - os: windows-latest
             compiler: msvc
             cc: cl
+          # Mirror the PR-gate clang-cl lane (issue #12) so any
+          # post-merge regression in the SSSE3 / AVX2 target-feature
+          # gating surfaces on main even if the PR gate was bypassed
+          # or its image diverged. continue-on-error stays true.
+          - os: windows-latest
+            compiler: clang-cl
+            cc: clang-cl
           # GitHub-hosted ARM64 runner exercises the NEON SIMD path.
           - os: ubuntu-24.04-arm
             os_display: ubuntu-24.04-arm
@@ -88,33 +95,36 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
 
-      - name: Configure (Windows / MSVC)
+      - name: Configure (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson setup builddir
 
       - name: Build (Linux / macOS)
         if: runner.os != 'Windows'
         run: meson compile -C builddir
 
-      - name: Build (Windows / MSVC)
+      - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson compile -C builddir
 
       - name: Test (Linux / macOS)
         if: runner.os != 'Windows'
         run: meson test -C builddir --print-errorlogs
 
-      - name: Test (Windows / MSVC)
+      - name: Test (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson test -C builddir --print-errorlogs
 
       - name: Footprint
