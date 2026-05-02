@@ -25,6 +25,11 @@
 
 #include <stdlib.h>
 
+/* See test_string_batch.c for the clang-cl rationale. Issue #12. */
+#if defined(_MSC_VER)
+#  include <intrin.h>
+#endif
+
 #if defined(CHRONOID_HAVE_HEX_AVX2) && (defined(__GNUC__) || defined(__clang__))
 #  define CHRONOID_UUIDV7_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
@@ -158,8 +163,20 @@ test_batch_pinned_corners (void)
 static int
 host_supports_avx2 (void)
 {
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
   __builtin_cpu_init ();
   return __builtin_cpu_supports ("avx2");
+#  elif defined(_MSC_VER)
+  /* clang-cl path; see chronoid/uuidv7/hex_batch.c. Issue #12. */
+  int regs[4];
+  __cpuidex (regs, 7, 0);
+  if ((regs[1] & (1 << 5)) == 0)
+    return 0;
+  unsigned long long xcr = _xgetbv (0);
+  return (xcr & 0x6) == 0x6 ? 1 : 0;
+#  else
+  return 0;
+#  endif
 }
 
 static void
