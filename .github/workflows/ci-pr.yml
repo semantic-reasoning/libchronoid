@@ -4,7 +4,7 @@ name: CI PR
 # failure so a busted formatter doesn't pay for a 30-minute build run.
 #
 #   Phase 1 (Lint):       lint-pr.yml — gst-indent -> clang-tidy
-#   Phase 2 (Build/Test): Linux GCC + Clang, macOS Clang, Windows MSVC
+#   Phase 2 (Build/Test): Linux GCC + Clang, macOS Clang, Windows MSVC + clang-cl
 #   Phase 3 (Sanitizers): Linux + macOS ASan + UBSan
 #
 # Within Phase 2 fail-fast is OFF so we get the full matrix's results
@@ -27,7 +27,7 @@ jobs:
 
   # ==========================================================================
   # Phase 2: Build & Test matrix
-  # Linux GCC, Linux Clang, macOS Clang, Windows MSVC
+  # Linux GCC, Linux Clang, macOS Clang, Windows MSVC, Windows clang-cl
   # ==========================================================================
   build:
     name: Build / ${{ matrix.os }} / ${{ matrix.compiler }}
@@ -49,6 +49,14 @@ jobs:
           - os: windows-latest
             compiler: msvc
             cc: cl
+          # clang-cl lane: catches the SSSE3 / AVX2 target-feature
+          # gate that real cl.exe gets for free but Clang's
+          # per-feature target model does not (issue #12). LLVM
+          # ships preinstalled on windows-latest as part of VS2022
+          # and vcvars64.bat puts clang-cl on PATH.
+          - os: windows-latest
+            compiler: clang-cl
+            cc: clang-cl
 
     steps:
       - uses: actions/checkout@v5
@@ -76,33 +84,36 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
 
-      - name: Configure (Windows / MSVC)
+      - name: Configure (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson setup builddir
 
       - name: Build (Linux / macOS)
         if: runner.os != 'Windows'
         run: meson compile -C builddir
 
-      - name: Build (Windows / MSVC)
+      - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson compile -C builddir
 
       - name: Test (Linux / macOS)
         if: runner.os != 'Windows'
         run: meson test -C builddir --print-errorlogs
 
-      - name: Test (Windows / MSVC)
+      - name: Test (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set CC=${{ matrix.cc }}
           meson test -C builddir --print-errorlogs
 
       - name: Verify chronoid_explicit_bzero survives optimization
