@@ -1,5 +1,5 @@
 project('libchronoid', 'c',
-  version : '1.0.0',
+  version : '1.0.1',
   license : 'LGPL-3.0-or-later AND MIT',
   meson_version : '>=1.1.0',
   default_options : [
