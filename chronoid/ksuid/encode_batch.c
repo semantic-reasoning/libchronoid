@@ -35,8 +35,14 @@
 #include <string.h>
 
 #if defined(__x86_64__) || defined(_M_X64)
-#  if defined(__GNUC__) || defined(__clang__)
+/* clang-cl defines BOTH __clang__ AND _MSC_VER but lld-link does not
+ * auto-resolve compiler-rt's __cpu_indicator_init / __cpu_model
+ * symbols that __builtin_cpu_supports lowers to, so route it through
+ * the MSVC __cpuidex path below. Issue #12. */
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
 #    include <cpuid.h>
+#  elif defined(_MSC_VER)
+#    include <intrin.h>
 #  endif
 #endif
 
@@ -63,7 +69,7 @@ chronoid_ksuid_string_batch_scalar (const chronoid_ksuid_t *ids, char *out_27n,
 static int
 chronoid_ksuid_cpu_supports_avx2 (void)
 {
-#  if defined(__GNUC__) || defined(__clang__)
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
   /* glibc's __builtin_cpu_supports requires __builtin_cpu_init
    * before its first invocation; the table it reads is populated
    * only by that call. */

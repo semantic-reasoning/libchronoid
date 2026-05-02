@@ -25,6 +25,13 @@
 
 #include <stdlib.h>
 
+/* clang-cl needs <intrin.h> for __cpuidex / _xgetbv; cl.exe does
+ * not currently exercise the parity test (the gate below requires
+ * __GNUC__ or __clang__) but the include is harmless on it. Issue #12. */
+#if defined(_MSC_VER)
+#  include <intrin.h>
+#endif
+
 #if defined(CHRONOID_HAVE_AVX2_BATCH) && (defined(__GNUC__) || defined(__clang__))
 #  define CHRONOID_KSUID_TEST_AVX2_PARITY 1
 /* Internal kernel prototypes. Tests link against the static archive
@@ -141,8 +148,22 @@ test_batch_pinned_corners (void)
 static int
 host_supports_avx2 (void)
 {
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
   __builtin_cpu_init ();
   return __builtin_cpu_supports ("avx2");
+#  elif defined(_MSC_VER)
+  /* clang-cl path. Mirrors chronoid_ksuid_cpu_supports_avx2 in
+   * encode_batch.c so the parity test runs on Windows clang-cl
+   * without pulling in compiler-rt's __cpu_indicator_init. Issue #12. */
+  int regs[4];
+  __cpuidex (regs, 7, 0);
+  if ((regs[1] & (1 << 5)) == 0)
+    return 0;
+  unsigned long long xcr = _xgetbv (0);
+  return (xcr & 0x6) == 0x6 ? 1 : 0;
+#  else
+  return 0;
+#  endif
 }
 
 static void
