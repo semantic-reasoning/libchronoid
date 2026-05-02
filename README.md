@@ -13,13 +13,14 @@ primitives.
 
 ## Status
 
-**0.9.x — pre-release.** UUIDv7 generation, parsing, formatting,
-monotonic sequence, and bulk encoding all ship in 0.9.x alongside the
-KSUID surface inherited from libksuid 1.0.0. During the 0.9.x window
-the ABI is **additive only** (no removals, no signature changes); the
-SONAME is `libchronoid.so.0` and downstream consumers should expect
-to rebuild when the SONAME advances. Both KSUID and UUIDv7 surfaces
-are feature-complete and tested.
+**1.0.0 — stable.** First committed ABI. KSUID (segmentio
+wire-compatible) and UUIDv7 (RFC 9562) surfaces are both
+feature-complete, tested, and locked at `libchronoid.so.0`. SemVer
+applies in full from 1.0.0 forward: additions bump the minor;
+removals or signature changes require a SONAME bump
+(`libchronoid.so.0` → `libchronoid.so.1`) and a new major version.
+Distros, language bindings, and downstream consumers can pin
+against `libchronoid >= 1.0.0` and rely on the documented contract.
 
 ## Provenance
 
@@ -93,13 +94,13 @@ strip --strip-unneeded build-release/libchronoid.so.*
 ## Footprint
 
 A release build on x86_64 produces (post-`strip --strip-unneeded`,
-0.99.0 with UUIDv7 and the shared hex codec linked in):
+1.0.0 with UUIDv7 and the shared hex codec linked in):
 
-| Artifact               | Bytes  |
-| :--------------------- | -----: |
-| libchronoid.so.0.99.0  | 39 072 |
-| libchronoid.a          | 55 246 |
-| chronoid-gen (CLI)     | 31 136 |
+| Artifact              | Bytes  |
+| :-------------------- | -----: |
+| libchronoid.so.1.0.0  | 39 072 |
+| libchronoid.a         | 53 862 |
+| chronoid-gen (CLI)    | 31 136 |
 
 The bulk-encode AVX2 kernel from `chronoid/ksuid/encode_avx2.c` accounts for
 roughly 8 KB of the shared-library size, and the UUIDv7 hex AVX2

@@ -1,11 +1,73 @@
 # Changelog
 
 All notable changes to libchronoid are recorded here. Format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
-follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
-1.0.0 ships. Pre-1.0 versions are additive but make no ABI promise.
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions
+follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+1.0.0 is the first stable ABI commitment; from this point forward a
+SONAME bump (`libchronoid.so.0` → `libchronoid.so.1`) accompanies
+every binary-incompatible change, and the major version bumps with it.
 
 ## [Unreleased]
+
+## [1.0.0] — 2026-05-02
+
+The first stable release. KSUID (segmentio wire-compatible) and
+UUIDv7 (RFC 9562) surfaces are now committed: the ABI is locked at
+`libchronoid.so.0`, every public type / constant / function is
+covered by tests in the upstream suite, and SemVer applies in full
+going forward (additions bump the minor, removals or signature
+changes require a SONAME bump and a new major).
+
+This is purely a stabilisation cut — no new public API, no
+behavioural change, no SIMD-lane changes versus 0.10.1. Distros,
+language bindings, and downstream consumers can pin against
+`libchronoid >= 1.0.0` and rely on the documented contract.
+
+### Added (project hygiene)
+
+- `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1 with maintainer
+  contact substituted in.
+- `CONTRIBUTING.md` — codifies the conventions already implicit in
+  git history and CI: meson + ninja build, `gst-indent` +
+  `clang-tidy` lint gate, atomic commits with the lowercase `type:`
+  prefix and `(issue #N, commit X/Y)` series tagging, the
+  additive-during-pre-1.0 ABI contract that closes with this
+  release, the SPDX header policy split between LGPL-only and
+  dual-licensed files, and the 3-phase PR gate (lint → build/test
+  matrix → sanitizers) including the scalar-fallback lanes added in
+  0.10.1.
+- `SECURITY.md` — GitHub Private Vulnerability Reporting as the
+  preferred channel with maintainer email as fallback. Documents
+  the supported-version window, best-effort response targets, and an
+  in-scope / out-of-scope split for parser memory safety, CSPRNG
+  seeding/reseed/fork contract, KSUID and UUIDv7 wire-format
+  compliance, and the documented monotonicity invariants.
+
+### Fixed (tests)
+
+- `tests/test_cli.sh` no longer depends on `xxd`. The hex round-trip
+  vector at test 17 now uses `od -An -tx1 | tr -d ' \n'` (coreutils,
+  essential everywhere) instead of `xxd -p | tr -d '\n'` (vim
+  package, not in build chroots by default). Surfaced when the
+  Debian/Ubuntu PPA build chroot lacked `xxd` and the silent
+  pipe-failure (no `pipefail` in POSIX `set -eu`) produced an empty
+  string for the comparison.
+
+### Footprint
+
+A 1.0.0 release build on x86_64, post-`strip --strip-unneeded`:
+
+| Artifact              | Bytes  | Δ vs 0.10.1 |
+| :-------------------- | -----: | ----------: |
+| libchronoid.so.1.0.0  | 39 072 |           0 |
+| libchronoid.a         | 53 862 |      -1 384 |
+| chronoid-gen (CLI)    | 31 136 |           0 |
+
+The shared library and CLI binaries are byte-identical to the
+0.10.1 release build (same SIMD lanes compiled in, same hardening
+flags, same strip pass). The static archive shrinks ~1.4 KB from
+ranlib symbol-table differences between toolchain runs and is not
+attributable to any source-level change in this release.
 
 ## [0.10.1] — 2026-05-01
 
