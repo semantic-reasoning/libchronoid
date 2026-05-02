@@ -95,9 +95,9 @@ test_version_macros_are_consistent (void)
    * When you bump meson.build's project version you MUST update
    * these four asserts in the same commit. */
   ASSERT_EQ_INT (CHRONOID_VERSION_MAJOR, 1);
-  ASSERT_EQ_INT (CHRONOID_VERSION_MINOR, 0);
+  ASSERT_EQ_INT (CHRONOID_VERSION_MINOR, 1);
   ASSERT_EQ_INT (CHRONOID_VERSION_PATCH, 0);
-  ASSERT_EQ_STR (CHRONOID_VERSION_STRING, "1.0.0");
+  ASSERT_EQ_STR (CHRONOID_VERSION_STRING, "1.1.0");
 
   /* The composite CHRONOID_VERSION must equal the documented
    * (MAJOR << 16) | (MINOR << 8) | PATCH layout for `#if

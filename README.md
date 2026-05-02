@@ -94,11 +94,11 @@ strip --strip-unneeded build-release/libchronoid.so.*
 ## Footprint
 
 A release build on x86_64 produces (post-`strip --strip-unneeded`,
-1.0.0 with UUIDv7 and the shared hex codec linked in):
+1.1.0 with UUIDv7 and the shared hex codec linked in):
 
 | Artifact              | Bytes  |
 | :-------------------- | -----: |
-| libchronoid.so.1.0.0  | 39 072 |
+| libchronoid.so.1.1.0  | 39 072 |
 | libchronoid.a         | 53 862 |
 | chronoid-gen (CLI)    | 31 136 |
 
