@@ -18,8 +18,14 @@
 #include <string.h>
 
 #if defined(__x86_64__) || defined(_M_X64)
-#  if defined(__GNUC__) || defined(__clang__)
+/* See chronoid/ksuid/encode_batch.c for the clang-cl rationale: it
+ * defines both __clang__ and _MSC_VER but lld-link cannot resolve
+ * __builtin_cpu_supports's compiler-rt symbols, so route it through
+ * the MSVC __cpuidex path. Issue #12. */
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
 #    include <cpuid.h>
+#  elif defined(_MSC_VER)
+#    include <intrin.h>
 #  endif
 #endif
 
@@ -47,7 +53,7 @@ chronoid_uuidv7_string_batch_scalar (const chronoid_uuidv7_t *ids,
 static int
 chronoid_uuidv7_cpu_supports_avx2 (void)
 {
-#  if defined(__GNUC__) || defined(__clang__)
+#  if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
   __builtin_cpu_init ();
   if (!__builtin_cpu_supports ("avx2"))
     return 0;
