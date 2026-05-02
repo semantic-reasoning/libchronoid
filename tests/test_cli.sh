@@ -210,7 +210,7 @@ if [ "$n_raw_v7" -ne 16 ]; then
   echo "expected 16 bytes from uuidv7 -f raw, got $n_raw_v7" >&2
   exit 1
 fi
-raw_hex_v7=$("$KSUID_GEN" -f raw "$RFC_UUIDV7" | xxd -p | tr -d '\n')
+raw_hex_v7=$("$KSUID_GEN" -f raw "$RFC_UUIDV7" | od -An -tx1 | tr -d ' \n')
 if [ "$raw_hex_v7" != "017f22e279b07cc398c4dc0c0c07398f" ]; then
   echo "expected uuidv7 -f raw bytes 017f22e279b07cc398c4dc0c0c07398f, got $raw_hex_v7" >&2
   exit 1
