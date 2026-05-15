@@ -4,10 +4,26 @@ All notable changes to libchronoid are recorded here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 1.0.0 is the first stable ABI commitment; from this point forward a
-SONAME bump (`libchronoid.so.0` → `libchronoid.so.1`) accompanies
+SONAME bump (`libchronoid.so.1` → `libchronoid.so.2`) accompanies
 every binary-incompatible change, and the major version bumps with it.
 
 ## [Unreleased]
+
+## [1.0.2] — 2026-05-15
+
+Patch release correcting the 1.0 branch shared-library SONAME to
+`libchronoid.so.1`. The Meson `soversion` setting was still `0`, so
+shared builds could emit `libchronoid.so.0` despite the 1.0 stable
+ABI commitment and existing footprint documentation using
+`libchronoid.so.1.0.0`.
+
+### Fixed (build)
+
+- `meson.build` now sets `soversion : '1'`, producing
+  `libchronoid.so.1` on ELF platforms and `libchronoid.1.dylib` on
+  macOS.
+- README SONAME references now consistently describe the 1.0 branch
+  ABI as `libchronoid.so.1`.
 
 ## [1.0.1] — 2026-05-02
 
@@ -382,7 +398,8 @@ top of this base.
 - `chronoid-gen` (formerly `ksuid-gen`) CLI for round-trip generation
   and inspection.
 
-[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.2
 [1.0.1]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.1
 [1.0.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.0
 [0.10.1]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.10.1

@@ -15,10 +15,10 @@ primitives.
 
 **1.0.0 — stable.** First committed ABI. KSUID (segmentio
 wire-compatible) and UUIDv7 (RFC 9562) surfaces are both
-feature-complete, tested, and locked at `libchronoid.so.0`. SemVer
+feature-complete, tested, and locked at `libchronoid.so.1`. SemVer
 applies in full from 1.0.0 forward: additions bump the minor;
 removals or signature changes require a SONAME bump
-(`libchronoid.so.0` → `libchronoid.so.1`) and a new major version.
+(`libchronoid.so.1` → `libchronoid.so.2`) and a new major version.
 Distros, language bindings, and downstream consumers can pin
 against `libchronoid >= 1.0.0` and rely on the documented contract.
 
@@ -31,7 +31,7 @@ guarantees for KSUID. The rename reflects an enlarged scope: a
 single-format port grows into a multi-format toolkit. The KSUID public
 API (types, constants, functions) is unchanged byte-for-byte at the
 ABI level; only header path (`<chronoid/ksuid.h>` instead of
-`<libksuid/ksuid.h>`) and library/SONAME (`libchronoid.so.0` instead
+`<libksuid/ksuid.h>`) and library/SONAME (`libchronoid.so.1` instead
 of `libksuid.so.1`) move.
 
 ## Goals

@@ -1,5 +1,5 @@
 project('libchronoid', 'c',
-  version : '1.0.1',
+  version : '1.0.2',
   license : 'LGPL-3.0-or-later AND MIT',
   meson_version : '>=1.1.0',
   default_options : [
@@ -342,7 +342,7 @@ chronoid_lib = both_libraries('chronoid', core_sources,
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the
   # first stable ABI commitment.
-  soversion           : '0',
+  soversion           : '1',
   install             : true,
 )
 
