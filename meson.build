@@ -342,7 +342,7 @@ chronoid_lib = both_libraries('chronoid', core_sources,
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the
   # first stable ABI commitment.
-  soversion           : '0',
+  soversion           : '1',
   install             : true,
 )
 
