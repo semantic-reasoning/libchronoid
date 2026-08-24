@@ -24,6 +24,12 @@ every binary-incompatible change, and the major version bumps with it.
 
 ### Fixed (build)
 
+- Windows CI now discovers the latest installed Visual Studio C++ toolchain
+  with `vswhere` instead of hard-coding the VS 2022 Enterprise path. This
+  restores the MSVC lane after `windows-latest` moved to the VS 2026 image and
+  keeps both MSVC and clang-cl setup independent of the installed year and
+  edition.
+
 - `meson.build` SSSE3 hex-encode kernel and AVX2 batch kernel
   discriminator switched from `cc.get_argument_syntax() == 'msvc'` to
   `cc.get_id() == 'msvc'`. The previous predicate was true for both
