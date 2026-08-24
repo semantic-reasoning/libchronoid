@@ -91,24 +91,27 @@ meson compile -C build-release
 strip --strip-unneeded build-release/libchronoid.so.*
 ```
 
-Release builds use Meson optimization level 2 by default. This keeps the
-installed artifacts compact without the substantial KSUID throughput loss
-observed with size optimization. To honor Meson's or the caller's global
-release optimization level instead, configure with
-`-Dcompact_release=false` (Meson's standard release default is level 3).
+Release builds use Meson's standard optimization level 3. Binary footprint is
+reduced in the source rather than by overriding the caller's optimization
+policy.
 
 ## Footprint
 
-A GCC 16.2.1 release build on x86_64 produces the following paired result.
+A GCC 16.2.1 O3 release build on x86_64 produces the following paired result.
 The shared library is measured after `strip --strip-unneeded`; the static
-archive and CLI are measured as built. Both columns use the same compiler and
-linker invocation, with only `compact_release` changed:
+archive and CLI are measured as built. Both columns use the same compiler,
+linker, build options, and optimization level:
 
-| Artifact              | Compact O2 | O3 control | Reduction |
-| :-------------------- | ---------: | ---------: | --------: |
-| libchronoid.so.1.1.0  |     39 072 |     43 168 |      9.5% |
-| libchronoid.a         |     52 358 |     56 142 |      6.7% |
-| chronoid-gen (CLI)    |     33 328 |     37 312 |     10.7% |
+| Artifact              | O3 before | O3 source-optimized | Reduction |
+| :-------------------- | --------: | ------------------: | --------: |
+| libchronoid.so.1.1.0  |    43 168 |              39 072 |      9.5% |
+| libchronoid.a         |    56 142 |              55 532 |      1.1% |
+| chronoid-gen (CLI)    |    37 312 |              37 248 |      0.2% |
+
+The source change compacts a private RNG-state observation helper used only by
+the test suite. Its documented fixed-capacity contract avoids the compiler's
+large variable-length `memcpy` expansion without changing production RNG hot
+paths, public API, or wire formats.
 
 The bulk-encode AVX2 kernel from `chronoid/ksuid/encode_avx2.c` accounts for
 roughly 8 KB of the shared-library size, and the UUIDv7 hex AVX2

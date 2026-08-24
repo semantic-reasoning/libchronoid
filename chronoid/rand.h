@@ -88,15 +88,12 @@ extern _Atomic int chronoid_thread_exit_wipes_observed;
  * erase. Must be called before any draw on the same thread. */
 void chronoid_random_thread_state_set_sentinel_for_testing (void);
 
-/* Copy the calling thread's TLS RNG state bytes into |out| (which
- * must be at least sizeof(chronoid_tls_rng_t) -- the test is allowed to
- * over-allocate). Used to assert the wipe actually zeroed the
- * region. */
-void chronoid_random_thread_state_peek_for_testing (uint8_t * out,
-    size_t out_len);
+/* Capacity for the private TLS-state observation buffer. The helper
+ * returns the actual bytes copied; any unused tail stays untouched. */
+#define CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY 256u
 
-/* Size in bytes that a peek buffer must accommodate. */
-size_t chronoid_random_thread_state_size_for_testing (void);
+size_t chronoid_random_thread_state_peek_for_testing (uint8_t
+    out[CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY]);
 
 /* Test-only: replace the wall-clock source used by chronoid_uuidv7_*
  * generation. Pass a non-NULL fn to install; pass NULL to restore the

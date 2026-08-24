@@ -118,17 +118,30 @@ sentinel_thread_body (void *opaque)
    * registered destructor still fires at thread exit and wipes
    * whatever is in the slot. */
   chronoid_random_thread_state_set_sentinel_for_testing ();
-  /* Sanity check: the sentinel landed in the slot. */
-  size_t n = chronoid_random_thread_state_size_for_testing ();
-  uint8_t *peek = malloc (n);
-  if (peek == NULL)
-    return -1;
-  chronoid_random_thread_state_peek_for_testing (peek, n);
+  /* Sanity check: the sentinel landed in the slot. Guard bytes and
+   * the unused capacity tail prove that the observation helper copies
+   * exactly the private state size it reports. */
+  enum
+  { guard_size = 16 };
+  uint8_t guarded[guard_size + CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY
+      + guard_size];
+  memset (guarded, 0x3c, sizeof guarded);
+  uint8_t *peek = guarded + guard_size;
+  size_t n = chronoid_random_thread_state_peek_for_testing (peek);
+  if (n == 0 || n > CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY)
+    return -3;
   size_t a5_count = 0;
   for (size_t i = 0; i < n; ++i)
     if (peek[i] == 0xa5)
       ++a5_count;
-  free (peek);
+  for (size_t i = 0; i < guard_size; ++i) {
+    if (guarded[i] != 0x3c
+        || peek[CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY + i] != 0x3c)
+      return -3;
+  }
+  for (size_t i = n; i < CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY; ++i)
+    if (peek[i] != 0x3c)
+      return -3;
   /* At least 64 bytes of state[16] plus 64 bytes of buf must be
    * the sentinel (the bool flags read as 1, not 0xa5, but everything
    * else does). Use a conservative lower bound. */

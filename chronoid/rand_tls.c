@@ -78,6 +78,10 @@ typedef struct
   bool destructor_registered;   /* thread-exit wipe registered yet?      */
 } chronoid_tls_rng_t;
 
+_Static_assert (sizeof (chronoid_tls_rng_t)
+    <= CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY,
+    "test observation capacity must hold the complete TLS RNG state");
+
 static _Thread_local chronoid_tls_rng_t chronoid_tls_rng_;
 
 /* Re-entry guard for chronoid_random_thread_state_wipe. A future change
@@ -120,18 +124,11 @@ chronoid_random_thread_state_set_sentinel_for_testing (void)
   chronoid_tls_rng_.destructor_registered = registered;
 }
 
-void
-chronoid_random_thread_state_peek_for_testing (uint8_t *out, size_t out_len)
-{
-  size_t n = sizeof chronoid_tls_rng_;
-  if (out_len < n)
-    n = out_len;
-  memcpy (out, &chronoid_tls_rng_, n);
-}
-
 size_t
-chronoid_random_thread_state_size_for_testing (void)
+chronoid_random_thread_state_peek_for_testing (uint8_t
+    out[CHRONOID_RANDOM_THREAD_STATE_PEEK_CAPACITY])
 {
+  memcpy (out, &chronoid_tls_rng_, sizeof chronoid_tls_rng_);
   return sizeof chronoid_tls_rng_;
 }
 
