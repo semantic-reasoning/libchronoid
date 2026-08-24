@@ -9,6 +9,19 @@ every binary-incompatible change, and the major version bumps with it.
 
 ## [Unreleased]
 
+### Changed (build)
+
+- Release builds now compile production targets at optimization level 2 by
+  default. On GCC 16.2.1 x86_64 this reduces the stripped shared library from
+  43,168 to 39,072 bytes (-9.5%), the as-built static archive from 56,142 to
+  52,358 bytes (-6.7%), and the as-built CLI from 37,312 to 33,328 bytes
+  (-10.7%) relative to an otherwise identical O3 build. Size optimization was
+  smaller but roughly halved KSUID CLI throughput, while LTO enlarged the
+  static archive more than threefold, so O2 is the size/performance compromise.
+  Pass `-Dcompact_release=false` to remove the per-target override and honor
+  the caller's global optimization setting. Public API, ABI, wire formats,
+  SIMD dispatch, and runtime dependencies are unchanged.
+
 ### Fixed (build)
 
 - `meson.build` SSSE3 hex-encode kernel and AVX2 batch kernel

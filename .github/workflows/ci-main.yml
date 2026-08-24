@@ -131,19 +131,64 @@ jobs:
         if: runner.os == 'Linux' && matrix.compiler == 'gcc'
         continue-on-error: true
         run: |
-          rm -rf build-rel
+          rm -rf build-rel build-rel-o3
+          meson setup build-rel-o3 --buildtype=release \
+            -Doptimization=3 -Dcompact_release=false
+          meson compile -C build-rel-o3
           meson setup build-rel --buildtype=release
           meson compile -C build-rel
-          strip --strip-unneeded build-rel/libchronoid.so.* 2>/dev/null || true
+
+          mapfile -t control_shared < <(find build-rel-o3 -maxdepth 1 -type f \
+            -name 'libchronoid.so.*' -print)
+          mapfile -t compact_shared < <(find build-rel -maxdepth 1 -type f \
+            -name 'libchronoid.so.*' -print)
+          if [ "${#control_shared[@]}" -ne 1 ] \
+              || [ "${#compact_shared[@]}" -ne 1 ]; then
+            echo "Expected one versioned shared library per build." >&2
+            exit 1
+          fi
+
+          strip --strip-unneeded "${control_shared[0]}"
+          strip --strip-unneeded "${compact_shared[0]}"
+
           {
-            echo '## Footprint (stripped release build) — ${{ matrix.os }}'
+            echo '## Footprint — ${{ matrix.os }} / GCC / x86_64'
             echo ''
-            echo '| Artifact | Bytes |'
-            echo '|---|---:|'
-            for f in build-rel/libchronoid.so.* build-rel/libchronoid.a build-rel/chronoid-gen; do
-              [ -e "$f" ] && printf '| %s | %s |\n' "$(basename "$f")" "$(stat -c '%s' "$f")"
+            echo 'Shared libraries are stripped with `strip --strip-unneeded`;'
+            echo 'the static archive and CLI are measured as built.'
+            echo ''
+            echo '| Artifact | O3 control | Compact O2 | Delta | Reduction |'
+            echo '|---|---:|---:|---:|---:|'
+            failed=0
+            for spec in \
+                "shared:${control_shared[0]}:${compact_shared[0]}" \
+                'static:build-rel-o3/libchronoid.a:build-rel/libchronoid.a' \
+                'chronoid-gen:build-rel-o3/chronoid-gen:build-rel/chronoid-gen'; do
+              IFS=: read -r label control_path compact_path <<< "$spec"
+              if [ ! -f "$control_path" ] || [ ! -f "$compact_path" ]; then
+                echo "Missing footprint artifact for $label." >&2
+                exit 1
+              fi
+              control_bytes=$(stat -c '%s' "$control_path")
+              compact_bytes=$(stat -c '%s' "$compact_path")
+              case "$control_bytes:$compact_bytes" in
+                *[!0-9:]*|'':*|*:'')
+                  echo "Invalid footprint size for $label." >&2
+                  exit 1
+                  ;;
+              esac
+              delta=$((compact_bytes - control_bytes))
+              reduction=$(awk -v c="$control_bytes" -v n="$compact_bytes" \
+                'BEGIN { printf "%.1f%%", 100 * (c - n) / c }')
+              printf '| %s | %s | %s | %+d | %s |\n' \
+                "$label" "$control_bytes" "$compact_bytes" "$delta" "$reduction"
+              if [ "$compact_bytes" -ge "$control_bytes" ]; then
+                echo "Compact release did not shrink $label." >&2
+                failed=1
+              fi
             done
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$failed"
 
       - name: Publish results
         if: always()
