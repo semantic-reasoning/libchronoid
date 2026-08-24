@@ -13,14 +13,15 @@ primitives.
 
 ## Status
 
-**1.0.0 — stable.** First committed ABI. KSUID (segmentio
+**1.2.0 — stable.** First post-1.0 mainline release. KSUID (segmentio
 wire-compatible) and UUIDv7 (RFC 9562) surfaces are both
-feature-complete, tested, and locked at `libchronoid.so.1`. SemVer
-applies in full from 1.0.0 forward: additions bump the minor;
-removals or signature changes require a SONAME bump
-(`libchronoid.so.1` → `libchronoid.so.2`) and a new major version.
-Distros, language bindings, and downstream consumers can pin
-against `libchronoid >= 1.0.0` and rely on the documented contract.
+feature-complete, tested, and locked at `libchronoid.so.1`. The ABI
+commitment began with 1.0.0, and SemVer applies in full from that
+release forward: additions bump the minor; removals or signature
+changes require a SONAME bump (`libchronoid.so.1` →
+`libchronoid.so.2`) and a new major version. Distros, language
+bindings, and downstream consumers can pin against
+`libchronoid >= 1.0.0` and rely on the documented contract.
 
 ## Provenance
 
@@ -104,7 +105,7 @@ linker, build options, and optimization level:
 
 | Artifact              | O3 before | O3 source-optimized | Reduction |
 | :-------------------- | --------: | ------------------: | --------: |
-| libchronoid.so.1.1.0  |    43 168 |              39 072 |      9.5% |
+| libchronoid.so.1.2.0  |    43 168 |              39 072 |      9.5% |
 | libchronoid.a         |    56 142 |              55 532 |      1.1% |
 | chronoid-gen (CLI)    |    37 312 |              37 248 |      0.2% |
 
