@@ -1,5 +1,5 @@
 project('libchronoid', 'c',
-  version : '1.1.0',
+  version : '1.2.0',
   license : 'LGPL-3.0-or-later AND MIT',
   meson_version : '>=1.1.0',
   default_options : [
@@ -361,7 +361,7 @@ install_data(
 
 pkg.generate(chronoid_lib.get_shared_lib(),
   name        : 'libchronoid',
-  description : 'C11 toolkit for time-ordered IDs (KSUID + future UUIDv7); successor to libksuid',
+  description : 'C11 toolkit for time-ordered IDs (KSUID + UUIDv7); successor to libksuid',
   version     : meson.project_version(),
   filebase    : 'libchronoid',
 )

@@ -66,21 +66,17 @@ deliverability is the most likely cause of silence.
 
 ## Supported versions
 
-Pre-1.0 support is narrow. Only the **most recent 0.10.x patch
-release** receives security fixes; older 0.10.x and any 0.9.x release
-are end-of-life. The development branch (`main`, currently 0.99.x)
-receives fixes as they land.
+Only the **most recent stable release line** receives security fixes.
+Older stable lines and all pre-1.0 releases are end-of-life. The
+development branch (`main`) receives fixes as they land.
 
 | Version line          | Status                  | Security fixes |
 | :-------------------- | :---------------------- | :------------- |
-| `main` (0.99.x dev)   | active development      | yes            |
-| 0.10.1                | latest stable           | yes            |
-| 0.10.0                | superseded by 0.10.1    | no             |
-| 0.9.x                 | superseded              | no             |
+| `main`                | active development      | yes            |
+| 1.2.x                 | latest stable           | yes            |
+| 1.0.x                 | superseded              | no             |
+| 0.x                   | end-of-life             | no             |
 | `libksuid` 1.0.0      | archived predecessor    | no — see <https://github.com/semantic-reasoning/libksuid> |
-
-This table tightens once 1.0.0 ships; until then, "stay on the latest
-patch" is the entire support story.
 
 ## Scope
 

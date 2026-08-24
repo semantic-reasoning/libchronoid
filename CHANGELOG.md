@@ -4,10 +4,19 @@ All notable changes to libchronoid are recorded here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 1.0.0 is the first stable ABI commitment; from this point forward a
-SONAME bump (`libchronoid.so.0` → `libchronoid.so.1`) accompanies
+SONAME bump (`libchronoid.so.1` → `libchronoid.so.2`) accompanies
 every binary-incompatible change, and the major version bumps with it.
 
 ## [Unreleased]
+
+## [1.2.0] — 2026-08-24
+
+The first post-1.0 mainline release. The 1.1.0 identifier was used
+only as the development version on `main` and was never published.
+Relative to 1.0.2, this release strengthens Windows CI and restores
+the documented O3 footprint without changing the public API, ABI,
+wire formats, SIMD dispatch, or runtime dependencies. The SONAME
+remains `libchronoid.so.1`.
 
 ### Changed (build)
 
@@ -20,6 +29,12 @@ every binary-incompatible change, and the major version bumps with it.
   same O3 build before the source change. Production RNG paths, public API,
   ABI, wire formats, SIMD dispatch, and runtime dependencies are unchanged.
 
+### Added (CI)
+
+- Windows clang-cl is now a blocking pull-request lane and is mirrored in
+  post-merge CI alongside MSVC. This continuously covers the compiler path
+  fixed in 1.0.1 without changing shipped code or platform support.
+
 ### Fixed (build)
 
 - Windows CI now discovers the latest installed Visual Studio C++ toolchain
@@ -28,26 +43,87 @@ every binary-incompatible change, and the major version bumps with it.
   keeps both MSVC and clang-cl setup independent of the installed year and
   edition.
 
+- The pkg-config description now identifies UUIDv7 as a shipped format rather
+  than a future addition.
+
+### Changed (documentation)
+
+- The security support table now describes the current stable release policy:
+  the latest stable line and `main` receive fixes, while older release lines
+  are end-of-life.
+
+## [1.0.2] — 2026-05-15
+
+Patch release correcting the 1.0 branch shared-library SONAME to
+`libchronoid.so.1`. The Meson `soversion` setting was still `0`, so
+shared builds could emit `libchronoid.so.0` despite the 1.0 stable
+ABI commitment and existing footprint documentation using
+`libchronoid.so.1.0.0`.
+
+### Fixed (build)
+
+- `meson.build` now sets `soversion : '1'`, producing
+  `libchronoid.so.1` on ELF platforms and `libchronoid.1.dylib` on
+  macOS.
+- README SONAME references now consistently describe the 1.0 branch
+  ABI as `libchronoid.so.1`.
+
+## [1.0.1] — 2026-05-02
+
+A patch release backporting the issue #12 fix from main: clang-cl on
+`windows-latest` now compiles and links libchronoid clean. Linux gcc,
+Linux clang, macOS clang, and Windows MSVC `cl.exe` lanes are
+unchanged. No public-API or ABI impact — `libchronoid.so.0` SONAME is
+preserved, no installed-header changes, no runtime behaviour change.
+
+### Fixed (build) — Windows clang-cl support (closes #12)
+
+The original v1.0.0 build failed with `CC=clang-cl` on
+`windows-latest` because of two distinct compiler-trichotomy bugs
+collapsed under one symptom; both layers are fixed in this release.
+
 - `meson.build` SSSE3 hex-encode kernel and AVX2 batch kernel
-  discriminator switched from `cc.get_argument_syntax() == 'msvc'` to
-  `cc.get_id() == 'msvc'`. The previous predicate was true for both
-  real MSVC `cl.exe` (which gets free SSSE3 intrinsics off the SSE2
-  baseline and needs no flag) AND for `clang-cl` (which inherits
-  Clang's strict per-feature target gate and therefore must compile
-  the SSSE3 TU with explicit `-mssse3`). On `windows-latest +
-  CC=clang-cl` the SSSE3 kernel was hitting `error: always_inline
-  function '_mm_shuffle_epi8' requires target feature 'ssse3', but
-  would be inlined into function 'chronoid_hex_encode_lower_ssse3'
-  that is compiled without support for 'ssse3'`. The fix routes
-  clang-cl through the gcc/clang branch where
-  `cc.has_argument('-mssse3')` succeeds because clang-cl forwards
-  `-m...` flags to its underlying clang driver. The same rewrite is
-  applied to the AVX2 block for symmetry; real `cl.exe` keeps its
-  `/arch:AVX2` path unchanged. The two other
-  `cc.get_argument_syntax() == 'msvc'` checks in `meson.build` (for
-  `/experimental:c11atomics` and for `-W…` warning suppression) are
-  about flag syntax, not target-feature gating, and remain
-  unchanged. No ABI, public-API, or installed-header impact. Closes #12.
+  discriminator switched from `cc.get_argument_syntax() == 'msvc'`
+  to `cc.get_id() == 'msvc'`. The previous predicate was true for
+  both real MSVC `cl.exe` (which gets free SSSE3 intrinsics off the
+  SSE2 baseline and needs no flag) AND for `clang-cl` (which
+  inherits Clang's strict per-feature target gate and therefore
+  must compile the SSSE3 TU with explicit `-mssse3`). On
+  `windows-latest + CC=clang-cl` the SSSE3 kernel was hitting
+  `error: always_inline function '_mm_shuffle_epi8' requires
+  target feature 'ssse3', but would be inlined into function
+  'chronoid_hex_encode_lower_ssse3' that is compiled without
+  support for 'ssse3'`. The fix routes clang-cl through the
+  gcc/clang branch where `cc.has_argument('-mssse3')` succeeds
+  because clang-cl forwards `-m...` flags to its underlying clang
+  driver. The same rewrite is applied to the AVX2 block for
+  symmetry; real `cl.exe` keeps its `/arch:AVX2` path unchanged.
+  The two other `cc.get_argument_syntax() == 'msvc'` checks in
+  `meson.build` (for `/experimental:c11atomics` and for `-W…`
+  warning suppression) gate flag syntax, not target features, and
+  remain unchanged.
+
+- `chronoid/ksuid/encode_batch.c` and
+  `chronoid/uuidv7/hex_batch.c` runtime AVX2 dispatchers (plus the
+  matching `host_supports_avx2()` helpers in
+  `tests/test_string_batch.c` and `tests/test_uuidv7_string_batch.c`)
+  tightened the GCC/Clang branch to
+  `(__GNUC__ || __clang__) && !_MSC_VER` so clang-cl falls through
+  to the existing `_MSC_VER` path that uses `__cpuidex` + `_xgetbv`.
+  Without this second fix, even with the meson.build change above
+  in place, clang-cl builds would have failed at link time with
+  `lld-link: error: undefined symbol: __cpu_indicator_init` /
+  `__cpu_model` because `__builtin_cpu_supports("avx2")` lowers to
+  compiler-rt symbols that lld-link does not auto-resolve under
+  MSVC-style linking. `<intrin.h>` is now explicitly included under
+  `_MSC_VER` so `__cpuidex` and `_xgetbv` are declared (no-op on
+  cl.exe, required under clang-cl's stricter declaration checking).
+
+### Footprint
+
+A 1.0.1 release build on x86_64 Linux gcc is byte-identical to
+1.0.0. The fix is Windows-clang-cl-only and changes no codegen on
+Linux, macOS, or Windows `cl.exe`.
 
 ## [1.0.0] — 2026-05-02
 
@@ -365,6 +441,11 @@ top of this base.
 - `chronoid-gen` (formerly `ksuid-gen`) CLI for round-trip generation
   and inspection.
 
-[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/semantic-reasoning/libchronoid/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.2.0
+[1.0.2]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.2
+[1.0.1]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.1
+[1.0.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v1.0.0
+[0.10.1]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.10.1
 [0.10.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.10.0
 [0.9.0]: https://github.com/semantic-reasoning/libchronoid/releases/tag/v0.9.0
