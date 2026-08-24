@@ -13,6 +13,17 @@ project('libchronoid', 'c',
 cc = meson.get_compiler('c')
 pkg = import('pkgconfig')
 
+# Meson's release build type selects optimization level 3. GCC and Clang
+# expand several of our fixed-trip-count codec loops aggressively at that
+# level, increasing all three installed artifacts without a measurable CLI
+# throughput benefit. Keep the public release recipe compact by overriding
+# production targets to level 2. Setting -Dcompact_release=false removes the
+# target override and honors the caller's global optimization choice.
+compact_release_options = []
+if get_option('compact_release') and get_option('buildtype') == 'release'
+  compact_release_options = ['optimization=2']
+endif
+
 # Hardening / portability flags applied to all our TUs. Compiler-
 # specific defaults split between gcc/clang and MSVC: visibility
 # control + POSIX feature macros only mean anything on the GCC-style
@@ -291,6 +302,7 @@ if have_hex_ssse3
     'chronoid/uuidv7/hex_ssse3.c',
     include_directories : inc,
     c_args              : ssse3_arg != '' ? [ssse3_arg] : [],
+    override_options    : compact_release_options,
     pic                 : true,
     install             : false,
   )
@@ -305,6 +317,7 @@ if have_avx2_batch
     'chronoid/ksuid/encode_avx2.c',
     include_directories : inc,
     c_args              : [avx2_arg],
+    override_options    : compact_release_options,
     pic                 : true,
     install             : false,
   )
@@ -328,6 +341,7 @@ if have_hex_avx2
     'chronoid/uuidv7/hex_avx2.c',
     include_directories : inc,
     c_args              : [avx2_arg],
+    override_options    : compact_release_options,
     pic                 : true,
     install             : false,
   )
@@ -338,6 +352,7 @@ chronoid_lib = both_libraries('chronoid', core_sources,
   include_directories : inc,
   dependencies        : extra_link_deps,
   link_whole          : hex_ssse3_lib_dep + avx2_lib_dep + hex_avx2_lib_dep,
+  override_options    : compact_release_options,
   version             : meson.project_version(),
   # soversion tracks semver major: a major bump means a binary-
   # incompatible ABI break and the SONAME flips with it. 1.0 is the
@@ -371,6 +386,7 @@ if get_option('cli')
     'examples/chronoid-gen.c',
     include_directories : inc,
     link_with : chronoid_lib.get_static_lib(),
+    override_options : compact_release_options,
     install : true,
   )
 endif
