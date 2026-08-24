@@ -2,8 +2,6 @@ option('tests', type : 'boolean', value : true,
        description : 'Build the unit test suite')
 option('cli', type : 'boolean', value : true,
        description : 'Build the chronoid-gen CLI tool')
-option('compact_release', type : 'boolean', value : true,
-       description : 'Use optimization level 2 for smaller release artifacts; disable to honor the global release optimization level')
 option('simd', type : 'combo', choices : ['auto', 'none'], value : 'auto',
        description : 'Enable SIMD/NEON acceleration (auto-detected per host arch)')
 option('avx2_batch', type : 'feature', value : 'auto',
